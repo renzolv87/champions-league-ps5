@@ -192,6 +192,20 @@ function nowStr(){ const d=new Date(); return d.toLocaleDateString('es-ES')+' '+
 function dayStr(){ return new Date().toLocaleDateString('es-ES'); }
 function seasonDateText(dateValue){ return dateValue ? `${FUN_DATE_LABEL}: ${dateValue}` : `${FUN_DATE_LABEL}: —`; }
 function normalizePlayerName(name){ return (name||'').trim().toLocaleLowerCase('es-ES'); }
+function basePlayerName(name){
+  const n = normalizePlayerName(name);
+  if(!n) return '';
+  return n.split(/\s*-\s*/)[0].trim();
+}
+function cannotFaceEachOther(idA, idB){
+  if(!idA || !idB || idA===idB) return false;
+  const a = findPlayer(idA);
+  const b = findPlayer(idB);
+  if(!a || !b) return false;
+  const ka = basePlayerName(a.name);
+  const kb = basePlayerName(b.name);
+  return !!ka && ka===kb;
+}
 function wait(ms){ return new Promise(resolve=> setTimeout(resolve, ms)); }
 function isEditingField(){
   const ae = document.activeElement;
@@ -678,6 +692,22 @@ function tiedGroupsAtCutoff(standings, cutoff){
 }
 
 function shuffle(arr){ return [...arr].sort(()=>Math.random()-0.5); }
+function buildAllowedPairings(ids){
+  if(ids.length%2!==0) return null;
+  function backtrack(remaining){
+    if(!remaining.length) return [];
+    const [first, ...rest] = remaining;
+    const candidates = shuffle(rest);
+    for(const candidate of candidates){
+      if(cannotFaceEachOther(first, candidate)) continue;
+      const next = remaining.filter(x=> x!==first && x!==candidate);
+      const tail = backtrack(next);
+      if(tail) return [[first, candidate], ...tail];
+    }
+    return null;
+  }
+  return backtrack(shuffle(ids));
+}
 function sameIdSet(a,b){
   if(!a || !b || a.length!==b.length) return false;
   const sa = [...a].sort().join('|');
@@ -692,16 +722,29 @@ function isThreePlayersThreeDrawsInvalid(tiedIds){
   return draws===confirmed.length;
 }
 function buildTieBreakRound(activeIds){
-  const pool = shuffle(activeIds);
-  const bye = pool.length%2===1 ? pool.pop() : null;
-  const pairings=[];
-  for(let i=0;i<pool.length;i+=2){
-    pairings.push({id:uid(), p1:pool[i], p2:pool[i+1], pen1:null, pen2:null, winner:null, loser:null});
+  const shuffledIds = shuffle(activeIds);
+  const attempts = [];
+  if(shuffledIds.length%2===1){
+    shuffledIds.forEach(id=> attempts.push(id));
+  } else {
+    attempts.push(null);
   }
-  return {pairings, bye};
+
+  for(const byeCandidate of attempts){
+    const pool = byeCandidate ? shuffledIds.filter(id=> id!==byeCandidate) : [...shuffledIds];
+    const pairs = buildAllowedPairings(pool);
+    if(!pairs) continue;
+    return {
+      pairings: pairs.map(([p1,p2])=> ({id:uid(), p1, p2, pen1:null, pen2:null, winner:null, loser:null})),
+      bye: byeCandidate,
+      error: null
+    };
+  }
+  return {pairings:[], bye:null, error:'No se pudieron generar cruces de desempate sin enfrentar jugadores del mismo nombre base.'};
 }
 function startLeagueTieBreaker(ids){
   const first = buildTieBreakRound(ids);
+  if(first.error) return first.error;
   state.leagueTieBreaker = {
     ids:[...ids],
     round:1,
@@ -711,6 +754,7 @@ function startLeagueTieBreaker(ids){
   };
   log('Organizador', 'inició desempate por penaltis con cruces aleatorios entre: '+ids.map(playerName).join(', '));
   saveAndRender();
+  return null;
 }
 function finalizeLeagueTieBreaker(winnerId){
   const tb = state.leagueTieBreaker;
@@ -751,6 +795,7 @@ function submitLeagueTiePenalty(pairingId, pen1, pen2){
   }
 
   const next = buildTieBreakRound(survivors);
+  if(next.error) return next.error;
   tb.round += 1;
   tb.pairings = next.pairings;
   tb.bye = next.bye;
@@ -845,9 +890,8 @@ function buildKnockoutSkeleton(P){
 }
 
 function startKnockoutDraw(entrants, P){
-  const shuffled = [...entrants].sort(()=>Math.random()-0.5);
-  const pairings = [];
-  for(let i=0;i<shuffled.length;i+=2) pairings.push([shuffled[i], shuffled[i+1]]);
+  const pairings = buildAllowedPairings(entrants);
+  if(!pairings) return 'No se pudo hacer el sorteo sin cruces entre jugadores del mismo nombre base (antes del "-").';
   state.bracket = buildKnockoutSkeleton(P);
   state.knockoutDraw = {
     pairings,
@@ -856,6 +900,7 @@ function startKnockoutDraw(entrants, P){
     nextRevealAt: null,
     complete: false
   };
+  return null;
 }
 
 function revealNextDrawPair(){
@@ -1227,14 +1272,20 @@ function startLeague(){
   state.players.forEach(p=> addMoney(p.id, state.finance.prizes.participation, `season:${state.season}:participation:${p.id}`, 'participación en Champions'));
   const firstLegRoundCount = ids.length % 2 === 0 ? Math.max(1, ids.length-1) : ids.length;
   let firstLegRounds = generateRoundRobinRounds(ids, firstLegRoundCount);
-  const expectedUniquePairs = (ids.length * (ids.length - 1)) / 2;
+  firstLegRounds = firstLegRounds.map(round=> round.filter(([a,b])=> !cannotFaceEachOther(a,b)));
+  const expectedUniquePairs = ids.reduce((acc, a, i)=>{
+    for(let j=i+1;j<ids.length;j++) if(!cannotFaceEachOther(a, ids[j])) acc++;
+    return acc;
+  }, 0);
   const pairSet = new Set();
   firstLegRounds.forEach(round=> round.forEach(([a,b])=> pairSet.add([a,b].sort().join('|'))));
   if(pairSet.size !== expectedUniquePairs){
-    // Fallback defensivo: construir todos los cruces una vez para asegurar todos contra todos.
+    // Fallback defensivo: construir cruces permitidos una vez para asegurar cobertura completa.
     const allPairs = [];
     for(let i=0;i<ids.length;i++){
-      for(let j=i+1;j<ids.length;j++) allPairs.push([ids[i], ids[j]]);
+      for(let j=i+1;j<ids.length;j++){
+        if(!cannotFaceEachOther(ids[i], ids[j])) allPairs.push([ids[i], ids[j]]);
+      }
     }
     const perRound = Math.max(1, Math.floor(ids.length/2));
     firstLegRounds = [];
@@ -1270,7 +1321,8 @@ function closeLeague(){
   const playoffPool = qualifiers.slice(directCount);
 
   if(playoffPool.length===0){
-    startKnockoutDraw(qualifiers, P);
+    const drawErr = startKnockoutDraw(qualifiers, P);
+    if(drawErr) return drawErr;
     const entry = firstKnockoutBonusBySize(P);
     if(entry){
       qualifiers.forEach(pid=> addMoney(pid, entry.amount, `ko:${state.season}:entry:${entry.key}:${pid}`, entry.label));
@@ -1278,9 +1330,11 @@ function closeLeague(){
     state.phase='knockout';
     log('Organizador','cerró la liguilla y generó el cuadro de eliminatorias directamente.');
   } else {
+    const playoffPairs = buildAllowedPairings(playoffPool);
+    if(!playoffPairs) return 'No se pudo generar play-off sin cruces entre jugadores del mismo nombre base (antes del "-").';
     const pairs=[];
-    for(let i=0;i<playoffPool.length/2;i++){
-      pairs.push({id:uid(), seedSlot: directCount+i+1, p1: playoffPool[i], p2: playoffPool[playoffPool.length-1-i],
+    for(let i=0;i<playoffPairs.length;i++){
+      pairs.push({id:uid(), seedSlot: directCount+i+1, p1: playoffPairs[i][0], p2: playoffPairs[i][1],
         score1:null,score2:null,peno1:null,peno2:null,status:'empty',reportedBy:null,confirmedBy:null,dispute:null,mustReReportBy:null});
     }
     state.playoffMatches = pairs;
@@ -1345,7 +1399,8 @@ function closePlayoff(){
   state._directQualifiers.forEach((id,i)=> seedMap[i+1]=id);
   state.playoffMatches.forEach(m=> seedMap[m.seedSlot]=m.winner);
   const entrants = Object.values(seedMap);
-  startKnockoutDraw(entrants, state._bracketSize);
+  const drawErr = startKnockoutDraw(entrants, state._bracketSize);
+  if(drawErr) return drawErr;
   const entry = firstKnockoutBonusBySize(state._bracketSize);
   if(entry){
     entrants.forEach(pid=> addMoney(pid, entry.amount, `ko:${state.season}:entry:${entry.key}:${pid}`, entry.label));
@@ -1616,7 +1671,10 @@ function renderLeagueTab(){
       if(!activeTb){
         tieCard.appendChild(el(`<div class="muted" style="margin-bottom:8px;">El sistema generará cruces aleatorios entre los empatados y avanzará por rondas de tandas de penaltis hasta dejar un único ganador.</div>`));
         const btn = el(`<button class="danger">Generar cruces aleatorios de penaltis</button>`);
-        btn.onclick=()=> startLeagueTieBreaker(tiedIds);
+        btn.onclick=()=>{
+          const err = startLeagueTieBreaker(tiedIds);
+          if(err) alert(err);
+        };
         tieCard.appendChild(btn);
       } else {
         tieCard.appendChild(el(`<div class="muted" style="margin-bottom:8px;">Desempate en curso · Ronda ${activeTb.round}${activeTb.bye?` · Descansa: ${playerName(activeTb.bye)}`:''}</div>`));
