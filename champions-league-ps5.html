@@ -1760,15 +1760,7 @@ function renderConfigTab(){
 
 
   if(!locked){
-    const startBtn = el(`<button ${n<2?'disabled':''}>Iniciar liguilla / torneo</button>`);
-    startBtn.onclick=()=>{
-      state.config.matchesPerPlayer = autoMatchesPerPlayer(n);
-      state.config.numQualifiers = effectiveNumQualifiers();
-      const err = startLeague();
-      if(err) alert(err);
-    };
-    wrap.appendChild(startBtn);
-    if(n<2) wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">Añade al menos 2 jugadores en la pestaña Jugadores.</div>`));
+    wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">Inicia la liguilla desde la pestaña Jugadores cuando la plantilla esté lista.</div>`));
   }
   return wrap;
 }
@@ -1794,16 +1786,6 @@ function renderPlayersTab(){
     wrap.appendChild(addRow);
     const syncInfo = el(`<div class="muted" style="margin-bottom:8px;">Sync remoto: ${state.sync?.mode==='remoto'?'OK':'desconectado'}${state.sync?.lastRemoteAt?` · Última: ${state.sync.lastRemoteAt}`:''}</div>`);
     wrap.appendChild(syncInfo);
-    const syncBtn = el(`<button class="secondary small" style="margin-bottom:8px;">Sincronizar ahora</button>`);
-    syncBtn.onclick=async ()=>{
-      syncBtn.disabled = true;
-      const original = syncBtn.textContent;
-      syncBtn.textContent = 'Sincronizando...';
-      await pullRemoteState({ touchOnNoChange:true });
-      syncBtn.textContent = original;
-      syncBtn.disabled = false;
-    };
-    wrap.appendChild(syncBtn);
     const addBtn = el(`<button>Añadir jugador</button>`);
     addBtn.onclick=async ()=>{
       const name = document.getElementById('np-name').value.trim();
@@ -1812,6 +1794,18 @@ function renderPlayersTab(){
       if(err){ alert(err); return; }
     };
     wrap.appendChild(addBtn);
+    const startBtn = el(`<button class="gold" style="margin-left:8px;" ${state.players.length<2?'disabled':''}>Iniciar liguilla / torneo</button>`);
+    startBtn.onclick=()=>{
+      const n = state.players.length;
+      state.config.matchesPerPlayer = autoMatchesPerPlayer(n);
+      state.config.numQualifiers = effectiveNumQualifiers();
+      const err = startLeague();
+      if(err) alert(err);
+    };
+    wrap.appendChild(startBtn);
+    if(state.players.length<2){
+      wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">Añade al menos 2 jugadores para iniciar la liguilla.</div>`));
+    }
   } else {
     wrap.appendChild(el(`<div class="muted">La plantilla no se puede editar mientras el torneo está en marcha.</div>`));
   }
