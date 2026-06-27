@@ -81,6 +81,31 @@ button.small{padding:5px 10px;font-size:.75rem;}
 .bet-presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;}
 .bet-presets button{background:var(--surface-2);color:var(--text);border:1px solid var(--line);padding:6px 10px;}
 .bet-presets button.active{background:var(--gold);color:#1a1200;border-color:var(--gold);}
+.bet-arcade{
+  background:
+    radial-gradient(900px 180px at 0% 0%, rgba(63,167,150,.12), transparent 55%),
+    radial-gradient(700px 160px at 100% 10%, rgba(232,179,57,.12), transparent 50%),
+    var(--surface);
+  border-color:#3b427d;
+}
+.bet-rail{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:10px;
+}
+.bet-ticket{
+  background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(0,0,0,.08));
+  border:1px solid #3a427f;
+  border-radius:12px;
+  padding:10px;
+}
+.bet-ticket-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;}
+.bet-ticket-player{font-weight:700;font-size:.85rem;}
+.bet-ticket .meta{font-size:.75rem;color:var(--text-dim);line-height:1.45;}
+.bet-ticket.open{box-shadow:0 0 0 1px rgba(232,179,57,.2) inset;}
+.bet-ticket.won{box-shadow:0 0 0 1px rgba(63,167,150,.26) inset;}
+.bet-ticket.lost{box-shadow:0 0 0 1px rgba(225,87,76,.22) inset;}
+.bet-ticket.void{opacity:.82;}
 
 table{width:100%;border-collapse:collapse;font-size:.85rem;}
 th,td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--line);}
@@ -641,6 +666,7 @@ function computeStandings(){
   state.leagueMatches.forEach(m=>{
     if(m.status!=='confirmed') return;
     const t1=table[m.p1], t2=table[m.p2];
+    if(!t1 || !t2) return;
     t1.pj++; t2.pj++;
     t1.gf+=m.score1; t1.gc+=m.score2;
     t2.gf+=m.score2; t2.gc+=m.score1;
@@ -672,7 +698,7 @@ function computeStandings(){
     if(h2h!==0) return h2h;
     const sa = state.tieResolution[a.id], sb = state.tieResolution[b.id];
     if(sa!==undefined && sb!==undefined) return sa-sb;
-    return 0;
+    return a.name.localeCompare(b.name, 'es-ES');
   });
   return arr;
 }
@@ -925,8 +951,6 @@ function revealNextDrawPair(){
 
 function processKnockoutDrawClock(){
   if(!state?.knockoutDraw || !state.knockoutDraw.startedAt || state.knockoutDraw.complete) return;
-    state.config.matchesPerPlayer = autoMatchesPerPlayer(state.players.length);
-    state.config.numQualifiers = effectiveNumQualifiers();
   let changed = false;
   while(state.knockoutDraw.nextRevealAt && Date.now()>=state.knockoutDraw.nextRevealAt){
     if(!revealNextDrawPair()) break;
@@ -1024,6 +1048,52 @@ function getStakePresets(maxStake){
 }
 function getOpenBetTicket(playerId, matchId){
   return state.bets.tickets.find(t=> t.playerId===playerId && t.matchId===matchId && t.status==='open');
+}
+function findMatchForTicket(matchId){
+  let match = (state.leagueMatches || []).find(m=> m.id===matchId);
+  if(match) return match;
+  match = (state.playoffMatches || []).find(m=> m.id===matchId);
+  if(match) return match;
+  if(state.bracket?.rounds){
+    for(const round of state.bracket.rounds){
+      for(const tie of round){
+        if(tie.id===matchId) return tie;
+        if(tie.leg1?.id===matchId) return tie.leg1;
+        if(tie.leg2?.id===matchId) return tie.leg2;
+      }
+    }
+  }
+  return null;
+}
+function renderBetActivityBoard(title){
+  const card = el(`<div class="card bet-arcade"><h3>${title}</h3><div class="muted" style="margin-bottom:8px;">Vista compartida de apuestas de todos los jugadores en esta temporada.</div><div class="bet-rail"></div></div>`);
+  const rail = card.querySelector('.bet-rail');
+  const tickets = (state.bets?.tickets || [])
+    .filter(t=> t.season===state.season)
+    .slice()
+    .reverse();
+  if(!tickets.length){
+    rail.appendChild(el(`<div class="muted">Todavía no hay apuestas registradas en esta temporada.</div>`));
+    return card;
+  }
+  tickets.forEach(t=>{
+    const m = findMatchForTicket(t.matchId);
+    const pickTxt = t.pick==='home' ? 'gana local' : (t.pick==='away' ? 'gana visitante' : 'empate');
+    const matchTxt = m ? `${playerName(m.p1)} vs ${playerName(m.p2)}` : 'partido no disponible';
+    const statusTag = t.status==='open'
+      ? '<span class="tag pending">abierta</span>'
+      : (t.status==='settled'
+        ? `<span class="tag ${t.won?'confirmed':'dispute'}">${t.won?'ganada':'perdida'}</span>`
+        : '<span class="tag empty">anulada</span>');
+    const tone = t.status==='open' ? 'open' : (t.status==='settled' ? (t.won ? 'won' : 'lost') : 'void');
+    const payoutTxt = t.status==='open'
+      ? 'Pendiente de resolución.'
+      : (t.status==='settled'
+        ? (t.won ? `Cobro: ${fmtMoney(t.payout||0)}.` : `Pérdida: ${fmtMoney(t.stake||0)}.`)
+        : 'Apuesta anulada.');
+    rail.appendChild(el(`<div class="bet-ticket ${tone}"><div class="bet-ticket-head"><span class="bet-ticket-player">${playerName(t.playerId)}</span>${statusTag}</div><div class="meta"><b>${fmtMoney(t.stake||0)}</b> · ${pickTxt}</div><div class="meta">${matchTxt}</div><div class="meta" style="margin-top:4px;">${payoutTxt}</div></div>`));
+  });
+  return card;
 }
 function getBettableMatches(){
   if(state.phase==='league' && state.players.length===3){
@@ -1292,7 +1362,8 @@ function startLeague(){
     for(let i=0;i<allPairs.length;i+=perRound) firstLegRounds.push(allPairs.slice(i, i+perRound));
   }
   const secondLegRounds = firstLegRounds.map(pairs=> pairs.map(([a,b])=>[b,a]));
-  const rounds = [...firstLegRounds, ...secondLegRounds];
+  const rounds = [...firstLegRounds, ...secondLegRounds].filter(pairs=> pairs.length>0);
+  if(!rounds.length) return 'No se pudo generar la liguilla con los jugadores actuales. Revisa los nombres bloqueados por la regla de no enfrentarse entre mismos nombres base.';
   const matches=[];
   rounds.forEach((pairs, rIdx)=>{
     pairs.forEach(([a,b])=> matches.push({id:uid(), round:rIdx+1, p1:a, p2:b, score1:null,score2:null,
@@ -1579,7 +1650,8 @@ function renderConfigTab(){
     startBtn.onclick=()=>{
       state.config.matchesPerPlayer = autoMatchesPerPlayer(n);
       state.config.numQualifiers = effectiveNumQualifiers();
-      startLeague();
+      const err = startLeague();
+      if(err) alert(err);
     };
     wrap.appendChild(startBtn);
     if(n<2) wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">Añade al menos 2 jugadores en la pestaña Jugadores.</div>`));
@@ -1768,6 +1840,7 @@ function renderLeagueTab(){
       }
       wrap.appendChild(bettingCard);
     }
+    wrap.appendChild(renderBetActivityBoard('Panel de apuestas de la liguilla'));
 
     const closeCard = el(`<div class="card"><h3>Calendario de la liguilla</h3></div>`);
     closeCard.appendChild(el(`<div class="muted" style="margin-bottom:8px;">Antitrampas: un resultado queda en <b>pendiente</b> hasta que el rival pulse <b>Aceptar</b> o <b>Rechazar</b>. Si rechaza, debe volver a reportarlo quien lo cargó primero.</div>`));
@@ -2180,17 +2253,10 @@ function renderKnockoutTab(){
       card.appendChild(err);
     }
 
-    const openTickets = state.bets.tickets.filter(t=> t.status==='open' && t.season===state.season);
-    if(openTickets.length){
-      const list = el(`<div class="matchlist" style="margin-top:10px;"></div>`);
-      openTickets.forEach(t=>{
-        const m = getBettableMatches().find(x=>x.id===t.matchId) || {p1:null,p2:null};
-        const pickTxt = t.pick==='home'?'gana local':(t.pick==='away'?'gana visitante':'empate');
-        list.appendChild(el(`<div class="match"><div class="vs"><span>${playerName(t.playerId)}</span><span>${fmtMoney(t.stake)} · ${pickTxt}</span><span>${playerName(m.p1)} vs ${playerName(m.p2)}</span></div><span class="tag pending">abierta</span></div>`));
-      });
-      card.appendChild(list);
-    }
     wrap.appendChild(card);
+  }
+  if(state.phase==='knockout'){
+    wrap.appendChild(renderBetActivityBoard('Panel de apuestas de eliminatorias'));
   }
 
   if(state.knockoutDraw && !state.knockoutDraw.complete){
