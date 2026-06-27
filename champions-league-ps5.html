@@ -1114,6 +1114,120 @@ function getBettableMatches(){
   });
   return matches;
 }
+function canOpenBetForMatch(match){
+  if(!match || !match.p1 || !match.p2) return false;
+  if(match.status==='confirmed') return false;
+  if(state.phase==='league' && state.players.length===3) return true;
+  if(state.phase==='knockout') return true;
+  return false;
+}
+function getEligibleBettorsForMatch(match){
+  if(state.phase==='league' && state.players.length===3){
+    const rest = state.players.find(p=> p.id!==match.p1 && p.id!==match.p2);
+    return rest ? [rest] : [];
+  }
+  if(state.phase==='knockout'){
+    return getNonQualifiedIds().map(id=> findPlayer(id)).filter(Boolean);
+  }
+  return [];
+}
+function openBetForMatchModal(matchId){
+  const match = getBettableMatches().find(m=> m.id===matchId) || state.leagueMatches.find(m=> m.id===matchId);
+  if(!match) return;
+  if(!canOpenBetForMatch(match)){
+    alert('Este partido no está disponible para apuestas en este momento.');
+    return;
+  }
+  const bettors = getEligibleBettorsForMatch(match);
+  if(!bettors.length){
+    alert('No hay apostadores disponibles para este partido.');
+    return;
+  }
+
+  pendingModal = ()=>{
+    const singleBettor = bettors.length===1;
+    const header = `${playerName(match.p1)} vs ${playerName(match.p2)}`;
+    const bg = el(`<div class="modal-bg"><div class="modal">
+      <span class="close">✕</span>
+      <h3>Apostar en ${header}</h3>
+      <div class="muted" style="margin-bottom:10px;">Elige pronóstico y monto para este emparejamiento.</div>
+      ${singleBettor
+        ? `<label>Apostador</label><input id="bm-bettor" type="text" disabled>`
+        : `<label>Apostador</label><select id="bm-bettor"></select>`}
+      <label>Pronóstico</label>
+      <select id="bm-pick">
+        <option value="home">Gana local</option>
+        <option value="draw">Empate</option>
+        <option value="away">Gana visitante</option>
+      </select>
+      <label>Monto</label>
+      <input type="number" id="bm-stake" min="1" step="1" readonly>
+      <div id="bm-max" class="muted" style="margin-bottom:8px;"></div>
+      <div id="bm-presets" class="bet-presets" style="margin-bottom:10px;"></div>
+      <div id="bm-err" class="muted" style="color:#ffb3ad;margin-bottom:10px;"></div>
+      <button id="bm-go" class="gold" type="button">Registrar apuesta</button>
+    </div></div>`);
+
+    const close = ()=>{ pendingModal=null; render(); };
+    bg.querySelector('.close').onclick = close;
+
+    const bettorEl = bg.querySelector('#bm-bettor');
+    const pickEl = bg.querySelector('#bm-pick');
+    const stakeEl = bg.querySelector('#bm-stake');
+    const maxEl = bg.querySelector('#bm-max');
+    const presetsEl = bg.querySelector('#bm-presets');
+    const errEl = bg.querySelector('#bm-err');
+
+    if(singleBettor){
+      bettorEl.value = `${bettors[0].name} (${fmtMoney(bettors[0].money||0)})`;
+      bettorEl.dataset.playerId = bettors[0].id;
+    } else {
+      bettors.forEach((p, idx)=>{
+        bettorEl.appendChild(el(`<option value="${p.id}" ${idx===0?'selected':''}>${p.name} (${fmtMoney(p.money||0)})</option>`));
+      });
+      if(state.myPlayerId && bettors.some(p=> p.id===state.myPlayerId)) bettorEl.value = state.myPlayerId;
+    }
+
+    function selectedBettorId(){
+      return singleBettor ? bettorEl.dataset.playerId : bettorEl.value;
+    }
+    function refreshStakeOptions(){
+      const pid = selectedBettorId();
+      const maxStake = pid ? getMaxStakeForPlayer(pid) : 0;
+      maxEl.textContent = `Máximo que puedes apostar: ${fmtMoney(maxStake)}`;
+      presetsEl.innerHTML = '';
+      let selected = null;
+      getStakePresets(maxStake).forEach((amount, idx)=>{
+        const b = el(`<button type="button" class="small ${idx===2?'active':''}">${fmtMoney(amount)}</button>`);
+        if(idx===2) selected = amount;
+        b.onclick = ()=>{
+          selected = amount;
+          stakeEl.value = String(amount);
+          presetsEl.querySelectorAll('button').forEach(x=> x.classList.remove('active'));
+          b.classList.add('active');
+        };
+        presetsEl.appendChild(b);
+      });
+      stakeEl.value = selected!==null ? String(selected) : '';
+    }
+
+    if(!singleBettor) bettorEl.onchange = refreshStakeOptions;
+    refreshStakeOptions();
+
+    bg.querySelector('#bm-go').onclick = ()=>{
+      const playerId = selectedBettorId();
+      const pick = pickEl.value;
+      const stake = parseInt(stakeEl.value);
+      const e = placeBet(playerId, match.id, pick, stake);
+      if(e){ errEl.textContent = e; return; }
+      pendingModal = null;
+      render();
+    };
+
+    return bg;
+  };
+  render();
+}
 function placeBet(playerId, matchId, pick, stake){
   const bettor = findPlayer(playerId);
   if(!bettor) return 'Apostador no encontrado.';
@@ -1894,6 +2008,11 @@ function renderMatchRow(m, decisive){
   const btn = el(`<button class="small secondary">${btnLabel}</button>`);
   btn.onclick=()=> openMatchModal(m, decisive, m.status==='confirmed');
   row.appendChild(btn);
+  if(canOpenBetForMatch(m)){
+    const betBtn = el(`<button class="small gold" type="button">Apostar</button>`);
+    betBtn.onclick=()=> openBetForMatchModal(m.id);
+    row.appendChild(betBtn);
+  }
   return row;
 }
 
