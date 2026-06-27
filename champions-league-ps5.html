@@ -1635,6 +1635,8 @@ function el(html){ const d=document.createElement('div'); d.innerHTML=html; retu
 
 function render(){
   const app = document.getElementById('app');
+  const allowedTabs = getVisibleTabs();
+  if(!allowedTabs.some(t=> t[0]===currentTab)) currentTab = allowedTabs[0][0];
   app.innerHTML = '';
   app.appendChild(renderHero());
   app.appendChild(renderStepper());
@@ -1664,6 +1666,19 @@ function renderHero(){
 function phaseLabel(p){
   return {setup:'configuración', league:'liguilla', playoff:'play-off', knockout:'eliminatorias', finished:'finalizado'}[p]||p;
 }
+function getVisibleTabs(){
+  const tabs = [
+    ['config','Configuración'],
+    ['players','Jugadores']
+  ];
+  const phaseOrder = ['setup','league','playoff','knockout','finished'];
+  const idx = Math.max(0, phaseOrder.indexOf(state.phase));
+  if(idx>=1) tabs.push(['league','Liguilla']);
+  if(idx>=2) tabs.push(['knockout','Eliminatorias']);
+  tabs.push(['museum','Museo']);
+  tabs.push(['history','Historial']);
+  return tabs;
+}
 function renderStepper(){
   const steps=[['setup','Config'],['league','Liguilla'],['playoff','Play-off'],['knockout','Eliminatorias'],['finished','Campeón']];
   const order=['setup','league','playoff','knockout','finished'];
@@ -1677,7 +1692,7 @@ function renderStepper(){
   return wrap;
 }
 function renderTabs(){
-  const tabs = [['config','Configuración'],['players','Jugadores'],['league','Liguilla'],['knockout','Eliminatorias'],['museum','Museo'],['history','Historial']];
+  const tabs = getVisibleTabs();
   const wrap = el(`<div class="tabs"></div>`);
   tabs.forEach(([key,lab])=>{
     const t = el(`<div class="tab ${currentTab===key?'active':''}">${lab}</div>`);
