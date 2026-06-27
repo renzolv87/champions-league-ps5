@@ -276,6 +276,7 @@ function loadState(){
   if(!state.seasonKickoff) state.seasonKickoff = null;
   if(!state.season || state.season==='Champions PS5') state.season = GAME_NAME+' - T1';
   state.players.forEach(p=>{
+    p.name = normalizePlayerName(p.name);
     if(typeof p.money!=='number') p.money=0;
     if(typeof state.finance.lifetimeByPlayer[p.id] !== 'number'){
       // Migracion: si no habia acumulado historico, tomamos el saldo actual.
@@ -377,7 +378,7 @@ async function pushRemoteState(){
     const data = await res.json();
     if(res.status===409){
       if(data?.state){
-        state = data.state;
+        state = migrateStateShape(data.state);
         remoteEtag = data.etag || null;
         state.sync.mode = 'remoto';
         state.sync.lastRemoteAt = nowStr();
@@ -414,6 +415,7 @@ function migrateStateShape(s){
   if(!s.bets) s.bets = defaultState().bets;
   if(!Array.isArray(s.players)) s.players = [];
   s.players.forEach(p=>{
+    p.name = normalizePlayerName(p.name);
     if(typeof p.money!=='number') p.money = 0;
     if(typeof s.finance.lifetimeByPlayer[p.id] !== 'number') s.finance.lifetimeByPlayer[p.id] = p.money;
   });
@@ -421,7 +423,7 @@ function migrateStateShape(s){
 }
 
 async function addPlayerShared(name){
-  const clean = name.trim();
+  const clean = normalizePlayerName(name);
   if(!clean) return 'Nombre inválido.';
 
   for(let attempt=0; attempt<10; attempt++){
@@ -1376,7 +1378,7 @@ function renderPlayersTab(){
 
   if(!locked){
     const addRow = el(`<div class="row" style="margin-top:14px;">
-      <div><label>Nombre</label><input id="np-name" placeholder="Ej: Renzo"></div>
+      <div><label>Nombre</label><input id="np-name" placeholder="Ej: renzo"></div>
     </div>`);
     wrap.appendChild(addRow);
     const syncInfo = el(`<div class="muted" style="margin-bottom:8px;">Sync remoto: ${state.sync?.mode==='remoto'?'OK':'desconectado'}${state.sync?.lastRemoteAt?` · Última: ${state.sync.lastRemoteAt}`:''}</div>`);
