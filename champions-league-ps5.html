@@ -1481,16 +1481,6 @@ function renderPlayersTab(){
     wrap.appendChild(el(`<div class="muted">La plantilla no se puede editar mientras el torneo está en marcha.</div>`));
   }
 
-  const activePlayer = state.players.find(p=> p.id===state.myPlayerId) || null;
-  if(activePlayer){
-    wrap.appendChild(el(`<div class="card"><h3>Jugador activo en este dispositivo</h3><div class="muted">Este dispositivo está vinculado automáticamente a <b>${activePlayer.name}</b>.</div></div>`));
-  } else {
-    const whoCard = el(`<div class="card"><h3>Jugador activo en este dispositivo</h3><div class="muted" style="margin-bottom:8px;">Selecciona tu jugador una sola vez en este dispositivo.</div><select id="who-am-i"><option value="">Selecciona jugador</option></select></div>`);
-    const sel = whoCard.querySelector('#who-am-i');
-    state.players.forEach(p=> sel.appendChild(el(`<option value="${p.id}">${p.name}</option>`)));
-    sel.onchange=()=>{ state.myPlayerId = sel.value || null; saveAndRender(); };
-    wrap.appendChild(whoCard);
-  }
   return wrap;
 }
 
