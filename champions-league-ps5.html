@@ -195,6 +195,7 @@ function defaultState(){
     leagueMatches: [],
     qualifiers: null,
     tieResolution: {}, // playerId -> random tiebreak salt once resolved
+    leagueTieBreaker: null, // desempate por tanda de penaltis en cruces aleatorios
     playoffMatches: [],
     bracket: null, // { size:P, rounds:[[match,...],...] }
     knockoutDraw: null, // { pairings:[[id,id],...], revealed:number, startedAt:number|null, nextRevealAt:number|null, complete:boolean }
@@ -202,6 +203,7 @@ function defaultState(){
     myPlayerId: null,
     finance: {
       applied: {},
+      lifetimeByPlayer: {},
       currency: 'EUR',
       prizes: {
         participation: 18620000,
@@ -232,10 +234,17 @@ function loadState(){
     state = defaultState();
   }
   if(!state.finance) state.finance = defaultState().finance;
+  if(!state.finance.lifetimeByPlayer) state.finance.lifetimeByPlayer = {};
   if(!state.sync) state.sync = defaultState().sync;
   if(!state.seasonKickoff) state.seasonKickoff = null;
   if(!state.season || state.season==='Champions PS5') state.season = GAME_NAME+' - T1';
-  state.players.forEach(p=>{ if(typeof p.money!=='number') p.money=0; });
+  state.players.forEach(p=>{
+    if(typeof p.money!=='number') p.money=0;
+    if(typeof state.finance.lifetimeByPlayer[p.id] !== 'number'){
+      // Migracion: si no habia acumulado historico, tomamos el saldo actual.
+      state.finance.lifetimeByPlayer[p.id] = p.money;
+    }
+  });
   if(Array.isArray(state.pastChampions)){
     state.pastChampions = state.pastChampions.map(pc=> ({
       ...pc,
@@ -246,6 +255,7 @@ function loadState(){
   pullRemoteState();
   if(pullTimer) clearInterval(pullTimer);
   pullTimer = setInterval(()=>{
+    if(pendingModal) return;
     pullRemoteState();
     processKnockoutDrawClock();
   }, 4000);
@@ -260,6 +270,7 @@ function log(actor, action){
 }
 
 async function pullRemoteState(){
+  if(pendingModal) return;
   try{
     const res = await fetch(REMOTE_ENDPOINT, { cache:'no-store' });
     if(!res.ok) return;
@@ -413,6 +424,101 @@ function tiedGroupsAtCutoff(standings, cutoff){
   return block.map(x=>x.id);
 }
 
+function shuffle(arr){ return [...arr].sort(()=>Math.random()-0.5); }
+function sameIdSet(a,b){
+  if(!a || !b || a.length!==b.length) return false;
+  const sa = [...a].sort().join('|');
+  const sb = [...b].sort().join('|');
+  return sa===sb;
+}
+function isThreePlayersThreeDrawsInvalid(tiedIds){
+  if(state.players.length!==3 || tiedIds.length!==3) return false;
+  const confirmed = state.leagueMatches.filter(m=> m.status==='confirmed');
+  if(confirmed.length===0) return false;
+  const draws = confirmed.filter(m=> m.score1===m.score2).length;
+  return draws===confirmed.length;
+}
+function buildTieBreakRound(activeIds){
+  const pool = shuffle(activeIds);
+  const bye = pool.length%2===1 ? pool.pop() : null;
+  const pairings=[];
+  for(let i=0;i<pool.length;i+=2){
+    pairings.push({id:uid(), p1:pool[i], p2:pool[i+1], pen1:null, pen2:null, winner:null, loser:null});
+  }
+  return {pairings, bye};
+}
+function startLeagueTieBreaker(ids){
+  const first = buildTieBreakRound(ids);
+  state.leagueTieBreaker = {
+    ids:[...ids],
+    round:1,
+    pairings:first.pairings,
+    bye:first.bye,
+    eliminated:[]
+  };
+  log('Organizador', 'inició desempate por penaltis con cruces aleatorios entre: '+ids.map(playerName).join(', '));
+  saveAndRender();
+}
+function finalizeLeagueTieBreaker(winnerId){
+  const tb = state.leagueTieBreaker;
+  if(!tb) return;
+  const ranking = [winnerId, ...tb.eliminated.slice().reverse()];
+  tb.ids.forEach(id=>{ if(!ranking.includes(id)) ranking.push(id); });
+  ranking.forEach((id,i)=> state.tieResolution[id]=i);
+  log('Organizador', 'desempate por penaltis finalizado. Orden: '+ranking.map(playerName).join(' > '));
+  state.leagueTieBreaker = null;
+  saveAndRender();
+}
+function submitLeagueTiePenalty(pairingId, pen1, pen2){
+  const tb = state.leagueTieBreaker;
+  if(!tb) return 'No hay desempate activo.';
+  const pair = tb.pairings.find(p=> p.id===pairingId);
+  if(!pair) return 'Cruce no encontrado.';
+  if(Number.isNaN(pen1)||Number.isNaN(pen2)||pen1<0||pen2<0) return 'Indica penaltis válidos.';
+  if(pen1===pen2) return 'La tanda no puede terminar empatada.';
+
+  pair.pen1 = pen1;
+  pair.pen2 = pen2;
+  pair.winner = pen1>pen2 ? pair.p1 : pair.p2;
+  pair.loser = pair.winner===pair.p1 ? pair.p2 : pair.p1;
+
+  const pending = tb.pairings.some(p=> !p.winner);
+  if(pending){
+    saveAndRender();
+    return null;
+  }
+
+  tb.eliminated.push(...tb.pairings.map(p=> p.loser));
+  const survivors = tb.pairings.map(p=> p.winner);
+  if(tb.bye) survivors.push(tb.bye);
+
+  if(survivors.length===1){
+    finalizeLeagueTieBreaker(survivors[0]);
+    return null;
+  }
+
+  const next = buildTieBreakRound(survivors);
+  tb.round += 1;
+  tb.pairings = next.pairings;
+  tb.bye = next.bye;
+  saveAndRender();
+  return null;
+}
+function restartInvalidLeagueSeason(){
+  state.phase='setup';
+  state.leagueMatches=[];
+  state.playoffMatches=[];
+  state.bracket=null;
+  state.knockoutDraw=null;
+  state.champion=null;
+  state.qualifiers=null;
+  state.tieResolution={};
+  state.leagueTieBreaker=null;
+  state.seasonKickoff=null;
+  log('Sistema','temporada inválida: 3 jugadores con todos los partidos empatados. Se reinicia la temporada.');
+  saveAndRender();
+}
+
 /* ---------------- BRACKET HELPERS ---------------- */
 function autoMatchesPerPlayer(n){
   // En esta app, la liguilla es todos contra todos a ida y vuelta.
@@ -444,7 +550,7 @@ function buildKnockoutSkeleton(P){
   for(let i=0;i<P/2;i++){
     round0.push({id:uid(), round:0, slot:i,
       p1:null, p2:null,
-      score1:null,score2:null,peno1:null,peno2:null,status:'empty',reportedBy:null,confirmedBy:null,dispute:null,
+      score1:null,score2:null,peno1:null,peno2:null,status:'empty',reportedBy:null,confirmedBy:null,dispute:null,mustReReportBy:null,
       legs: P===2 ? 1 : 2,
       leg1:null,
       leg2:null,
@@ -459,7 +565,7 @@ function buildKnockoutSkeleton(P){
   while(m>1){
     m = m/2;
     rounds.push(Array.from({length:m},(_,idx)=>({id:uid(),round:rounds.length,slot:idx,
-      p1:null,p2:null,score1:null,score2:null,peno1:null,peno2:null,status:'empty',reportedBy:null,confirmedBy:null,dispute:null,
+      p1:null,p2:null,score1:null,score2:null,peno1:null,peno2:null,status:'empty',reportedBy:null,confirmedBy:null,dispute:null,mustReReportBy:null,
       legs: (rounds.length===Math.log2(P)-1) ? 1 : 2,
       leg1:null,
       leg2:null,
@@ -551,11 +657,13 @@ function findPlayer(id){ return state.players.find(p=>p.id===id); }
 
 function addMoney(playerId, amount, reasonKey, reasonText){
   if(!state.finance.applied) state.finance.applied = {};
+  if(!state.finance.lifetimeByPlayer) state.finance.lifetimeByPlayer = {};
   if(state.finance.applied[reasonKey]) return;
   const p = findPlayer(playerId);
   if(!p) return;
   if(typeof p.money!=='number') p.money = 0;
   p.money += amount;
+  state.finance.lifetimeByPlayer[playerId] = (state.finance.lifetimeByPlayer[playerId]||0) + amount;
   state.finance.applied[reasonKey] = true;
   log('Sistema', `${p.name} recibe ${fmtMoney(amount)} por ${reasonText}.`);
 }
@@ -580,39 +688,14 @@ function reportResult(match, byId, score1, score2, peno1, peno2, decisive){
   const player = findPlayer(byId);
   if(!player) return 'Jugador no encontrado.';
   if(match.p1!==byId && match.p2!==byId) return 'No formas parte de este partido.';
+  if(match.status==='pending') return 'Este resultado está pendiente de aceptación/rechazo del rival.';
+  if(match.mustReReportBy && byId!==match.mustReReportBy) return 'El jugador que reportó inicialmente debe volver a cargar el resultado.';
 
   if(decisive && score1===score2){
     if(peno1===null||peno2===null||peno1===peno2) return 'En esta fase no puede haber empate: indica el resultado de la tanda de penaltis.';
   }
 
   const proposed = { byId, score1, score2, peno1: decisive&&score1===score2?peno1:null, peno2: decisive&&score1===score2?peno2:null };
-  const opponentId = byId===match.p1 ? match.p2 : match.p1;
-
-  if(match.status==='pending' && match.reportedBy===opponentId){
-    const same = match.score1===score1 && match.score2===score2 && (match.peno1??null)===(proposed.peno1??null) && (match.peno2??null)===(proposed.peno2??null);
-    if(!same){
-      match.status='dispute';
-      match.dispute = {
-        first:{byId:match.reportedBy, score1:match.score1, score2:match.score2, peno1:match.peno1, peno2:match.peno2},
-        second:proposed
-      };
-      log(player.name, 'marcó disputa en el resultado de '+playerName(match.p1)+' vs '+playerName(match.p2)+'.');
-      saveAndRender();
-      return null;
-    }
-
-    match.status='confirmed';
-    match.confirmedBy = byId;
-    if(decisive){
-      if(score1>score2) match.winner=match.p1;
-      else if(score2>score1) match.winner=match.p2;
-      else match.winner = proposed.peno1>proposed.peno2? match.p1: match.p2;
-    }
-    if(state.phase==='league') registerLeagueMoney(match);
-    log(player.name, 'aceptó y confirmó el resultado '+score1+'-'+score2+(proposed.peno1!==null?` (pen. ${proposed.peno1}-${proposed.peno2})`:''));
-    saveAndRender();
-    return null;
-  }
 
   match.score1 = score1;
   match.score2 = score2;
@@ -622,8 +705,55 @@ function reportResult(match, byId, score1, score2, peno1, peno2, decisive){
   match.reportedBy = byId;
   match.confirmedBy = null;
   match.dispute = null;
+  match.mustReReportBy = null;
+  match.winner = null;
 
   log(player.name, 'propuso el resultado '+score1+'-'+score2+(match.peno1!==null?` (pen. ${match.peno1}-${match.peno2})`:''));
+  saveAndRender();
+  return null;
+}
+
+function acceptReportedResult(match, byId, decisive){
+  const player = findPlayer(byId);
+  if(!player) return 'Jugador no encontrado.';
+  if(match.status!=='pending') return 'Este partido no está pendiente.';
+  if(byId!==match.p1 && byId!==match.p2) return 'No formas parte de este partido.';
+  if(byId===match.reportedBy) return 'Quien reportó no puede auto-confirmar: debe aceptar el rival.';
+
+  match.status='confirmed';
+  match.confirmedBy = byId;
+  match.mustReReportBy = null;
+  if(decisive){
+    if(match.score1>match.score2) match.winner=match.p1;
+    else if(match.score2>match.score1) match.winner=match.p2;
+    else match.winner = match.peno1>match.peno2? match.p1: match.p2;
+  }
+  if(state.phase==='league') registerLeagueMoney(match);
+  log(player.name, 'aceptó el resultado '+match.score1+'-'+match.score2+(match.peno1!==null?` (pen. ${match.peno1}-${match.peno2})`:''));
+  saveAndRender();
+  return null;
+}
+
+function rejectReportedResult(match, byId){
+  const player = findPlayer(byId);
+  if(!player) return 'Jugador no encontrado.';
+  if(match.status!=='pending') return 'Este partido no está pendiente.';
+  if(byId!==match.p1 && byId!==match.p2) return 'No formas parte de este partido.';
+  if(byId===match.reportedBy) return 'Quien reportó no puede rechazarse a sí mismo.';
+
+  const reporterId = match.reportedBy;
+  const reporterName = playerName(reporterId);
+  match.score1 = null;
+  match.score2 = null;
+  match.peno1 = null;
+  match.peno2 = null;
+  match.status = 'empty';
+  match.confirmedBy = null;
+  match.dispute = null;
+  match.winner = null;
+  match.mustReReportBy = reporterId;
+
+  log(player.name, 'rechazó el resultado reportado por '+reporterName+'. '+reporterName+' debe cargarlo de nuevo.');
   saveAndRender();
   return null;
 }
@@ -635,6 +765,7 @@ function adminOverride(match, score1, score2, peno1, peno2, decisive){
   match.peno2 = decisive&&score1===score2? peno2: null;
   match.status='confirmed';
   match.confirmedBy='admin';
+  match.mustReReportBy = null;
   if(decisive){
     if(score1>score2) match.winner=match.p1;
     else if(score2>score1) match.winner=match.p2;
@@ -653,19 +784,18 @@ function saveAndRender(){
 }
 
 function masterResetAll(){
-  const playersKept = state.players.map(p=> ({ id:p.id, name:p.name, money:0 }));
-  const myPlayer = state.myPlayerId;
   const syncSnapshot = state.sync || defaultState().sync;
   const financeSnapshot = state.finance || defaultState().finance;
 
   state = defaultState();
-  state.players = playersKept;
-  state.myPlayerId = playersKept.some(p=>p.id===myPlayer) ? myPlayer : null;
+  state.players = [];
+  state.myPlayerId = null;
   state.sync = syncSnapshot;
   state.finance = {
     ...defaultState().finance,
     ...financeSnapshot,
-    applied: {}
+    applied: {},
+    lifetimeByPlayer: {}
   };
   state.history = [];
   state.pastChampions = [];
@@ -706,7 +836,7 @@ function startLeague(){
   const matches=[];
   rounds.forEach((pairs, rIdx)=>{
     pairs.forEach(([a,b])=> matches.push({id:uid(), round:rIdx+1, p1:a, p2:b, score1:null,score2:null,
-      status:'empty', reportedBy:null, confirmedBy:null, dispute:null}));
+      status:'empty', reportedBy:null, confirmedBy:null, dispute:null, mustReReportBy:null}));
   });
   state.leagueMatches = matches;
   state.phase='league';
@@ -741,7 +871,7 @@ function closeLeague(){
     const pairs=[];
     for(let i=0;i<playoffPool.length/2;i++){
       pairs.push({id:uid(), seedSlot: directCount+i+1, p1: playoffPool[i], p2: playoffPool[playoffPool.length-1-i],
-        score1:null,score2:null,peno1:null,peno2:null,status:'empty',reportedBy:null,confirmedBy:null,dispute:null});
+        score1:null,score2:null,peno1:null,peno2:null,status:'empty',reportedBy:null,confirmedBy:null,dispute:null,mustReReportBy:null});
     }
     state.playoffMatches = pairs;
     state._directQualifiers = direct;
@@ -753,11 +883,49 @@ function closeLeague(){
   return null;
 }
 
-function resolveTieRandom(ids){
-  const order = [...ids].sort(()=>Math.random()-0.5);
+function resolveTieByPenalties(ids, penaltiesById){
+  const values = ids.map(id=> penaltiesById[id]);
+  if(values.some(v=> Number.isNaN(v) || v<0)) return 'Debes indicar penaltis validos para todos los jugadores empatados.';
+  if(new Set(values).size!==values.length) return 'No puede haber empate en la tanda: repite hasta que todos tengan valor distinto.';
+
+  const order = [...ids].sort((a,b)=> penaltiesById[b]-penaltiesById[a]);
   order.forEach((id,i)=> state.tieResolution[id]=i);
-  log('Organizador','realizó un sorteo para desempatar entre: '+ids.map(playerName).join(', '));
+  const resume = order.map(id=> `${playerName(id)} ${penaltiesById[id]}`).join(' · ');
+  log('Organizador','desempate por tanda de penaltis en liguilla: '+resume);
   saveAndRender();
+  return null;
+}
+
+function openLeagueTiePenaltyModal(ids){
+  pendingModal = ()=>{
+    const inputs = ids.map(id=>`
+      <div><label>${playerName(id)}</label><input type="number" id="tp-${id}" min="0" placeholder="Penaltis anotados"></div>
+    `).join('');
+    const bg = el(`<div class="modal-bg"><div class="modal">
+      <span class="close">✕</span>
+      <h3>Desempate por penaltis</h3>
+      <div class="muted" style="margin-bottom:10px;">Introduce el resultado de la tanda para cada jugador empatado. Deben quedar distintos.</div>
+      <div class="row">${inputs}</div>
+      <div id="tp-err" class="muted" style="color:#ffb3ad;"></div>
+      <button id="tp-save" class="danger">Guardar tanda y desempatar</button>
+    </div></div>`);
+    bg.querySelector('.close').onclick=()=>{pendingModal=null; render();};
+    bg.querySelector('#tp-save').onclick=()=>{
+      const penaltiesById = {};
+      ids.forEach(id=>{
+        penaltiesById[id] = parseInt(bg.querySelector(`#tp-${id}`).value);
+      });
+      const err = resolveTieByPenalties(ids, penaltiesById);
+      if(err){
+        bg.querySelector('#tp-err').textContent = err;
+        return;
+      }
+      pendingModal = null;
+      render();
+    };
+    return bg;
+  };
+  render();
 }
 
 function closePlayoff(){
@@ -786,6 +954,7 @@ function newSeason(){
   state.phase='setup';
   state.leagueMatches=[]; state.playoffMatches=[]; state.bracket=null; state.champion=null;
   state.knockoutDraw = null;
+  state.leagueTieBreaker = null;
   state.qualifiers=null; state.tieResolution={};
   state.history.unshift({ts:nowStr(), actor:'Organizador', action:'inició una nueva temporada.'});
   saveAndRender();
@@ -892,7 +1061,7 @@ function renderConfigTab(){
       <li>Diferencia de goles.</li>
       <li>Goles a favor.</li>
       <li>Resultado del partido directo entre los empatados (si jugaron entre sí).</li>
-      <li>Si sigue empatado, el organizador hace un sorteo registrado en el historial (botón aparece en la tabla cuando haga falta).</li>
+      <li>Si sigue empatado justo en la línea de clasificación, se generan cruces aleatorios de tanda de penaltis entre los empatados hasta dejar un único ganador.</li>
     </ol>
     <h3 style="margin-top:16px;">Empates en eliminatorias y play-off</h3>
     <p class="muted">En partido único de play-off o eliminatoria, un empate en el marcador de PS5 se resuelve siempre pidiendo el resultado de la tanda de penaltis dentro del propio partido — el programa no deja avanzar sin un ganador.</p>
@@ -940,7 +1109,8 @@ function renderPlayersTab(){
   wrap.appendChild(card);
   const plist = card.querySelector('#plist');
   state.players.forEach(p=>{
-    const chip = el(`<span class="player-chip">${p.name} · ${fmtMoney(p.money||0)}</span>`);
+    const totalMoney = state.finance?.lifetimeByPlayer?.[p.id] ?? p.money ?? 0;
+    const chip = el(`<span class="player-chip">${p.name} · ${fmtMoney(totalMoney)}</span>`);
     plist.appendChild(chip);
   });
   if(!state.players.length) plist.appendChild(el(`<div class="muted">Todavía no hay jugadores.</div>`));
@@ -954,7 +1124,16 @@ function renderPlayersTab(){
     addBtn.onclick=()=>{
       const name = document.getElementById('np-name').value.trim();
       if(!name) return;
-      state.players.push({id:uid(), name});
+      const normalized = name.toLocaleLowerCase('es-ES');
+      const exists = state.players.some(p=> p.name.trim().toLocaleLowerCase('es-ES')===normalized);
+      if(exists){
+        alert('Ese jugador ya existe. No se permiten nombres duplicados.');
+        return;
+      }
+      const id = uid();
+      state.players.push({id, name, money:0});
+      if(!state.finance.lifetimeByPlayer) state.finance.lifetimeByPlayer = {};
+      state.finance.lifetimeByPlayer[id] = 0;
       log('Organizador', 'añadió a '+name+' al torneo.');
       saveAndRender();
     };
@@ -999,16 +1178,43 @@ function renderLeagueTab(){
   wrap.appendChild(card);
 
   if(tiedIds.length){
-    const tieCard = el(`<div class="card"><div class="banner warn">Hay un empate entre estos jugadores justo en la línea de clasificación: ${tiedIds.map(playerName).join(', ')}. Ya se comprobaron puntos, diferencia de goles, goles a favor y resultado directo — sigue empatado. Hace falta un sorteo.</div></div>`);
-    const btn = el(`<button class="danger">Hacer sorteo para desempatar</button>`);
-    btn.onclick=()=> resolveTieRandom(tiedIds);
-    tieCard.appendChild(btn);
-    wrap.appendChild(tieCard);
+    const tieCard = el(`<div class="card"><div class="banner warn">Hay un empate entre estos jugadores justo en la línea de clasificación: ${tiedIds.map(playerName).join(', ')}. Ya se comprobaron puntos, diferencia de goles, goles a favor y resultado directo.</div></div>`);
+
+    if(isThreePlayersThreeDrawsInvalid(tiedIds)){
+      tieCard.appendChild(el(`<div class="banner warn">Caso especial: 3 jugadores y todos los partidos terminaron en empate. Esta temporada se considera inválida y debe reiniciarse.</div>`));
+      const rb = el(`<button class="danger">Reiniciar temporada inválida</button>`);
+      rb.onclick=()=> restartInvalidLeagueSeason();
+      tieCard.appendChild(rb);
+      wrap.appendChild(tieCard);
+    } else {
+      const activeTb = state.leagueTieBreaker && sameIdSet(state.leagueTieBreaker.ids, tiedIds) ? state.leagueTieBreaker : null;
+      if(!activeTb){
+        tieCard.appendChild(el(`<div class="muted" style="margin-bottom:8px;">El sistema generará cruces aleatorios entre los empatados y avanzará por rondas de tandas de penaltis hasta dejar un único ganador.</div>`));
+        const btn = el(`<button class="danger">Generar cruces aleatorios de penaltis</button>`);
+        btn.onclick=()=> startLeagueTieBreaker(tiedIds);
+        tieCard.appendChild(btn);
+      } else {
+        tieCard.appendChild(el(`<div class="muted" style="margin-bottom:8px;">Desempate en curso · Ronda ${activeTb.round}${activeTb.bye?` · Descansa: ${playerName(activeTb.bye)}`:''}</div>`));
+        const list = el(`<div class="matchlist"></div>`);
+        activeTb.pairings.forEach(pair=>{
+          const scoreTxt = pair.pen1!==null ? `${pair.pen1}-${pair.pen2}` : 'pendiente';
+          const row = el(`<div class="match"><div class="vs"><span>${playerName(pair.p1)}</span><span>${scoreTxt}</span><span>${playerName(pair.p2)}</span></div><span class="tag ${pair.winner?'confirmed':'pending'}">${pair.winner?'resuelto':'pendiente'}</span></div>`);
+          if(!pair.winner){
+            const b = el(`<button class="small danger">Cargar tanda</button>`);
+            b.onclick=()=> openLeagueTiePairPenaltyModal(pair.id);
+            row.appendChild(b);
+          }
+          list.appendChild(row);
+        });
+        tieCard.appendChild(list);
+      }
+      wrap.appendChild(tieCard);
+    }
   }
 
   if(state.phase==='league'){
     const closeCard = el(`<div class="card"><h3>Calendario de la liguilla</h3></div>`);
-    closeCard.appendChild(el(`<div class="muted" style="margin-bottom:8px;">Antitrampas: un resultado queda en <b>pendiente</b> hasta que el rival lo reporte igual y se confirme.</div>`));
+    closeCard.appendChild(el(`<div class="muted" style="margin-bottom:8px;">Antitrampas: un resultado queda en <b>pendiente</b> hasta que el rival pulse <b>Aceptar</b> o <b>Rechazar</b>. Si rechaza, debe volver a reportarlo quien lo cargó primero.</div>`));
     const ml = el(`<div class="matchlist"></div>`);
     const byRound = {};
     state.leagueMatches.forEach(m=> (byRound[m.round]=byRound[m.round]||[]).push(m));
@@ -1055,7 +1261,8 @@ function renderMatchRow(m, decisive){
     <div class="vs"><span>${p1}</span><span>${scoreTxt}</span><span>${p2}</span></div>
     <span class="tag ${m.status}">${({empty:'sin jugar',pending:'pendiente',confirmed:'confirmado',dispute:'disputa'})[m.status]}</span>
   </div>`);
-  const btn = el(`<button class="small secondary">${m.status==='confirmed'?'Corregir':'Reportar'}</button>`);
+  const btnLabel = m.status==='confirmed' ? 'Corregir' : (m.status==='pending' ? 'Revisar' : 'Reportar');
+  const btn = el(`<button class="small secondary">${btnLabel}</button>`);
   btn.onclick=()=> openMatchModal(m, decisive, m.status==='confirmed');
   row.appendChild(btn);
   return row;
@@ -1075,7 +1282,8 @@ function ensureTieLeg(tie, idx){
       status: 'empty',
       reportedBy: null,
       confirmedBy: null,
-      dispute: null
+      dispute: null,
+      mustReReportBy: null
     };
   }
   tie[key].p1 = tie.p1;
@@ -1153,6 +1361,38 @@ function openAggregatePenaltyModal(tie){
   render();
 }
 
+function openLeagueTiePairPenaltyModal(pairingId){
+  const tb = state.leagueTieBreaker;
+  if(!tb) return;
+  const pair = tb.pairings.find(p=> p.id===pairingId);
+  if(!pair) return;
+
+  pendingModal = ()=>{
+    const bg = el(`<div class="modal-bg"><div class="modal">
+      <span class="close">✕</span>
+      <h3>Tanda de penaltis de desempate</h3>
+      <div class="muted" style="margin-bottom:8px;">Ronda ${tb.round}: ${playerName(pair.p1)} vs ${playerName(pair.p2)}</div>
+      <div class="row">
+        <div><label>Penaltis ${playerName(pair.p1)}</label><input type="number" id="lt-p1" min="0" value="${pair.pen1??''}"></div>
+        <div><label>Penaltis ${playerName(pair.p2)}</label><input type="number" id="lt-p2" min="0" value="${pair.pen2??''}"></div>
+      </div>
+      <div id="lt-err" class="muted" style="color:#ffb3ad;"></div>
+      <button id="lt-save" class="danger">Guardar tanda</button>
+    </div></div>`);
+    bg.querySelector('.close').onclick=()=>{pendingModal=null; render();};
+    bg.querySelector('#lt-save').onclick=()=>{
+      const p1 = parseInt(bg.querySelector('#lt-p1').value);
+      const p2 = parseInt(bg.querySelector('#lt-p2').value);
+      const err = submitLeagueTiePenalty(pairingId, p1, p2);
+      if(err){ bg.querySelector('#lt-err').textContent = err; return; }
+      pendingModal=null;
+      render();
+    };
+    return bg;
+  };
+  render();
+}
+
 function renderKnockoutTieRow(tie){
   const box = el(`<div class="card" style="padding:12px;"></div>`);
   const title = tie.legs===1
@@ -1197,7 +1437,7 @@ function openMatchModal(match, decisive, isAdminEdit){
     const modal = bg.querySelector('.modal');
     const form = (isAdminEdit || match.status==='dispute')
       ? renderAdminForm(match, decisive)
-      : renderPlayerForm(match, decisive);
+      : (match.status==='pending' ? renderPendingDecisionForm(match, decisive) : renderPlayerForm(match, decisive));
     modal.appendChild(form);
     bg.querySelector('.close').onclick=()=>{pendingModal=null; render();};
     return bg;
@@ -1231,6 +1471,45 @@ function renderPlayerForm(match, decisive){
     const err = reportResult(match, byId, s1, s2, pn1, pn2, decisive);
     if(err){ box.querySelector('#m-err').textContent=err; }
     else { pendingModal=null; render(); }
+  };
+  return box;
+}
+
+function renderPendingDecisionForm(match, decisive){
+  const reporterId = match.reportedBy;
+  const opponentDefault = state.myPlayerId && state.myPlayerId!==reporterId && (state.myPlayerId===match.p1||state.myPlayerId===match.p2)
+    ? state.myPlayerId
+    : (reporterId===match.p1 ? match.p2 : match.p1);
+  const scoreTxt = `${match.score1} - ${match.score2}` + (match.peno1!==null? ` (pen. ${match.peno1}-${match.peno2})` : '');
+
+  const box = el(`<div>
+    <div class="banner info">Resultado propuesto por <b>${playerName(reporterId)}</b>: <b>${scoreTxt}</b></div>
+    <label>¿Quién responde?</label>
+    <select id="m-decider">
+      <option value="${match.p1}" ${opponentDefault===match.p1?'selected':''}>${playerName(match.p1)}</option>
+      <option value="${match.p2}" ${opponentDefault===match.p2?'selected':''}>${playerName(match.p2)}</option>
+    </select>
+    <div id="m-derr" class="muted" style="color:#ffb3ad;margin-bottom:8px;"></div>
+    <div class="row">
+      <div><button id="m-accept" class="gold" type="button">Aceptar</button></div>
+      <div><button id="m-reject" class="danger" type="button">Rechazar</button></div>
+    </div>
+    <div class="muted" style="margin-top:8px;">Si rechazas, quien reportó inicialmente deberá volver a cargar el resultado.</div>
+  </div>`);
+
+  box.querySelector('#m-accept').onclick=()=>{
+    const byId = box.querySelector('#m-decider').value;
+    const err = acceptReportedResult(match, byId, decisive);
+    if(err){ box.querySelector('#m-derr').textContent = err; return; }
+    pendingModal=null;
+    render();
+  };
+  box.querySelector('#m-reject').onclick=()=>{
+    const byId = box.querySelector('#m-decider').value;
+    const err = rejectReportedResult(match, byId);
+    if(err){ box.querySelector('#m-derr').textContent = err; return; }
+    pendingModal=null;
+    render();
   };
   return box;
 }
@@ -1344,21 +1623,75 @@ function museumCupSvg(){
   </svg>`;
 }
 
+function getGoalStatsByPlayerId(){
+  const stats = {};
+  state.players.forEach(p=> stats[p.id]={gf:0,gc:0,dg:0});
+
+  state.leagueMatches.forEach(m=>{
+    if(m.status!=='confirmed' || m.score1===null || m.score2===null) return;
+    stats[m.p1] = stats[m.p1]||{gf:0,gc:0,dg:0};
+    stats[m.p2] = stats[m.p2]||{gf:0,gc:0,dg:0};
+    stats[m.p1].gf += m.score1; stats[m.p1].gc += m.score2;
+    stats[m.p2].gf += m.score2; stats[m.p2].gc += m.score1;
+  });
+
+  state.playoffMatches.forEach(m=>{
+    if(m.status!=='confirmed' || m.score1===null || m.score2===null) return;
+    stats[m.p1] = stats[m.p1]||{gf:0,gc:0,dg:0};
+    stats[m.p2] = stats[m.p2]||{gf:0,gc:0,dg:0};
+    stats[m.p1].gf += m.score1; stats[m.p1].gc += m.score2;
+    stats[m.p2].gf += m.score2; stats[m.p2].gc += m.score1;
+  });
+
+  if(state.bracket?.rounds){
+    state.bracket.rounds.forEach(round=>{
+      round.forEach(tie=>{
+        if(tie.legs===2){
+          const l1 = tie.leg1;
+          const l2 = tie.leg2;
+          if(l1 && l1.status==='confirmed' && l1.score1!==null && l1.score2!==null){
+            stats[l1.p1] = stats[l1.p1]||{gf:0,gc:0,dg:0};
+            stats[l1.p2] = stats[l1.p2]||{gf:0,gc:0,dg:0};
+            stats[l1.p1].gf += l1.score1; stats[l1.p1].gc += l1.score2;
+            stats[l1.p2].gf += l1.score2; stats[l1.p2].gc += l1.score1;
+          }
+          if(l2 && l2.status==='confirmed' && l2.score1!==null && l2.score2!==null){
+            stats[l2.p1] = stats[l2.p1]||{gf:0,gc:0,dg:0};
+            stats[l2.p2] = stats[l2.p2]||{gf:0,gc:0,dg:0};
+            stats[l2.p1].gf += l2.score1; stats[l2.p1].gc += l2.score2;
+            stats[l2.p2].gf += l2.score2; stats[l2.p2].gc += l2.score1;
+          }
+        } else if(tie.status==='confirmed' && tie.score1!==null && tie.score2!==null){
+          stats[tie.p1] = stats[tie.p1]||{gf:0,gc:0,dg:0};
+          stats[tie.p2] = stats[tie.p2]||{gf:0,gc:0,dg:0};
+          stats[tie.p1].gf += tie.score1; stats[tie.p1].gc += tie.score2;
+          stats[tie.p2].gf += tie.score2; stats[tie.p2].gc += tie.score1;
+        }
+      });
+    });
+  }
+
+  Object.keys(stats).forEach(id=>{ stats[id].dg = stats[id].gf - stats[id].gc; });
+  return stats;
+}
+
 function getMuseumRows(){
   const rowsByName = {};
+  const goalStatsById = getGoalStatsByPlayerId();
   state.players.forEach(p=>{
-    rowsByName[p.name] = {name:p.name, titles:0, seasons:[]};
+    const totalMoney = state.finance?.lifetimeByPlayer?.[p.id] ?? p.money ?? 0;
+    rowsByName[p.name] = {name:p.name, titles:0, seasons:[], money: totalMoney, goalDiff: goalStatsById[p.id]?.dg||0};
   });
 
   state.pastChampions.forEach(pc=>{
-    if(!rowsByName[pc.champion]) rowsByName[pc.champion] = {name:pc.champion, titles:0, seasons:[]};
+    if(!rowsByName[pc.champion]) rowsByName[pc.champion] = {name:pc.champion, titles:0, seasons:[], money:0, goalDiff:0};
     rowsByName[pc.champion].titles++;
     rowsByName[pc.champion].seasons.push(pc.season+' · '+seasonDateText(pc.kickoff));
   });
 
   if(state.phase==='finished' && state.champion){
     const currentChampion = playerName(state.champion);
-    if(!rowsByName[currentChampion]) rowsByName[currentChampion] = {name:currentChampion, titles:0, seasons:[]};
+    if(!rowsByName[currentChampion]) rowsByName[currentChampion] = {name:currentChampion, titles:0, seasons:[], money:0, goalDiff:0};
     const alreadyCounted = rowsByName[currentChampion].seasons.includes(state.season);
     if(!alreadyCounted){
       rowsByName[currentChampion].titles++;
@@ -1368,6 +1701,8 @@ function getMuseumRows(){
 
   return Object.values(rowsByName).sort((a,b)=>{
     if(b.titles!==a.titles) return b.titles-a.titles;
+    if(b.money!==a.money) return b.money-a.money;
+    if(b.goalDiff!==a.goalDiff) return b.goalDiff-a.goalDiff;
     return a.name.localeCompare(b.name,'es');
   });
 }
@@ -1388,12 +1723,14 @@ function renderMuseumTab(){
   wrap.appendChild(el(`<div class="banner gold">Copas totales registradas: <b>${totalTitles}</b></div>`));
 
   const grid = el(`<div class="museum-grid"></div>`);
-  rows.forEach(r=>{
+  rows.forEach((r,idx)=>{
     const card = el(`<div class="museum-card">
       <div class="museum-head">
-        <div class="museum-name">${r.name}</div>
+        <div class="museum-name">#${idx+1} · ${r.name}</div>
         <span class="museum-count">${r.titles} copa${r.titles===1?'':'s'}</span>
       </div>
+      <div class="muted" style="margin-bottom:8px;">Dinero histórico total: <b>${fmtMoney(r.money||0)}</b></div>
+      <div class="muted" style="margin-bottom:8px;">Diferencia de goles (GF-GC): <b>${(r.goalDiff||0)>0?'+':''}${r.goalDiff||0}</b></div>
       <div class="cup-shelf"></div>
       <div class="museum-seasons"></div>
     </div>`);
