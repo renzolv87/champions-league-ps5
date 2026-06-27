@@ -189,6 +189,12 @@ function dayStr(){ return new Date().toLocaleDateString('es-ES'); }
 function seasonDateText(dateValue){ return dateValue ? `${FUN_DATE_LABEL}: ${dateValue}` : `${FUN_DATE_LABEL}: —`; }
 function normalizePlayerName(name){ return (name||'').trim().toLocaleLowerCase('es-ES'); }
 function wait(ms){ return new Promise(resolve=> setTimeout(resolve, ms)); }
+function isEditingField(){
+  const ae = document.activeElement;
+  if(!ae) return false;
+  const tag = ae.tagName;
+  return tag==='INPUT' || tag==='TEXTAREA' || tag==='SELECT' || ae.isContentEditable;
+}
 function getMasterResetPassword(){
   try{ return localStorage.getItem(MASTER_RESET_PASSWORD_KEY) || ''; }
   catch(_err){ return ''; }
@@ -359,7 +365,7 @@ function loadState(){
   pullRemoteState();
   if(pullTimer) clearInterval(pullTimer);
   pullTimer = setInterval(()=>{
-    if(pendingModal) return;
+    if(pendingModal || isEditingField()) return;
     pullRemoteState();
     processKnockoutDrawClock();
   }, 4000);
@@ -375,13 +381,15 @@ function log(actor, action){
 
 async function pullRemoteState(opts = {}){
   const touchOnNoChange = !!opts.touchOnNoChange;
-  if(pendingModal) return;
+  if(pendingModal || isEditingField()) return;
   const remote = await readRemoteSnapshot();
   if(!remote.ok){
     if(state?.sync){
+      const prevMode = state.sync.mode;
+      const prevError = state.sync.lastError;
       state.sync.mode = 'local';
       state.sync.lastError = remote.error || 'Sin conexión remota';
-      render();
+      if(prevMode!==state.sync.mode || prevError!==state.sync.lastError) render();
     }
     return;
   }
