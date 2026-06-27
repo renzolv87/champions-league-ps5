@@ -540,6 +540,7 @@ async function addPlayerShared(name){
     }
     if(!saved.ok){
       state = migrateStateShape(nextState);
+      state.myPlayerId = id;
       state.sync.mode = 'local';
       state.sync.lastError = 'Guardado local temporal. Se sincronizará cuando vuelva la conexión remota.';
       localStorage.setItem(STATE_KEY, JSON.stringify(state));
@@ -549,6 +550,7 @@ async function addPlayerShared(name){
     }
 
     state = migrateStateShape(nextState);
+  state.myPlayerId = id;
     remoteEtag = typeof saved.etag==='number' ? saved.etag : etag;
     state.sync.mode = 'remoto';
     state.sync.lastRemoteAt = nowStr();
@@ -1479,11 +1481,16 @@ function renderPlayersTab(){
     wrap.appendChild(el(`<div class="muted">La plantilla no se puede editar mientras el torneo está en marcha.</div>`));
   }
 
-  const whoCard = el(`<div class="card"><h3>Jugador activo en este dispositivo</h3><div class="muted" style="margin-bottom:8px;">Este selector define quién está reportando o aceptando resultados desde esta pantalla.</div><select id="who-am-i"><option value="">Selecciona jugador</option></select></div>`);
-  const sel = whoCard.querySelector('#who-am-i');
-  state.players.forEach(p=> sel.appendChild(el(`<option value="${p.id}" ${state.myPlayerId===p.id?'selected':''}>${p.name}</option>`)));
-  sel.onchange=()=>{ state.myPlayerId = sel.value || null; saveAndRender(); };
-  wrap.appendChild(whoCard);
+  const activePlayer = state.players.find(p=> p.id===state.myPlayerId) || null;
+  if(activePlayer){
+    wrap.appendChild(el(`<div class="card"><h3>Jugador activo en este dispositivo</h3><div class="muted">Este dispositivo está vinculado automáticamente a <b>${activePlayer.name}</b>.</div></div>`));
+  } else {
+    const whoCard = el(`<div class="card"><h3>Jugador activo en este dispositivo</h3><div class="muted" style="margin-bottom:8px;">Selecciona tu jugador una sola vez en este dispositivo.</div><select id="who-am-i"><option value="">Selecciona jugador</option></select></div>`);
+    const sel = whoCard.querySelector('#who-am-i');
+    state.players.forEach(p=> sel.appendChild(el(`<option value="${p.id}">${p.name}</option>`)));
+    sel.onchange=()=>{ state.myPlayerId = sel.value || null; saveAndRender(); };
+    wrap.appendChild(whoCard);
+  }
   return wrap;
 }
 
