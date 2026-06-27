@@ -1794,20 +1794,23 @@ function renderPlayersTab(){
       if(err){ alert(err); return; }
     };
     wrap.appendChild(addBtn);
-    const startBtn = el(`<button class="gold" style="margin-left:8px;" ${state.players.length<2?'disabled':''}>Iniciar liguilla / torneo</button>`);
-    startBtn.onclick=()=>{
-      const n = state.players.length;
-      state.config.matchesPerPlayer = autoMatchesPerPlayer(n);
-      state.config.numQualifiers = effectiveNumQualifiers();
-      const err = startLeague();
-      if(err) alert(err);
-    };
-    wrap.appendChild(startBtn);
-    if(state.players.length<2){
-      wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">Añade al menos 2 jugadores para iniciar la liguilla.</div>`));
-    }
-  } else {
-    wrap.appendChild(el(`<div class="muted">La plantilla no se puede editar mientras el torneo está en marcha.</div>`));
+  }
+
+  const canStartLeague = !locked && state.players.length>=2;
+  const startBtn = el(`<button class="gold" style="margin-left:8px;" ${canStartLeague?'':'disabled'}>Iniciar liguilla / torneo</button>`);
+  startBtn.onclick=()=>{
+    const n = state.players.length;
+    state.config.matchesPerPlayer = autoMatchesPerPlayer(n);
+    state.config.numQualifiers = effectiveNumQualifiers();
+    const err = startLeague();
+    if(err) alert(err);
+  };
+  wrap.appendChild(startBtn);
+
+  if(locked){
+    wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">La temporada ya está en curso. Este botón se habilita cuando la fase vuelva a configuración.</div>`));
+  } else if(state.players.length<2){
+    wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">Añade al menos 2 jugadores para iniciar la liguilla.</div>`));
   }
 
   return wrap;
