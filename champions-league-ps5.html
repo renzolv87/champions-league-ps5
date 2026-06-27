@@ -1375,21 +1375,18 @@ function newSeason(){
 }
 
 function restartCurrentSeason(){
-  const keepPlayers = (state.players || []).map(p=> ({ id:p.id, name:p.name, money:0 }));
-  const keepMyPlayerId = state.myPlayerId;
   const keepSync = state.sync || defaultState().sync;
   const keepPastChampions = Array.isArray(state.pastChampions) ? [...state.pastChampions] : [];
   const keepSeason = state.season || (GAME_NAME+' - T1');
 
   state = defaultState();
   state.season = keepSeason;
-  state.players = keepPlayers;
-  state.myPlayerId = keepPlayers.some(p=>p.id===keepMyPlayerId) ? keepMyPlayerId : null;
+  state.players = [];
+  state.myPlayerId = null;
   state.pastChampions = keepPastChampions;
   state.sync = keepSync;
   state.finance.lifetimeByPlayer = {};
-  keepPlayers.forEach(p=>{ state.finance.lifetimeByPlayer[p.id] = 0; });
-  state.history.unshift({ts:nowStr(), actor:'Organizador', action:'reinició la temporada actual (manteniendo jugadores).'});
+  state.history.unshift({ts:nowStr(), actor:'Organizador', action:'reinició la temporada actual y borró todos los jugadores.'});
   saveAndRender();
 }
 
@@ -2358,7 +2355,7 @@ function renderHistoryTab(){
       const bg = el(`<div class="modal-bg"><div class="modal">
         <span class="close">✕</span>
         <h3>Reiniciar temporada actual</h3>
-        <div class="muted" style="margin-bottom:10px;">Se borrará el progreso de la temporada actual (partidos, cuadro, campeón y dinero de temporada), pero se mantienen los jugadores.</div>
+        <div class="muted" style="margin-bottom:10px;">Se borrará todo de la temporada actual, incluyendo jugadores, partidos, cuadro, campeón y dinero.</div>
         <div class="muted" style="margin-bottom:10px;">Introduce la contraseña para reiniciar esta temporada.</div>
         <label>Contraseña</label>
         <input type="password" id="rs-p1" autocomplete="off">
