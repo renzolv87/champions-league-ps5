@@ -231,6 +231,30 @@ function supabaseApi(path){
   return SUPABASE_URL.replace(/\/+$/,'') + '/rest/v1/' + path;
 }
 
+function stateForRemote(s){
+  const clone = JSON.parse(JSON.stringify(s || {}));
+  delete clone.myPlayerId;
+  return clone;
+}
+
+function preserveLocalMyPlayer(prevState, nextState){
+  const localId = prevState?.myPlayerId || null;
+  if(!localId) return nextState;
+  if(Array.isArray(nextState?.players) && nextState.players.some(p=> p.id===localId)){
+    nextState.myPlayerId = localId;
+  }
+  return nextState;
+}
+
+function bindLocalPlayerId(playerId){
+  if(!playerId) return;
+  if(!state || !Array.isArray(state.players)) return;
+  if(!state.players.some(p=> p.id===playerId)) return;
+  state.myPlayerId = playerId;
+  try{ localStorage.setItem(STATE_KEY, JSON.stringify(state)); }
+  catch(_err){}
+}
+
 async function readRemoteSnapshot(){
   const url = supabaseApi(`${SUPABASE_TABLE}?id=eq.${encodeURIComponent(SUPABASE_ROW_ID)}&select=id,state,version,updated_at&limit=1`);
   try{
@@ -391,6 +415,7 @@ function log(actor, action){
 async function pullRemoteState(opts = {}){
   const touchOnNoChange = !!opts.touchOnNoChange;
   if(pendingModal || isEditingField()) return;
+  const prevLocal = state;
   const remote = await readRemoteSnapshot();
   if(!remote.ok){
     if(state?.sync){
@@ -413,6 +438,7 @@ async function pullRemoteState(opts = {}){
   }
   if(remoteEtag===null || remoteEtag!==remote.etag){
     state = migrateStateShape(remote.state);
+    state = preserveLocalMyPlayer(prevLocal, state);
     remoteEtag = remote.etag;
     if(!state.sync) state.sync = defaultState().sync;
     state.sync.mode = 'remoto';
@@ -442,10 +468,12 @@ async function pushRemoteState(){
   }
   pushInFlight = true;
   try{
-    const remote = await writeRemoteSnapshot(state, remoteEtag);
+    const remote = await writeRemoteSnapshot(stateForRemote(state), remoteEtag);
     if(remote.status===409){
       if(remote?.state){
+        const prevLocal = state;
         state = migrateStateShape(remote.state);
+        state = preserveLocalMyPlayer(prevLocal, state);
         remoteEtag = remote.etag ?? null;
         state.sync.mode = 'remoto';
         state.sync.lastRemoteAt = nowStr();
@@ -542,7 +570,7 @@ async function addPlayerShared(name){
     nextState.history = nextState.history || [];
     nextState.history.unshift({ts: nowStr(), actor:'Organizador', action:'añadió a '+clean+' al torneo.'});
 
-    const saved = await writeRemoteSnapshot(nextState, etag);
+    const saved = await writeRemoteSnapshot(stateForRemote(nextState), etag);
     if(saved.status===409){
       await wait(80 + Math.floor(Math.random()*120));
       continue;
@@ -1874,13 +1902,16 @@ function openMatchModal(match, decisive, isAdminEdit){
 }
 
 function renderPlayerForm(match, decisive){
-  const defaultWho = (state.myPlayerId===match.p1 || state.myPlayerId===match.p2) ? state.myPlayerId : match.p1;
+  const autoWho = (state.myPlayerId===match.p1 || state.myPlayerId===match.p2) ? state.myPlayerId : null;
+  const defaultWho = autoWho || match.p1;
   const box = el(`<div>
-    <label>¿Quién reporta el resultado?</label>
+    ${autoWho
+      ? `<div class="muted" style="margin-bottom:8px;">Reportando automáticamente como <b>${playerName(autoWho)}</b>.</div><input type="hidden" id="m-who" value="${autoWho}">`
+      : `<label>¿Quién reporta el resultado?</label>
     <select id="m-who">
       <option value="${match.p1}" ${defaultWho===match.p1?'selected':''}>${playerName(match.p1)}</option>
       <option value="${match.p2}" ${defaultWho===match.p2?'selected':''}>${playerName(match.p2)}</option>
-    </select>
+    </select>`}
     <div class="row">
       <div><label>Goles ${playerName(match.p1)}</label><input type="number" id="m-s1" min="0" value="${match.score1??''}"></div>
       <div><label>Goles ${playerName(match.p2)}</label><input type="number" id="m-s2" min="0" value="${match.score2??''}"></div>
@@ -1891,6 +1922,7 @@ function renderPlayerForm(match, decisive){
   </div>`);
   box.querySelector('#m-submit').onclick=()=>{
     const byId = box.querySelector('#m-who').value;
+    bindLocalPlayerId(byId);
     const s1 = parseInt(box.querySelector('#m-s1').value);
     const s2 = parseInt(box.querySelector('#m-s2').value);
     const pn1 = decisive? (box.querySelector('#m-pn1').value===''? null: parseInt(box.querySelector('#m-pn1').value)) : null;
@@ -1905,18 +1937,23 @@ function renderPlayerForm(match, decisive){
 
 function renderPendingDecisionForm(match, decisive){
   const reporterId = match.reportedBy;
-  const opponentDefault = state.myPlayerId && state.myPlayerId!==reporterId && (state.myPlayerId===match.p1||state.myPlayerId===match.p2)
+  const autoDecider = state.myPlayerId && state.myPlayerId!==reporterId && (state.myPlayerId===match.p1||state.myPlayerId===match.p2)
+    ? state.myPlayerId
+    : null;
+  const opponentDefault = autoDecider
     ? state.myPlayerId
     : (reporterId===match.p1 ? match.p2 : match.p1);
   const scoreTxt = `${match.score1} - ${match.score2}` + (match.peno1!==null? ` (pen. ${match.peno1}-${match.peno2})` : '');
 
   const box = el(`<div>
     <div class="banner info">Resultado propuesto por <b>${playerName(reporterId)}</b>: <b>${scoreTxt}</b></div>
-    <label>¿Quién responde?</label>
+    ${autoDecider
+      ? `<div class="muted" style="margin-bottom:8px;">Respondiendo automáticamente como <b>${playerName(autoDecider)}</b>.</div><input type="hidden" id="m-decider" value="${autoDecider}">`
+      : `<label>¿Quién responde?</label>
     <select id="m-decider">
       <option value="${match.p1}" ${opponentDefault===match.p1?'selected':''}>${playerName(match.p1)}</option>
       <option value="${match.p2}" ${opponentDefault===match.p2?'selected':''}>${playerName(match.p2)}</option>
-    </select>
+    </select>`}
     <div id="m-derr" class="muted" style="color:#ffb3ad;margin-bottom:8px;"></div>
     <div class="row">
       <div><button id="m-accept" class="gold" type="button">Aceptar</button></div>
@@ -1927,6 +1964,7 @@ function renderPendingDecisionForm(match, decisive){
 
   box.querySelector('#m-accept').onclick=()=>{
     const byId = box.querySelector('#m-decider').value;
+    bindLocalPlayerId(byId);
     const err = acceptReportedResult(match, byId, decisive);
     if(err){ box.querySelector('#m-derr').textContent = err; return; }
     pendingModal=null;
@@ -1934,6 +1972,7 @@ function renderPendingDecisionForm(match, decisive){
   };
   box.querySelector('#m-reject').onclick=()=>{
     const byId = box.querySelector('#m-decider').value;
+    bindLocalPlayerId(byId);
     const err = rejectReportedResult(match, byId);
     if(err){ box.querySelector('#m-derr').textContent = err; return; }
     pendingModal=null;
