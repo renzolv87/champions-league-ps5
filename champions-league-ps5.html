@@ -467,12 +467,35 @@ async function pushRemoteState(){
 }
 
 function migrateStateShape(s){
+  if(!s || typeof s!=='object') s = {};
+  const base = defaultState();
+  if(!s.season || typeof s.season!=='string') s.season = base.season;
+  if(!s.phase || typeof s.phase!=='string') s.phase = base.phase;
+  if(!s.config || typeof s.config!=='object') s.config = {...base.config};
+  if(typeof s.config.matchesPerPlayer!=='number') s.config.matchesPerPlayer = base.config.matchesPerPlayer;
+  if(typeof s.config.numQualifiers!=='number') s.config.numQualifiers = base.config.numQualifiers;
+  if(!Array.isArray(s.players)) s.players = [];
+  if(!Array.isArray(s.leagueMatches)) s.leagueMatches = [];
+  if(!Array.isArray(s.playoffMatches)) s.playoffMatches = [];
+  if(!Array.isArray(s.pastChampions)) s.pastChampions = [];
+  if(!Array.isArray(s.history)) s.history = [];
+  if(!s.tieResolution || typeof s.tieResolution!=='object') s.tieResolution = {};
+  if(!s.bets || typeof s.bets!=='object') s.bets = {...base.bets};
+  if(!Array.isArray(s.bets.tickets)) s.bets.tickets = [];
+  if(typeof s.bets.maxStakePct!=='number') s.bets.maxStakePct = base.bets.maxStakePct;
+  if(typeof s.bets.championMoneyCap!=='number' || s.bets.championMoneyCap<=0) s.bets.championMoneyCap = base.bets.championMoneyCap;
   if(!s.finance) s.finance = defaultState().finance;
   if(!s.finance.lifetimeByPlayer) s.finance.lifetimeByPlayer = {};
   if(!s.sync) s.sync = defaultState().sync;
-  if(!s.bets) s.bets = defaultState().bets;
-  if(!Array.isArray(s.players)) s.players = [];
+  if(!s.seasonKickoff) s.seasonKickoff = null;
+  if(typeof s.myPlayerId==='undefined') s.myPlayerId = null;
+  if(typeof s.champion==='undefined') s.champion = null;
+  if(typeof s.qualifiers==='undefined') s.qualifiers = null;
+  if(typeof s.leagueTieBreaker==='undefined') s.leagueTieBreaker = null;
+  if(typeof s.knockoutDraw==='undefined') s.knockoutDraw = null;
+  if(typeof s.bracket==='undefined') s.bracket = null;
   s.players.forEach(p=>{
+    if(!p.id) p.id = uid();
     p.name = normalizePlayerName(p.name);
     if(typeof p.money!=='number') p.money = 0;
     if(typeof s.finance.lifetimeByPlayer[p.id] !== 'number') s.finance.lifetimeByPlayer[p.id] = p.money;
