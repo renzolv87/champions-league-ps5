@@ -280,13 +280,29 @@ function log(actor, action){
   state.history.unshift({ts: nowStr(), actor, action});
 }
 
-async function pullRemoteState(){
+async function pullRemoteState(opts = {}){
+  const touchOnNoChange = !!opts.touchOnNoChange;
   if(pendingModal) return;
   try{
     const res = await fetch(REMOTE_ENDPOINT, { cache:'no-store' });
-    if(!res.ok) return;
+    if(!res.ok){
+      if(state?.sync){
+        state.sync.mode = 'local';
+        state.sync.lastError = 'Error remoto ('+res.status+').';
+        render();
+      }
+      return;
+    }
     const data = await res.json();
-    if(!data || !data.state) return;
+    if(!data || !data.state){
+      if(state?.sync && touchOnNoChange){
+        state.sync.mode = 'remoto';
+        state.sync.lastRemoteAt = nowStr();
+        state.sync.lastError = 'Sin estado remoto todavía.';
+        render();
+      }
+      return;
+    }
     if(!remoteEtag || remoteEtag!==data.etag){
       state = migrateStateShape(data.state);
       remoteEtag = data.etag;
@@ -294,6 +310,13 @@ async function pullRemoteState(){
       state.sync.mode = 'remoto';
       state.sync.lastRemoteAt = nowStr();
       state.sync.lastError = null;
+      localStorage.setItem(STATE_KEY, JSON.stringify(state));
+      render();
+    } else if(touchOnNoChange){
+      if(!state.sync) state.sync = defaultState().sync;
+      state.sync.mode = 'remoto';
+      state.sync.lastRemoteAt = nowStr();
+      state.sync.lastError = 'Sin cambios (ya estabas al día).';
       localStorage.setItem(STATE_KEY, JSON.stringify(state));
       render();
     }
@@ -1329,7 +1352,14 @@ function renderPlayersTab(){
     const syncInfo = el(`<div class="muted" style="margin-bottom:8px;">Sync remoto: ${state.sync?.mode==='remoto'?'OK':'desconectado'}${state.sync?.lastRemoteAt?` · Última: ${state.sync.lastRemoteAt}`:''}</div>`);
     wrap.appendChild(syncInfo);
     const syncBtn = el(`<button class="secondary small" style="margin-bottom:8px;">Sincronizar ahora</button>`);
-    syncBtn.onclick=()=> pullRemoteState();
+    syncBtn.onclick=async ()=>{
+      syncBtn.disabled = true;
+      const original = syncBtn.textContent;
+      syncBtn.textContent = 'Sincronizando...';
+      await pullRemoteState({ touchOnNoChange:true });
+      syncBtn.textContent = original;
+      syncBtn.disabled = false;
+    };
     wrap.appendChild(syncBtn);
     const addBtn = el(`<button>Añadir jugador</button>`);
     addBtn.onclick=async ()=>{
