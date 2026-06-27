@@ -168,6 +168,7 @@ tr.tied td{outline:1px dashed var(--bad);outline-offset:-1px;}
 /* ---------------- STORAGE ---------------- */
 const STATE_KEY = 'cl-ps5-tournament-state';
 const REMOTE_ENDPOINT = '/.netlify/functions/tournament-state';
+const REMOTE_ENDPOINT_ALT = '/netlify/functions/tournament-state';
 const GAME_NAME = 'Champions League PS5';
 const FUN_DATE_LABEL = 'Dia del Bombazo';
 const MASTER_RESET_PASSWORD = '9wV$3nQ!m7Z@pL2#xT8^kR5&cH1*Bf6=Jd4?Ys0';
@@ -179,6 +180,7 @@ let pullTimer = null;
 let pushTimer = null;
 let pushInFlight = false;
 let pushQueued = false;
+let remoteEndpointInUse = REMOTE_ENDPOINT;
 
 function uid(){ return Math.random().toString(36).slice(2,10); }
 function nowStr(){ const d=new Date(); return d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); }
@@ -186,6 +188,30 @@ function dayStr(){ return new Date().toLocaleDateString('es-ES'); }
 function seasonDateText(dateValue){ return dateValue ? `${FUN_DATE_LABEL}: ${dateValue}` : `${FUN_DATE_LABEL}: —`; }
 function normalizePlayerName(name){ return (name||'').trim().toLocaleLowerCase('es-ES'); }
 function wait(ms){ return new Promise(resolve=> setTimeout(resolve, ms)); }
+
+function uniqueRemoteEndpoints(){
+  return Array.from(new Set([remoteEndpointInUse, REMOTE_ENDPOINT, REMOTE_ENDPOINT_ALT]));
+}
+
+async function fetchRemoteWithFallback(path, opts){
+  const endpoints = uniqueRemoteEndpoints();
+  let lastRes = null;
+  let lastErr = null;
+  for(const base of endpoints){
+    try{
+      const res = await fetch(base + path, opts);
+      if(res.ok || res.status===409){
+        remoteEndpointInUse = base;
+        return { res, endpoint: base };
+      }
+      lastRes = res;
+    }catch(err){
+      lastErr = err;
+    }
+  }
+  if(lastRes) return { res: lastRes, endpoint: null };
+  throw lastErr || new Error('No se pudo conectar al endpoint remoto');
+}
 
 function defaultState(){
   return {
@@ -284,7 +310,8 @@ async function pullRemoteState(opts = {}){
   const touchOnNoChange = !!opts.touchOnNoChange;
   if(pendingModal) return;
   try{
-    const res = await fetch(REMOTE_ENDPOINT, { cache:'no-store' });
+    const req = await fetchRemoteWithFallback('', { cache:'no-store' });
+    const res = req.res;
     if(!res.ok){
       if(state?.sync){
         state.sync.mode = 'local';
@@ -341,11 +368,12 @@ async function pushRemoteState(){
   }
   pushInFlight = true;
   try{
-    const res = await fetch(REMOTE_ENDPOINT, {
+    const req = await fetchRemoteWithFallback('', {
       method:'PUT',
       headers:{'content-type':'application/json'},
       body: JSON.stringify({ state, etag: remoteEtag })
     });
+    const res = req.res;
     const data = await res.json();
     if(res.status===409){
       if(data?.state){
@@ -400,7 +428,8 @@ async function addPlayerShared(name){
     let remoteState = null;
     let etag = null;
     try{
-      const getRes = await fetch(REMOTE_ENDPOINT, { cache:'no-store' });
+      const req = await fetchRemoteWithFallback('', { cache:'no-store' });
+      const getRes = req.res;
       if(!getRes.ok){
         state.sync.mode = 'local';
         state.sync.lastError = 'No se pudo leer el servidor compartido.';
@@ -428,11 +457,12 @@ async function addPlayerShared(name){
     nextState.history.unshift({ts: nowStr(), actor:'Organizador', action:'añadió a '+clean+' al torneo.'});
 
     try{
-      const putRes = await fetch(REMOTE_ENDPOINT, {
+      const putReq = await fetchRemoteWithFallback('', {
         method:'PUT',
         headers:{'content-type':'application/json'},
         body: JSON.stringify({ state: nextState, etag })
       });
+      const putRes = putReq.res;
       const putData = await putRes.json();
       if(putRes.status===409){
         await wait(80 + Math.floor(Math.random()*120));
@@ -1346,7 +1376,7 @@ function renderPlayersTab(){
 
   if(!locked){
     const addRow = el(`<div class="row" style="margin-top:14px;">
-      <div><label>Nombre</label><input id="np-name" placeholder="Ej: Marcos"></div>
+      <div><label>Nombre</label><input id="np-name" placeholder="Ej: Renzo"></div>
     </div>`);
     wrap.appendChild(addRow);
     const syncInfo = el(`<div class="muted" style="margin-bottom:8px;">Sync remoto: ${state.sync?.mode==='remoto'?'OK':'desconectado'}${state.sync?.lastRemoteAt?` · Última: ${state.sync.lastRemoteAt}`:''}</div>`);
