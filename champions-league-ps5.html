@@ -184,6 +184,7 @@ function uid(){ return Math.random().toString(36).slice(2,10); }
 function nowStr(){ const d=new Date(); return d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); }
 function dayStr(){ return new Date().toLocaleDateString('es-ES'); }
 function seasonDateText(dateValue){ return dateValue ? `${FUN_DATE_LABEL}: ${dateValue}` : `${FUN_DATE_LABEL}: —`; }
+function normalizePlayerName(name){ return (name||'').trim().toLocaleLowerCase('es-ES'); }
 
 function defaultState(){
   return {
@@ -351,6 +352,74 @@ async function pushRemoteState(){
       pushRemoteState();
     }
   }
+}
+
+function migrateStateShape(s){
+  if(!s.finance) s.finance = defaultState().finance;
+  if(!s.finance.lifetimeByPlayer) s.finance.lifetimeByPlayer = {};
+  if(!s.sync) s.sync = defaultState().sync;
+  if(!s.bets) s.bets = defaultState().bets;
+  if(!Array.isArray(s.players)) s.players = [];
+  s.players.forEach(p=>{
+    if(typeof p.money!=='number') p.money = 0;
+    if(typeof s.finance.lifetimeByPlayer[p.id] !== 'number') s.finance.lifetimeByPlayer[p.id] = p.money;
+  });
+  return s;
+}
+
+async function addPlayerShared(name){
+  const clean = name.trim();
+  if(!clean) return 'Nombre inválido.';
+
+  for(let attempt=0; attempt<4; attempt++){
+    let remoteState = null;
+    let etag = null;
+    try{
+      const getRes = await fetch(REMOTE_ENDPOINT, { cache:'no-store' });
+      if(getRes.ok){
+        const data = await getRes.json();
+        remoteState = data?.state || null;
+        etag = data?.etag || null;
+      }
+    }catch(_err){
+      // Si falla la red, caemos a estado local.
+    }
+
+    const nextState = migrateStateShape(remoteState ? JSON.parse(JSON.stringify(remoteState)) : JSON.parse(JSON.stringify(state || defaultState())));
+    const exists = nextState.players.some(p=> normalizePlayerName(p.name)===normalizePlayerName(clean));
+    if(exists) return 'Ese jugador ya existe. No se permiten nombres duplicados.';
+
+    const id = uid();
+    nextState.players.push({id, name:clean, money:0});
+    nextState.finance.lifetimeByPlayer[id] = 0;
+    nextState.history = nextState.history || [];
+    nextState.history.unshift({ts: nowStr(), actor:'Organizador', action:'añadió a '+clean+' al torneo.'});
+
+    try{
+      const putRes = await fetch(REMOTE_ENDPOINT, {
+        method:'PUT',
+        headers:{'content-type':'application/json'},
+        body: JSON.stringify({ state: nextState, etag })
+      });
+      const putData = await putRes.json();
+      if(putRes.status===409){
+        continue;
+      }
+      if(!putRes.ok) return 'No se pudo guardar en remoto. Revisa conexión e inténtalo de nuevo.';
+
+      state = migrateStateShape(nextState);
+      remoteEtag = putData?.etag || etag || remoteEtag;
+      state.sync.mode = 'remoto';
+      state.sync.lastRemoteAt = nowStr();
+      state.sync.lastError = null;
+      localStorage.setItem(STATE_KEY, JSON.stringify(state));
+      render();
+      return null;
+    }catch(_err){
+      return 'Error de red al guardar. Inténtalo de nuevo.';
+    }
+  }
+  return 'Hubo cambios simultáneos en otros dispositivos. Vuelve a intentarlo.';
 }
 
 /* ---------------- ROUND ROBIN ---------------- */
@@ -1247,21 +1316,11 @@ function renderPlayersTab(){
     </div>`);
     wrap.appendChild(addRow);
     const addBtn = el(`<button>Añadir jugador</button>`);
-    addBtn.onclick=()=>{
+    addBtn.onclick=async ()=>{
       const name = document.getElementById('np-name').value.trim();
       if(!name) return;
-      const normalized = name.toLocaleLowerCase('es-ES');
-      const exists = state.players.some(p=> p.name.trim().toLocaleLowerCase('es-ES')===normalized);
-      if(exists){
-        alert('Ese jugador ya existe. No se permiten nombres duplicados.');
-        return;
-      }
-      const id = uid();
-      state.players.push({id, name, money:0});
-      if(!state.finance.lifetimeByPlayer) state.finance.lifetimeByPlayer = {};
-      state.finance.lifetimeByPlayer[id] = 0;
-      log('Organizador', 'añadió a '+name+' al torneo.');
-      saveAndRender();
+      const err = await addPlayerShared(name);
+      if(err){ alert(err); return; }
     };
     wrap.appendChild(addBtn);
   } else {
