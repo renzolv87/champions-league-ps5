@@ -927,6 +927,9 @@ function getOpenBetTicket(playerId, matchId){
   return state.bets.tickets.find(t=> t.playerId===playerId && t.matchId===matchId && t.status==='open');
 }
 function getBettableMatches(){
+  if(state.phase==='league' && state.players.length===3){
+    return state.leagueMatches.filter(m=> m.p1 && m.p2);
+  }
   const matches = [];
   if(!state.bracket?.rounds) return matches;
   state.bracket.rounds.forEach(round=>{
@@ -945,10 +948,16 @@ function getBettableMatches(){
 function placeBet(playerId, matchId, pick, stake){
   const bettor = findPlayer(playerId);
   if(!bettor) return 'Apostador no encontrado.';
-  if(state.phase!=='knockout') return 'Las apuestas solo se permiten en eliminatorias.';
-  if(getQualifiedIds().includes(playerId)) return 'Solo pueden apostar los jugadores que no clasificaron a eliminatorias.';
-  const match = getBettableMatches().find(m=> m.id===matchId);
+  const isThreeLeagueMode = state.phase==='league' && state.players.length===3;
+  if(!isThreeLeagueMode && state.phase!=='knockout') return 'Las apuestas solo se permiten en eliminatorias.';
+  if(!isThreeLeagueMode && getQualifiedIds().includes(playerId)) return 'Solo pueden apostar los jugadores que no clasificaron a eliminatorias.';
+  const match = isThreeLeagueMode
+    ? state.leagueMatches.find(m=> m.id===matchId)
+    : getBettableMatches().find(m=> m.id===matchId);
   if(!match) return 'Partido no disponible para apostar.';
+  if(isThreeLeagueMode && (match.p1===playerId || match.p2===playerId)){
+    return 'En liguilla de 3, solo puede apostar el jugador que descansa ese partido.';
+  }
   if(match.status==='confirmed') return 'Ese partido ya está cerrado para apuestas.';
   if(!['home','draw','away'].includes(pick)) return 'Selección de apuesta inválida.';
   if(Number.isNaN(stake) || stake<=0) return 'Cantidad de apuesta inválida.';
@@ -1064,6 +1073,7 @@ function acceptReportedResult(match, byId, decisive){
     else match.winner = match.peno1>match.peno2? match.p1: match.p2;
   }
   if(state.phase==='league') registerLeagueMoney(match);
+  if(state.phase==='league' && state.players.length===3) settleBetsForMatch(match);
   if(state.phase==='knockout' || state.phase==='playoff') settleBetsForMatch(match);
   log(player.name, 'aceptó el resultado '+match.score1+'-'+match.score2+(match.peno1!==null?` (pen. ${match.peno1}-${match.peno2})`:''));
   saveAndRender();
@@ -1108,6 +1118,7 @@ function adminOverride(match, score1, score2, peno1, peno2, decisive){
     else match.winner = match.peno1>match.peno2? match.p1: match.p2;
   }
   if(state.phase==='league') registerLeagueMoney(match);
+  if(state.phase==='league' && state.players.length===3) settleBetsForMatch(match);
   if(state.phase==='knockout' || state.phase==='playoff') settleBetsForMatch(match);
   log('Organizador','resolvió/corrigió el resultado a '+score1+'-'+score2+(match.peno1!==null?` (pen. ${match.peno1}-${match.peno2})`:''));
   saveAndRender();
@@ -1575,6 +1586,61 @@ function renderLeagueTab(){
   }
 
   if(state.phase==='league'){
+    if(state.players.length===3){
+      const bettingCard = el(`<div class="card"><h3>Apuesta del jugador que descansa (solo liguilla de 3)</h3><div class="muted" style="margin-bottom:8px;">En este formato, el jugador que no participa en el partido de la jornada puede apostar 1X2.</div></div>`);
+      const openLeagueMatches = state.leagueMatches.filter(m=> m.p1 && m.p2 && m.status!=='confirmed');
+      if(openLeagueMatches.length){
+        const row = el(`<div class="row"></div>`);
+        const matchBox = el(`<div><label>Partido</label><select id="lg-bet-match"></select></div>`);
+        const bettorBox = el(`<div><label>Apostador (descansa)</label><input id="lg-bet-bettor" type="text" disabled></div>`);
+        const pickBox = el(`<div><label>Pronóstico</label><select id="lg-bet-pick"><option value="home">Gana local</option><option value="draw">Empate</option><option value="away">Gana visitante</option></select></div>`);
+        const stakeBox = el(`<div><label>Cantidad</label><input type="number" id="lg-bet-stake" min="1" step="1"></div>`);
+        row.appendChild(matchBox); row.appendChild(bettorBox); row.appendChild(pickBox); row.appendChild(stakeBox);
+        bettingCard.appendChild(row);
+
+        const selMatch = matchBox.querySelector('#lg-bet-match');
+        const inputBettor = bettorBox.querySelector('#lg-bet-bettor');
+        const pickSel = pickBox.querySelector('#lg-bet-pick');
+        const stakeInput = stakeBox.querySelector('#lg-bet-stake');
+
+        function restingPlayerFor(match){
+          return state.players.find(p=> p.id!==match.p1 && p.id!==match.p2) || null;
+        }
+
+        openLeagueMatches.forEach(m=>{
+          const rest = restingPlayerFor(m);
+          selMatch.appendChild(el(`<option value="${m.id}">${playerName(m.p1)} vs ${playerName(m.p2)}${rest?` · descansa: ${rest.name}`:''}</option>`));
+        });
+
+        function refreshResting(){
+          const m = openLeagueMatches.find(x=> x.id===selMatch.value) || openLeagueMatches[0];
+          const rest = m ? restingPlayerFor(m) : null;
+          inputBettor.value = rest ? `${rest.name} (${fmtMoney(rest.money||0)})` : '—';
+        }
+        selMatch.onchange = refreshResting;
+        refreshResting();
+
+        const betBtn = el(`<button class="gold" type="button">Registrar apuesta</button>`);
+        const betErr = el(`<div class="muted" style="color:#ffb3ad;margin-top:8px;"></div>`);
+        betBtn.onclick=()=>{
+          const m = openLeagueMatches.find(x=> x.id===selMatch.value);
+          if(!m){ betErr.textContent='No hay partido disponible.'; return; }
+          const rest = restingPlayerFor(m);
+          if(!rest){ betErr.textContent='No se pudo determinar el jugador que descansa.'; return; }
+          const pick = pickSel.value;
+          const stake = parseInt(stakeInput.value);
+          const err = placeBet(rest.id, m.id, pick, stake);
+          if(err){ betErr.textContent = err; return; }
+          betErr.textContent = 'Apuesta registrada.';
+        };
+        bettingCard.appendChild(betBtn);
+        bettingCard.appendChild(betErr);
+      } else {
+        bettingCard.appendChild(el(`<div class="muted">No hay partidos abiertos para apostar en este momento.</div>`));
+      }
+      wrap.appendChild(bettingCard);
+    }
+
     const closeCard = el(`<div class="card"><h3>Calendario de la liguilla</h3></div>`);
     closeCard.appendChild(el(`<div class="muted" style="margin-bottom:8px;">Antitrampas: un resultado queda en <b>pendiente</b> hasta que el rival pulse <b>Aceptar</b> o <b>Rechazar</b>. Si rechaza, debe volver a reportarlo quien lo cargó primero.</div>`));
     const ml = el(`<div class="matchlist"></div>`);
