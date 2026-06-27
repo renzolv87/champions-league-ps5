@@ -185,6 +185,7 @@ function nowStr(){ const d=new Date(); return d.toLocaleDateString('es-ES')+' '+
 function dayStr(){ return new Date().toLocaleDateString('es-ES'); }
 function seasonDateText(dateValue){ return dateValue ? `${FUN_DATE_LABEL}: ${dateValue}` : `${FUN_DATE_LABEL}: —`; }
 function normalizePlayerName(name){ return (name||'').trim().toLocaleLowerCase('es-ES'); }
+function wait(ms){ return new Promise(resolve=> setTimeout(resolve, ms)); }
 
 function defaultState(){
   return {
@@ -287,7 +288,7 @@ async function pullRemoteState(){
     const data = await res.json();
     if(!data || !data.state) return;
     if(!remoteEtag || remoteEtag!==data.etag){
-      state = data.state;
+      state = migrateStateShape(data.state);
       remoteEtag = data.etag;
       if(!state.sync) state.sync = defaultState().sync;
       state.sync.mode = 'remoto';
@@ -298,6 +299,7 @@ async function pullRemoteState(){
     }
   }catch(err){
     if(state?.sync){
+      state.sync.mode = 'local';
       state.sync.lastError = 'Sin conexion remota';
       render();
     }
@@ -371,21 +373,28 @@ async function addPlayerShared(name){
   const clean = name.trim();
   if(!clean) return 'Nombre inválido.';
 
-  for(let attempt=0; attempt<4; attempt++){
+  for(let attempt=0; attempt<10; attempt++){
     let remoteState = null;
     let etag = null;
     try{
       const getRes = await fetch(REMOTE_ENDPOINT, { cache:'no-store' });
-      if(getRes.ok){
-        const data = await getRes.json();
-        remoteState = data?.state || null;
-        etag = data?.etag || null;
+      if(!getRes.ok){
+        state.sync.mode = 'local';
+        state.sync.lastError = 'No se pudo leer el servidor compartido.';
+        render();
+        return 'No se pudo leer el servidor compartido. Verifica que todos usen el mismo link de Netlify.';
       }
+      const data = await getRes.json();
+      remoteState = data?.state || null;
+      etag = data?.etag || null;
     }catch(_err){
-      // Si falla la red, caemos a estado local.
+      state.sync.mode = 'local';
+      state.sync.lastError = 'Sin conexión al servidor compartido.';
+      render();
+      return 'Sin conexión al servidor compartido. Verifica internet y el link de Netlify.';
     }
 
-    const nextState = migrateStateShape(remoteState ? JSON.parse(JSON.stringify(remoteState)) : JSON.parse(JSON.stringify(state || defaultState())));
+    const nextState = migrateStateShape(remoteState ? JSON.parse(JSON.stringify(remoteState)) : defaultState());
     const exists = nextState.players.some(p=> normalizePlayerName(p.name)===normalizePlayerName(clean));
     if(exists) return 'Ese jugador ya existe. No se permiten nombres duplicados.';
 
@@ -403,6 +412,7 @@ async function addPlayerShared(name){
       });
       const putData = await putRes.json();
       if(putRes.status===409){
+        await wait(80 + Math.floor(Math.random()*120));
         continue;
       }
       if(!putRes.ok) return 'No se pudo guardar en remoto. Revisa conexión e inténtalo de nuevo.';
@@ -414,12 +424,13 @@ async function addPlayerShared(name){
       state.sync.lastError = null;
       localStorage.setItem(STATE_KEY, JSON.stringify(state));
       render();
+      pullRemoteState();
       return null;
     }catch(_err){
       return 'Error de red al guardar. Inténtalo de nuevo.';
     }
   }
-  return 'Hubo cambios simultáneos en otros dispositivos. Vuelve a intentarlo.';
+  return 'Hubo muchos cambios simultáneos en otros dispositivos. Vuelve a intentarlo.';
 }
 
 /* ---------------- ROUND ROBIN ---------------- */
@@ -1315,6 +1326,11 @@ function renderPlayersTab(){
       <div><label>Nombre</label><input id="np-name" placeholder="Ej: Marcos"></div>
     </div>`);
     wrap.appendChild(addRow);
+    const syncInfo = el(`<div class="muted" style="margin-bottom:8px;">Sync remoto: ${state.sync?.mode==='remoto'?'OK':'desconectado'}${state.sync?.lastRemoteAt?` · Última: ${state.sync.lastRemoteAt}`:''}</div>`);
+    wrap.appendChild(syncInfo);
+    const syncBtn = el(`<button class="secondary small" style="margin-bottom:8px;">Sincronizar ahora</button>`);
+    syncBtn.onclick=()=> pullRemoteState();
+    wrap.appendChild(syncBtn);
     const addBtn = el(`<button>Añadir jugador</button>`);
     addBtn.onclick=async ()=>{
       const name = document.getElementById('np-name').value.trim();
