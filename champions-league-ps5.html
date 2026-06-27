@@ -1199,18 +1199,6 @@ function startLeague(){
   const ids = state.players.map(p=>p.id);
   if(!state.seasonKickoff) state.seasonKickoff = dayStr();
   state.players.forEach(p=> addMoney(p.id, state.finance.prizes.participation, `season:${state.season}:participation:${p.id}`, 'participación en Champions'));
-  if(ids.length===2){
-    // direct final, no league phase
-    state.qualifiers = [...ids];
-    state.bracket = buildKnockoutSkeleton(2);
-    state.bracket.rounds[0][0].p1 = ids[0];
-    state.bracket.rounds[0][0].p2 = ids[1];
-    state.knockoutDraw = {pairings:[[ids[0],ids[1]]], revealed:1, startedAt:Date.now(), nextRevealAt:null, complete:true};
-    state.phase='knockout';
-    log('Organizador','solo hay 2 jugadores: se va directo a la final.');
-    saveAndRender();
-    return;
-  }
   const firstLegRounds = generateRoundRobinRounds(ids, Math.max(1, ids.length-1));
   const secondLegRounds = firstLegRounds.map(pairs=> pairs.map(([a,b])=>[b,a]));
   const rounds = [...firstLegRounds, ...secondLegRounds];
@@ -1556,10 +1544,6 @@ function renderLeagueTab(){
   const wrap = document.createElement('div');
   if(state.phase==='setup'){
     wrap.appendChild(el(`<div class="banner info">La liguilla aún no ha empezado. Configúrala en la pestaña Configuración.</div>`));
-    return wrap;
-  }
-  if(state.players.length===2 && state.leagueMatches.length===0){
-    wrap.appendChild(el(`<div class="banner info">Con solo 2 jugadores se juega directamente la final: mira la pestaña Eliminatorias.</div>`));
     return wrap;
   }
 
