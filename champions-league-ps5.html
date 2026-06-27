@@ -150,7 +150,7 @@ tr.tied td{outline:1px dashed var(--bad);outline-offset:-1px;}
   padding:3px 8px;
 }
 .cup-shelf{display:flex;flex-wrap:wrap;gap:6px;min-height:34px;align-items:flex-end;}
-.ucl-cup{width:24px;height:28px;display:block;}
+.ucl-cup{width:28px;height:34px;display:block;}
 .museum-seasons{margin-top:8px;font-size:.74rem;color:var(--text-dim);line-height:1.4;}
 
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50;}
@@ -1947,18 +1947,15 @@ function roundLabels(total){
 }
 
 function museumCupSvg(){
-  return `<svg class="ucl-cup" viewBox="0 0 64 76" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <defs>
-      <linearGradient id="cupG" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#FFF0B8"/>
-        <stop offset="1" stop-color="#D7A63A"/>
-      </linearGradient>
-    </defs>
-    <path d="M24 12h16l-2 28c-.4 6.5-5.8 11.5-12 11.5S14.4 46.5 14 40L12 12h12z" fill="url(#cupG)" stroke="#B8841F" stroke-width="2"/>
-    <path d="M12 16H7c0 11 4.5 18.5 14 21" fill="none" stroke="#D7A63A" stroke-width="4" stroke-linecap="round"/>
-    <path d="M52 16h5c0 11-4.5 18.5-14 21" fill="none" stroke="#D7A63A" stroke-width="4" stroke-linecap="round"/>
-    <rect x="26" y="52" width="12" height="8" rx="2" fill="#D7A63A"/>
-    <rect x="19" y="60" width="26" height="6" rx="2" fill="#C08B29"/>
+  return `<svg class="ucl-cup" viewBox="0 0 64 84" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M20 12h24l-2.5 32c-.5 6.8-6 12-12 12s-11.5-5.2-12-12L20 12z" fill="#D9E0EA" stroke="#8C97A8" stroke-width="2"/>
+    <path d="M20 16H10c0 11 4.5 18 13.5 21" fill="none" stroke="#9BA8BB" stroke-width="4" stroke-linecap="round"/>
+    <path d="M44 16h10c0 11-4.5 18-13.5 21" fill="none" stroke="#9BA8BB" stroke-width="4" stroke-linecap="round"/>
+    <path d="M24 24c3 2 13 2 16 0" fill="none" stroke="#F4F8FD" stroke-width="1.8" stroke-linecap="round" opacity=".85"/>
+    <path d="M24.5 30c3 1.7 12 1.7 15 0" fill="none" stroke="#F4F8FD" stroke-width="1.6" stroke-linecap="round" opacity=".75"/>
+    <rect x="27" y="56" width="10" height="8" rx="2" fill="#A9B4C5"/>
+    <rect x="20" y="64" width="24" height="6" rx="2" fill="#8F9AAE"/>
+    <rect x="17" y="70" width="30" height="6" rx="2" fill="#7A8497"/>
   </svg>`;
 }
 
