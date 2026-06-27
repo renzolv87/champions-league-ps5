@@ -167,12 +167,13 @@ tr.tied td{outline:1px dashed var(--bad);outline-offset:-1px;}
 <script>
 /* ---------------- STORAGE ---------------- */
 const STATE_KEY = 'cl-ps5-tournament-state';
-const REMOTE_ENDPOINT = '/.netlify/functions/tournament-state';
-const REMOTE_ENDPOINT_ALT = '/netlify/functions/tournament-state';
-const REMOTE_ENDPOINT_API = '/api/tournament-state';
+const SUPABASE_URL = 'https://ymuljjodvdkdlvbozqoz.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_r3PAKQSOk2h8DmVeGmSOIg_lKLi8v8F';
+const SUPABASE_TABLE = 'tournament_state';
+const SUPABASE_ROW_ID = 'shared';
 const GAME_NAME = 'Champions League PS5';
 const FUN_DATE_LABEL = 'Dia del Bombazo';
-const MASTER_RESET_PASSWORD = '9wV$3nQ!m7Z@pL2#xT8^kR5&cH1*Bf6=Jd4?Ys0';
+const MASTER_RESET_PASSWORD_KEY = 'cl-ps5-master-reset-password';
 let state = null;
 let currentTab = 'config';
 let pendingModal = null;
@@ -181,7 +182,6 @@ let pullTimer = null;
 let pushTimer = null;
 let pushInFlight = false;
 let pushQueued = false;
-let remoteEndpointInUse = REMOTE_ENDPOINT_API;
 
 function uid(){ return Math.random().toString(36).slice(2,10); }
 function nowStr(){ const d=new Date(); return d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); }
@@ -189,31 +189,94 @@ function dayStr(){ return new Date().toLocaleDateString('es-ES'); }
 function seasonDateText(dateValue){ return dateValue ? `${FUN_DATE_LABEL}: ${dateValue}` : `${FUN_DATE_LABEL}: —`; }
 function normalizePlayerName(name){ return (name||'').trim().toLocaleLowerCase('es-ES'); }
 function wait(ms){ return new Promise(resolve=> setTimeout(resolve, ms)); }
-
-function uniqueRemoteEndpoints(){
-  return Array.from(new Set([remoteEndpointInUse, REMOTE_ENDPOINT_API, REMOTE_ENDPOINT, REMOTE_ENDPOINT_ALT]));
+function getMasterResetPassword(){
+  try{ return localStorage.getItem(MASTER_RESET_PASSWORD_KEY) || ''; }
+  catch(_err){ return ''; }
+}
+function setMasterResetPassword(value){
+  try{ localStorage.setItem(MASTER_RESET_PASSWORD_KEY, value); }
+  catch(_err){}
 }
 
-async function fetchRemoteWithFallback(path, opts){
-  const endpoints = uniqueRemoteEndpoints();
-  let lastRes = null;
-  let lastErr = null;
-  let lastEndpoint = null;
-  for(const base of endpoints){
+function supabaseHeaders(extra = {}){
+  return {
+    'content-type':'application/json',
+    'apikey': SUPABASE_ANON_KEY,
+    'authorization': 'Bearer '+SUPABASE_ANON_KEY,
+    ...extra
+  };
+}
+
+async function safeJson(res){
+  try{ return await res.json(); }
+  catch(_err){ return null; }
+}
+
+function supabaseApi(path){
+  return SUPABASE_URL.replace(/\/+$/,'') + '/rest/v1/' + path;
+}
+
+async function readRemoteSnapshot(){
+  const url = supabaseApi(`${SUPABASE_TABLE}?id=eq.${encodeURIComponent(SUPABASE_ROW_ID)}&select=id,state,version,updated_at&limit=1`);
+  try{
+    const res = await fetch(url, { method:'GET', headers:supabaseHeaders(), cache:'no-store' });
+    if(!res.ok){
+      const body = await safeJson(res);
+      return { ok:false, status:res.status, error: body?.message || body?.error || `Error remoto (${res.status})` };
+    }
+    const rows = await safeJson(res) || [];
+    if(!rows.length) return { ok:true, state:null, etag:null };
+    const row = rows[0];
+    return { ok:true, state:row.state || null, etag:typeof row.version==='number' ? row.version : null };
+  }catch(_err){
+    return { ok:false, status:0, error:'Sin conexión a Supabase' };
+  }
+}
+
+async function writeRemoteSnapshot(nextState, expectedVersion){
+  const nowIso = new Date().toISOString();
+
+  if(typeof expectedVersion !== 'number'){
+    const insertUrl = supabaseApi(SUPABASE_TABLE);
     try{
-      const res = await fetch(base + path, opts);
-      if(res.ok || res.status===409){
-        remoteEndpointInUse = base;
-        return { res, endpoint: base };
+      const res = await fetch(insertUrl, {
+        method:'POST',
+        headers:supabaseHeaders({ Prefer:'return=representation' }),
+        body: JSON.stringify({ id:SUPABASE_ROW_ID, state:nextState, version:1, updated_at:nowIso })
+      });
+      if(res.ok){
+        const rows = await safeJson(res) || [];
+        return { ok:true, etag: rows[0]?.version ?? 1 };
       }
-      lastRes = res;
-      lastEndpoint = base;
-    }catch(err){
-      lastErr = err;
+      if(res.status===409){
+        const current = await readRemoteSnapshot();
+        return { ok:false, status:409, state:current.state || null, etag:current.etag || null };
+      }
+      const body = await safeJson(res);
+      return { ok:false, status:res.status, error: body?.message || body?.error || `Error remoto (${res.status})` };
+    }catch(_err){
+      return { ok:false, status:0, error:'Sin conexión a Supabase' };
     }
   }
-  if(lastRes) return { res: lastRes, endpoint: lastEndpoint };
-  throw lastErr || new Error('No se pudo conectar al endpoint remoto');
+
+  const patchUrl = supabaseApi(`${SUPABASE_TABLE}?id=eq.${encodeURIComponent(SUPABASE_ROW_ID)}&version=eq.${expectedVersion}`);
+  try{
+    const res = await fetch(patchUrl, {
+      method:'PATCH',
+      headers:supabaseHeaders({ Prefer:'return=representation' }),
+      body: JSON.stringify({ state:nextState, version:expectedVersion+1, updated_at:nowIso })
+    });
+    if(res.ok){
+      const rows = await safeJson(res) || [];
+      if(rows.length) return { ok:true, etag:rows[0].version };
+      const current = await readRemoteSnapshot();
+      return { ok:false, status:409, state:current.state || null, etag:current.etag || null };
+    }
+    const body = await safeJson(res);
+    return { ok:false, status:res.status, error: body?.message || body?.error || `Error remoto (${res.status})` };
+  }catch(_err){
+    return { ok:false, status:0, error:'Sin conexión a Supabase' };
+  }
 }
 
 function defaultState(){
@@ -313,54 +376,40 @@ function log(actor, action){
 async function pullRemoteState(opts = {}){
   const touchOnNoChange = !!opts.touchOnNoChange;
   if(pendingModal) return;
-  try{
-    const req = await fetchRemoteWithFallback('', { cache:'no-store' });
-    const res = req.res;
-    if(!res.ok){
-      if(state?.sync){
-        state.sync.mode = 'local';
-        if(res.status===404){
-          state.sync.lastError = 'Function no desplegada (404) en '+(req.endpoint||'endpoint desconocido')+'. Revisa deploy de Netlify Functions.';
-        } else {
-          state.sync.lastError = 'Error remoto ('+res.status+') en '+(req.endpoint||'endpoint desconocido')+'.';
-        }
-        render();
-      }
-      return;
-    }
-    const data = await res.json();
-    if(!data || !data.state){
-      if(state?.sync && touchOnNoChange){
-        state.sync.mode = 'remoto';
-        state.sync.lastRemoteAt = nowStr();
-        state.sync.lastError = 'Sin estado remoto todavía.';
-        render();
-      }
-      return;
-    }
-    if(!remoteEtag || remoteEtag!==data.etag){
-      state = migrateStateShape(data.state);
-      remoteEtag = data.etag;
-      if(!state.sync) state.sync = defaultState().sync;
-      state.sync.mode = 'remoto';
-      state.sync.lastRemoteAt = nowStr();
-      state.sync.lastError = null;
-      localStorage.setItem(STATE_KEY, JSON.stringify(state));
-      render();
-    } else if(touchOnNoChange){
-      if(!state.sync) state.sync = defaultState().sync;
-      state.sync.mode = 'remoto';
-      state.sync.lastRemoteAt = nowStr();
-      state.sync.lastError = 'Sin cambios (ya estabas al día).';
-      localStorage.setItem(STATE_KEY, JSON.stringify(state));
-      render();
-    }
-  }catch(err){
+  const remote = await readRemoteSnapshot();
+  if(!remote.ok){
     if(state?.sync){
       state.sync.mode = 'local';
-      state.sync.lastError = 'Sin conexion remota';
+      state.sync.lastError = remote.error || 'Sin conexión remota';
       render();
     }
+    return;
+  }
+  if(!remote.state){
+    if(state?.sync && touchOnNoChange){
+      state.sync.mode = 'remoto';
+      state.sync.lastRemoteAt = nowStr();
+      state.sync.lastError = 'Sin estado remoto todavía.';
+      render();
+    }
+    return;
+  }
+  if(remoteEtag===null || remoteEtag!==remote.etag){
+    state = migrateStateShape(remote.state);
+    remoteEtag = remote.etag;
+    if(!state.sync) state.sync = defaultState().sync;
+    state.sync.mode = 'remoto';
+    state.sync.lastRemoteAt = nowStr();
+    state.sync.lastError = null;
+    localStorage.setItem(STATE_KEY, JSON.stringify(state));
+    render();
+  } else if(touchOnNoChange){
+    if(!state.sync) state.sync = defaultState().sync;
+    state.sync.mode = 'remoto';
+    state.sync.lastRemoteAt = nowStr();
+    state.sync.lastError = 'Sin cambios (ya estabas al día).';
+    localStorage.setItem(STATE_KEY, JSON.stringify(state));
+    render();
   }
 }
 
@@ -376,17 +425,11 @@ async function pushRemoteState(){
   }
   pushInFlight = true;
   try{
-    const req = await fetchRemoteWithFallback('', {
-      method:'PUT',
-      headers:{'content-type':'application/json'},
-      body: JSON.stringify({ state, etag: remoteEtag })
-    });
-    const res = req.res;
-    const data = await res.json();
-    if(res.status===409){
-      if(data?.state){
-        state = migrateStateShape(data.state);
-        remoteEtag = data.etag || null;
+    const remote = await writeRemoteSnapshot(state, remoteEtag);
+    if(remote.status===409){
+      if(remote?.state){
+        state = migrateStateShape(remote.state);
+        remoteEtag = remote.etag ?? null;
         state.sync.mode = 'remoto';
         state.sync.lastRemoteAt = nowStr();
         state.sync.lastError = 'Se detecto cambio remoto. Se refresco el estado.';
@@ -395,8 +438,8 @@ async function pushRemoteState(){
       }
       return;
     }
-    if(!res.ok) throw new Error('No se pudo guardar remoto');
-    remoteEtag = data.etag || remoteEtag;
+    if(!remote.ok) throw new Error(remote.error || 'No se pudo guardar remoto');
+    remoteEtag = typeof remote.etag==='number' ? remote.etag : remoteEtag;
     state.sync.mode = 'remoto';
     state.sync.lastRemoteAt = nowStr();
     state.sync.lastError = null;
@@ -437,26 +480,16 @@ async function addPlayerShared(name){
   for(let attempt=0; attempt<10; attempt++){
     let remoteState = null;
     let etag = null;
-    try{
-      const req = await fetchRemoteWithFallback('', { cache:'no-store' });
-      const getRes = req.res;
-      if(!getRes.ok){
-        hadReadIssue = true;
-        state.sync.mode = 'local';
-        state.sync.lastError = 'No se pudo leer remoto. Intentando guardar igualmente...';
-        remoteState = JSON.parse(JSON.stringify(state || defaultState()));
-        etag = remoteEtag || null;
-      } else {
-        const data = await getRes.json();
-        remoteState = data?.state || null;
-        etag = data?.etag || null;
-      }
-    }catch(_err){
+    const snapshot = await readRemoteSnapshot();
+    if(!snapshot.ok){
       hadReadIssue = true;
       state.sync.mode = 'local';
       state.sync.lastError = 'Sin conexión remota. Intentando guardar igualmente...';
       remoteState = JSON.parse(JSON.stringify(state || defaultState()));
       etag = remoteEtag || null;
+    } else {
+      remoteState = snapshot.state || null;
+      etag = snapshot.etag ?? null;
     }
 
     const nextState = migrateStateShape(remoteState ? JSON.parse(JSON.stringify(remoteState)) : defaultState());
@@ -469,39 +502,12 @@ async function addPlayerShared(name){
     nextState.history = nextState.history || [];
     nextState.history.unshift({ts: nowStr(), actor:'Organizador', action:'añadió a '+clean+' al torneo.'});
 
-    try{
-      const putReq = await fetchRemoteWithFallback('', {
-        method:'PUT',
-        headers:{'content-type':'application/json'},
-        body: JSON.stringify({ state: nextState, etag })
-      });
-      const putRes = putReq.res;
-      const putData = await putRes.json();
-      if(putRes.status===409){
-        await wait(80 + Math.floor(Math.random()*120));
-        continue;
-      }
-      if(!putRes.ok){
-        // Fallback: no bloquear la creación local por una caída remota temporal.
-        state = migrateStateShape(nextState);
-        state.sync.mode = 'local';
-        state.sync.lastError = 'Guardado local temporal. Se sincronizará cuando vuelva la conexión remota.';
-        localStorage.setItem(STATE_KEY, JSON.stringify(state));
-        queueRemotePush();
-        render();
-        return null;
-      }
-
-      state = migrateStateShape(nextState);
-      remoteEtag = putData?.etag || etag || remoteEtag;
-      state.sync.mode = 'remoto';
-      state.sync.lastRemoteAt = nowStr();
-      state.sync.lastError = null;
-      localStorage.setItem(STATE_KEY, JSON.stringify(state));
-      render();
-      pullRemoteState();
-      return null;
-    }catch(_err){
+    const saved = await writeRemoteSnapshot(nextState, etag);
+    if(saved.status===409){
+      await wait(80 + Math.floor(Math.random()*120));
+      continue;
+    }
+    if(!saved.ok){
       state = migrateStateShape(nextState);
       state.sync.mode = 'local';
       state.sync.lastError = 'Guardado local temporal. Se sincronizará cuando vuelva la conexión remota.';
@@ -510,6 +516,16 @@ async function addPlayerShared(name){
       render();
       return null;
     }
+
+    state = migrateStateShape(nextState);
+    remoteEtag = typeof saved.etag==='number' ? saved.etag : etag;
+    state.sync.mode = 'remoto';
+    state.sync.lastRemoteAt = nowStr();
+    state.sync.lastError = null;
+    localStorage.setItem(STATE_KEY, JSON.stringify(state));
+    render();
+    pullRemoteState();
+    return null;
   }
   if(hadReadIssue) return 'Sin conexión estable al servidor compartido. Se guardó local y se intentará sincronizar solo.';
   return 'Hubo muchos cambios simultáneos en otros dispositivos. Vuelve a intentarlo.';
@@ -1261,7 +1277,7 @@ function render(){
   body.id='tabbody';
   app.appendChild(body);
   renderTabBody();
-  app.appendChild(el(`<div class="foot-note">Datos compartidos por Netlify Functions + Blobs. Si dos personas editan a la vez, el sistema resuelve conflictos refrescando el estado más reciente.</div>`));
+  app.appendChild(el(`<div class="foot-note">Datos compartidos por Supabase. Si dos personas editan a la vez, el sistema resuelve conflictos refrescando el estado más reciente.</div>`));
   if(pendingModal) app.appendChild(pendingModal());
 }
 
@@ -2111,10 +2127,11 @@ function renderHistoryTab(){
   const resetBtn = el(`<button class="danger">Reset maestro total</button>`);
   resetBtn.onclick=()=>{
     pendingModal = ()=>{
+      const hasResetPassword = !!getMasterResetPassword();
       const bg = el(`<div class="modal-bg"><div class="modal">
         <span class="close">✕</span>
         <h3>Confirmar reseteo maestro</h3>
-        <div class="muted" style="margin-bottom:10px;">Introduce la contraseña maestra dos veces para confirmar.</div>
+        <div class="muted" style="margin-bottom:10px;">${hasResetPassword ? 'Introduce la contraseña maestra dos veces para confirmar.' : 'No hay contraseña maestra configurada en este dispositivo. Define una ahora y se usará para este y próximos reseteos.'}</div>
         <label>Contraseña (1ª vez)</label>
         <input type="password" id="rm-p1" autocomplete="off">
         <label>Contraseña (2ª vez)</label>
@@ -2128,7 +2145,13 @@ function renderHistoryTab(){
         const b = bg.querySelector('#rm-p2').value;
         if(!a || !b){ bg.querySelector('#rm-err').textContent='Debes escribir la contraseña en ambos campos.'; return; }
         if(a!==b){ bg.querySelector('#rm-err').textContent='Las dos contraseñas no coinciden.'; return; }
-        if(a!==MASTER_RESET_PASSWORD){ bg.querySelector('#rm-err').textContent='Contraseña maestra incorrecta.'; return; }
+        if(!hasResetPassword){
+          if(a.length < 8){ bg.querySelector('#rm-err').textContent='La contraseña debe tener al menos 8 caracteres.'; return; }
+          setMasterResetPassword(a);
+        } else if(a!==getMasterResetPassword()){
+          bg.querySelector('#rm-err').textContent='Contraseña maestra incorrecta.';
+          return;
+        }
         pendingModal = null;
         masterResetAll();
       };

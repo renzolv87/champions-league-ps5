@@ -1,6 +1,6 @@
 # Champions League PS5
 
-App web para organizar una Champions entre amigos en PS5, con estado compartido en Netlify, sistema antitrampas y economía inspirada en premios UEFA.
+App web para organizar una Champions entre amigos en PS5, con estado compartido en Supabase, sistema antitrampas y economía inspirada en premios UEFA.
 
 ## Resumen rapido
 
@@ -50,14 +50,25 @@ Los importes estan basados en referencias de la Champions moderna (2024/25 aprox
 	- Tope por apuesta: 30% del saldo actual del apostador.
 	- Tope total por apuestas para no clasificados: nunca superar lo que puede ganar un campeon y tampoco superar el umbral de dinero de los clasificados.
 
-## Persistencia compartida (Netlify)
+## Persistencia compartida (Supabase)
 
-La app guarda y lee el estado compartido desde una Netlify Function usando Netlify Blobs:
+La app guarda y lee el estado compartido desde Supabase (REST / PostgREST):
 
-- Endpoint: /.netlify/functions/tournament-state
-- Funcion: netlify/functions/tournament-state.js
+- Project URL (frontend): https://ymuljjodvdkdlvbozqoz.supabase.co
+- Tabla usada por el frontend: `tournament_state`
+- Fila compartida: `id='shared'`
 
 Esto permite que todos los jugadores vean los mismos datos desde distintos dispositivos.
+
+Estructura recomendada en Supabase:
+
+- Tabla `tournament_state` con columnas:
+	- `id` text primary key
+	- `state` jsonb not null
+	- `version` int not null default 1
+	- `updated_at` timestamptz not null default now()
+
+Nota: el frontend usa control de concurrencia optimista con `version` para evitar sobreescrituras cuando varios dispositivos guardan a la vez.
 
 ## Reseteo maestro
 
@@ -68,6 +79,13 @@ Existe un reset maestro protegido por contraseña doble:
 - Limpia historial.
 - Reinicia temporada y competicion.
 - Deja la aplicacion en estado inicial total.
+
+Comportamiento actual de contraseña maestra:
+
+- Ya no hay contraseña hardcodeada en el repositorio.
+- La primera vez que se usa el reset en un dispositivo, se crea una contraseña local (almacenada en ese navegador/dispositivo).
+- En usos posteriores, ese mismo dispositivo debe introducir su contraseña local para confirmar el reset.
+- Importante: esa contraseña no se comparte entre dispositivos.
 
 ## Museo y ranking
 
@@ -85,18 +103,20 @@ Existe un reset maestro protegido por contraseña doble:
 ## Estructura minima
 
 - champions-league-ps5.html
-- netlify/functions/tournament-state.js
-- netlify.toml
 - package.json
 
 ## Despliegue rapido
 
 1. Subir este proyecto a GitHub.
-2. Importar repo en Netlify.
-3. Publicar.
+2. Publicar frontend estatico donde prefieras (GitHub Pages, Netlify, Vercel, etc.).
+3. Configurar la tabla en Supabase.
 4. Abrir la app en /champions-league-ps5.html (o renombrar a index.html para abrir en raiz).
 
 ## Nota importante de seguridad
 
-Si la contraseña maestra esta en frontend, alguien tecnico podria verla inspeccionando codigo.
-Para seguridad real, mover validacion al backend (Netlify Function) y usar variable de entorno.
+No se deben subir secretos reales (tokens, claves privadas, contraseñas maestras fijas) al repositorio.
+
+Para seguridad fuerte en multi-dispositivo:
+
+- Mover la validación del reset maestro al backend.
+- Guardar secretos en variables de entorno del proveedor, no en el HTML.
