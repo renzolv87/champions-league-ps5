@@ -367,6 +367,7 @@ function loadState(){
     state = defaultState();
   }
   if(!state.finance) state.finance = defaultState().finance;
+  if(!state.config || typeof state.config!=='object') state.config = {...defaultState().config};
   if(!state.bets) state.bets = defaultState().bets;
   if(typeof state.bets.maxStakePct!=='number') state.bets.maxStakePct = 0.3;
   if(typeof state.bets.championMoneyCap!=='number' || state.bets.championMoneyCap<=0) state.bets.championMoneyCap = state.finance.prizes.champion;
@@ -784,6 +785,19 @@ function autoQualifiers(n){
   q = Math.min(n-1, q);
   return q;
 }
+function effectiveNumQualifiers(){
+  const n = state.players.length;
+  if(n<=0) return 0;
+  if(n===1) return 1;
+  if(n===2) return 2; // Con 2 jugadores tambien hay liguilla y ambos pasan a eliminatoria.
+
+  const auto = autoQualifiers(n);
+  const raw = Number.isFinite(state?.config?.numQualifiers) ? Math.floor(state.config.numQualifiers) : auto;
+  let q = raw>0 ? raw : auto;
+  q = Math.max(2, q);
+  q = Math.min(n-1, q);
+  return q;
+}
 function nearestPow2LE(x){ let p=1; while(p*2<=x) p*=2; return p; }
 function firstKnockoutBonusBySize(size){
   if(size>=16) return {amount: state.finance.prizes.round16, key:'round16', label:'clasificarse a octavos'};
@@ -866,6 +880,8 @@ function revealNextDrawPair(){
 
 function processKnockoutDrawClock(){
   if(!state?.knockoutDraw || !state.knockoutDraw.startedAt || state.knockoutDraw.complete) return;
+    state.config.matchesPerPlayer = autoMatchesPerPlayer(state.players.length);
+    state.config.numQualifiers = effectiveNumQualifiers();
   let changed = false;
   while(state.knockoutDraw.nextRevealAt && Date.now()>=state.knockoutDraw.nextRevealAt){
     if(!revealNextDrawPair()) break;
@@ -1239,7 +1255,8 @@ function startLeague(){
 
 function closeLeague(){
   const standings = computeStandings();
-  const Q = state.config.numQualifiers;
+  const Q = effectiveNumQualifiers();
+  state.config.numQualifiers = Q;
   const tied = tiedGroupsAtCutoff(standings, Q);
   if(tied.length){
     return 'Hay un empate sin resolver entre los puestos que delimitan la clasificación. Resuélvelo abajo antes de continuar.';
@@ -1448,6 +1465,7 @@ function renderConfigTab(){
   const locked = state.phase!=='setup';
   const n = state.players.length;
   const maxMatches = Math.max(1,2*(n-1));
+  const q = effectiveNumQualifiers();
 
   if(locked){
     wrap.appendChild(el(`<div class="banner info">La configuración está bloqueada porque el torneo ya empezó. Puedes iniciar una nueva temporada desde la pestaña Historial cuando termine.</div>`));
@@ -1463,7 +1481,7 @@ function renderConfigTab(){
       </div>
       <div>
         <label>Pasan a eliminatorias (automático)</label>
-        <input type="text" value="${n? autoQualifiers(n)+' de '+n : '—'}" disabled>
+        <input type="text" value="${n? q+' de '+n : '—'}" disabled>
         <div class="muted">Pasan aprox. 2 de cada 3 jugadores (24 de 36 en el formato oficial). Para 3 o más jugadores, siempre se elimina al menos uno en liguilla. Si ese número no es potencia de 2, se genera play-off para completar el cuadro.</div>
       </div>
     </div>
@@ -1508,7 +1526,7 @@ function renderConfigTab(){
     const startBtn = el(`<button ${n<2?'disabled':''}>Iniciar liguilla / torneo</button>`);
     startBtn.onclick=()=>{
       state.config.matchesPerPlayer = autoMatchesPerPlayer(n);
-      state.config.numQualifiers = autoQualifiers(n);
+      state.config.numQualifiers = effectiveNumQualifiers();
       startLeague();
     };
     wrap.appendChild(startBtn);
@@ -1573,7 +1591,8 @@ function renderLeagueTab(){
 
   // standings
   const standings = computeStandings();
-  const Q = state.config.numQualifiers;
+  const Q = effectiveNumQualifiers();
+  state.config.numQualifiers = Q;
   const card = el(`<div class="card"><h3>Clasificación</h3><table>
     <tr><th>#</th><th class="name">Jugador</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>DG</th><th>Pts</th></tr>
   </table></div>`);
