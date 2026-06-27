@@ -169,6 +169,7 @@ tr.tied td{outline:1px dashed var(--bad);outline-offset:-1px;}
 const STATE_KEY = 'cl-ps5-tournament-state';
 const REMOTE_ENDPOINT = '/.netlify/functions/tournament-state';
 const REMOTE_ENDPOINT_ALT = '/netlify/functions/tournament-state';
+const REMOTE_ENDPOINT_API = '/api/tournament-state';
 const GAME_NAME = 'Champions League PS5';
 const FUN_DATE_LABEL = 'Dia del Bombazo';
 const MASTER_RESET_PASSWORD = '9wV$3nQ!m7Z@pL2#xT8^kR5&cH1*Bf6=Jd4?Ys0';
@@ -180,7 +181,7 @@ let pullTimer = null;
 let pushTimer = null;
 let pushInFlight = false;
 let pushQueued = false;
-let remoteEndpointInUse = REMOTE_ENDPOINT;
+let remoteEndpointInUse = REMOTE_ENDPOINT_API;
 
 function uid(){ return Math.random().toString(36).slice(2,10); }
 function nowStr(){ const d=new Date(); return d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); }
@@ -190,7 +191,7 @@ function normalizePlayerName(name){ return (name||'').trim().toLocaleLowerCase('
 function wait(ms){ return new Promise(resolve=> setTimeout(resolve, ms)); }
 
 function uniqueRemoteEndpoints(){
-  return Array.from(new Set([remoteEndpointInUse, REMOTE_ENDPOINT, REMOTE_ENDPOINT_ALT]));
+  return Array.from(new Set([remoteEndpointInUse, REMOTE_ENDPOINT_API, REMOTE_ENDPOINT, REMOTE_ENDPOINT_ALT]));
 }
 
 async function fetchRemoteWithFallback(path, opts){
@@ -316,7 +317,7 @@ async function pullRemoteState(opts = {}){
     if(!res.ok){
       if(state?.sync){
         state.sync.mode = 'local';
-        state.sync.lastError = 'Error remoto ('+res.status+').';
+        state.sync.lastError = 'Error remoto ('+res.status+') en '+(req.endpoint||'endpoint desconocido')+'.';
         render();
       }
       return;
