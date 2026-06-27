@@ -174,6 +174,7 @@ const SUPABASE_ROW_ID = 'shared';
 const GAME_NAME = 'Champions League PS5';
 const FUN_DATE_LABEL = 'Dia del Bombazo';
 const MASTER_RESET_PASSWORD_KEY = 'cl-ps5-master-reset-password';
+const RESTART_SEASON_PASSWORD_KEY = 'cl-ps5-restart-season-password';
 let state = null;
 let currentTab = 'config';
 let pendingModal = null;
@@ -201,6 +202,14 @@ function getMasterResetPassword(){
 }
 function setMasterResetPassword(value){
   try{ localStorage.setItem(MASTER_RESET_PASSWORD_KEY, value); }
+  catch(_err){}
+}
+function getRestartSeasonPassword(){
+  try{ return localStorage.getItem(RESTART_SEASON_PASSWORD_KEY) || ''; }
+  catch(_err){ return ''; }
+}
+function setRestartSeasonPassword(value){
+  try{ localStorage.setItem(RESTART_SEASON_PASSWORD_KEY, value); }
   catch(_err){}
 }
 
@@ -1297,6 +1306,25 @@ function newSeason(){
   saveAndRender();
 }
 
+function restartCurrentSeason(){
+  const keepPlayers = (state.players || []).map(p=> ({ id:p.id, name:p.name, money:0 }));
+  const keepMyPlayerId = state.myPlayerId;
+  const keepSync = state.sync || defaultState().sync;
+  const keepPastChampions = Array.isArray(state.pastChampions) ? [...state.pastChampions] : [];
+  const keepSeason = state.season || (GAME_NAME+' - T1');
+
+  state = defaultState();
+  state.season = keepSeason;
+  state.players = keepPlayers;
+  state.myPlayerId = keepPlayers.some(p=>p.id===keepMyPlayerId) ? keepMyPlayerId : null;
+  state.pastChampions = keepPastChampions;
+  state.sync = keepSync;
+  state.finance.lifetimeByPlayer = {};
+  keepPlayers.forEach(p=>{ state.finance.lifetimeByPlayer[p.id] = 0; });
+  state.history.unshift({ts:nowStr(), actor:'Organizador', action:'reinició la temporada actual (manteniendo jugadores).'});
+  saveAndRender();
+}
+
 /* ================= RENDER ================= */
 function el(html){ const d=document.createElement('div'); d.innerHTML=html; return d.firstElementChild; }
 
@@ -2150,6 +2178,44 @@ function renderHistoryTab(){
     seasonCard.appendChild(el(`<div class="muted" style="margin-top:8px;">Este botón se habilita al finalizar la temporada actual.</div>`));
   }
   wrap.appendChild(seasonCard);
+
+  const restartSeasonBtn = el(`<button class="secondary" style="margin-top:10px;">Volver a empezar esta temporada</button>`);
+  restartSeasonBtn.onclick=()=>{
+    pendingModal = ()=>{
+      const hasRestartPassword = !!getRestartSeasonPassword();
+      const bg = el(`<div class="modal-bg"><div class="modal">
+        <span class="close">✕</span>
+        <h3>Reiniciar temporada actual</h3>
+        <div class="muted" style="margin-bottom:10px;">Se borrará el progreso de la temporada actual (partidos, cuadro, campeón y dinero de temporada), pero se mantienen los jugadores.</div>
+        <div class="muted" style="margin-bottom:10px;">${hasRestartPassword ? 'Introduce la contraseña de reinicio de temporada dos veces para confirmar.' : 'No hay contraseña de reinicio configurada en este dispositivo. Crea una ahora (mínimo 8 caracteres).'}</div>
+        <label>Contraseña (1ª vez)</label>
+        <input type="password" id="rs-p1" autocomplete="off">
+        <label>Contraseña (2ª vez)</label>
+        <input type="password" id="rs-p2" autocomplete="off">
+        <div id="rs-err" class="muted" style="color:#ffb3ad;"></div>
+        <button id="rs-go" class="danger">Reiniciar temporada actual</button>
+      </div></div>`);
+      bg.querySelector('.close').onclick=()=>{pendingModal=null; render();};
+      bg.querySelector('#rs-go').onclick=()=>{
+        const a = bg.querySelector('#rs-p1').value;
+        const b = bg.querySelector('#rs-p2').value;
+        if(!a || !b){ bg.querySelector('#rs-err').textContent='Debes escribir la contraseña en ambos campos.'; return; }
+        if(a!==b){ bg.querySelector('#rs-err').textContent='Las dos contraseñas no coinciden.'; return; }
+        if(!hasRestartPassword){
+          if(a.length < 8){ bg.querySelector('#rs-err').textContent='La contraseña debe tener al menos 8 caracteres.'; return; }
+          setRestartSeasonPassword(a);
+        } else if(a!==getRestartSeasonPassword()){
+          bg.querySelector('#rs-err').textContent='Contraseña incorrecta.';
+          return;
+        }
+        pendingModal = null;
+        restartCurrentSeason();
+      };
+      return bg;
+    };
+    render();
+  };
+  seasonCard.appendChild(restartSeasonBtn);
 
   const resetCard = el(`<div class="card"><h3>Reseteo maestro</h3><div class="banner warn">Pone todos los contadores a 0 (dinero, temporadas, cuadro, campeón actual) y borra el historial. Conserva solo la lista de jugadores.</div></div>`);
   const resetBtn = el(`<button class="danger">Reset maestro total</button>`);
