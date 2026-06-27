@@ -196,6 +196,11 @@ function defaultState(){
     qualifiers: null,
     tieResolution: {}, // playerId -> random tiebreak salt once resolved
     leagueTieBreaker: null, // desempate por tanda de penaltis en cruces aleatorios
+    bets: {
+      tickets: [],
+      maxStakePct: 0.3,
+      championMoneyCap: 25000000
+    },
     playoffMatches: [],
     bracket: null, // { size:P, rounds:[[match,...],...] }
     knockoutDraw: null, // { pairings:[[id,id],...], revealed:number, startedAt:number|null, nextRevealAt:number|null, complete:boolean }
@@ -234,6 +239,10 @@ function loadState(){
     state = defaultState();
   }
   if(!state.finance) state.finance = defaultState().finance;
+  if(!state.bets) state.bets = defaultState().bets;
+  if(typeof state.bets.maxStakePct!=='number') state.bets.maxStakePct = 0.3;
+  if(typeof state.bets.championMoneyCap!=='number' || state.bets.championMoneyCap<=0) state.bets.championMoneyCap = state.finance.prizes.champion;
+  if(!Array.isArray(state.bets.tickets)) state.bets.tickets = [];
   if(!state.finance.lifetimeByPlayer) state.finance.lifetimeByPlayer = {};
   if(!state.sync) state.sync = defaultState().sync;
   if(!state.seasonKickoff) state.seasonKickoff = null;
@@ -672,6 +681,112 @@ function fmtMoney(n){
   return new Intl.NumberFormat('es-ES', { style:'currency', currency:'EUR', maximumFractionDigits:0 }).format(n);
 }
 
+function getQualifiedIds(){ return Array.isArray(state.qualifiers) ? state.qualifiers : []; }
+function getNonQualifiedIds(){
+  const q = new Set(getQualifiedIds());
+  return state.players.map(p=>p.id).filter(id=>!q.has(id));
+}
+function getBetOptionFromMatch(match){
+  if(match.score1===null || match.score2===null) return null;
+  if(match.score1>match.score2) return 'home';
+  if(match.score2>match.score1) return 'away';
+  return 'draw';
+}
+function getMinimumQualifiedMoney(){
+  const q = getQualifiedIds();
+  if(!q.length) return Infinity;
+  const vals = q.map(id=> findPlayer(id)?.money ?? 0);
+  return Math.min(...vals);
+}
+function getBetMoneyCeiling(){
+  const champCap = Math.max(0, state.bets.championMoneyCap || state.finance.prizes.champion);
+  const qualCap = getMinimumQualifiedMoney();
+  return Math.max(0, Math.min(champCap, qualCap));
+}
+function getOpenBetTicket(playerId, matchId){
+  return state.bets.tickets.find(t=> t.playerId===playerId && t.matchId===matchId && t.status==='open');
+}
+function getBettableMatches(){
+  const matches = [];
+  if(!state.bracket?.rounds) return matches;
+  state.bracket.rounds.forEach(round=>{
+    round.forEach(tie=>{
+      if(!tie.p1 || !tie.p2) return;
+      if(tie.legs===2){
+        matches.push(ensureTieLeg(tie, 1));
+        matches.push(ensureTieLeg(tie, 2));
+      } else {
+        matches.push(tie);
+      }
+    });
+  });
+  return matches;
+}
+function placeBet(playerId, matchId, pick, stake){
+  const bettor = findPlayer(playerId);
+  if(!bettor) return 'Apostador no encontrado.';
+  if(state.phase!=='knockout') return 'Las apuestas solo se permiten en eliminatorias.';
+  if(getQualifiedIds().includes(playerId)) return 'Solo pueden apostar los jugadores que no clasificaron a eliminatorias.';
+  const match = getBettableMatches().find(m=> m.id===matchId);
+  if(!match) return 'Partido no disponible para apostar.';
+  if(match.status==='confirmed') return 'Ese partido ya está cerrado para apuestas.';
+  if(!['home','draw','away'].includes(pick)) return 'Selección de apuesta inválida.';
+  if(Number.isNaN(stake) || stake<=0) return 'Cantidad de apuesta inválida.';
+  if(getOpenBetTicket(playerId, matchId)) return 'Ya tienes una apuesta abierta en este partido.';
+
+  const maxStake = Math.floor((bettor.money||0) * state.bets.maxStakePct);
+  if(stake>maxStake) return `Tu apuesta máxima en este momento es ${fmtMoney(maxStake)}.`;
+  if(stake>(bettor.money||0)) return 'No tienes saldo suficiente.';
+
+  bettor.money -= stake;
+  state.bets.tickets.push({
+    id: uid(),
+    season: state.season,
+    playerId,
+    matchId,
+    pick,
+    stake,
+    status:'open',
+    settledAt:null,
+    payout:0,
+    won:false
+  });
+  log(playerName(playerId), `apostó ${fmtMoney(stake)} en ${playerName(match.p1)} vs ${playerName(match.p2)} (${pick==='home'?'gana local':pick==='away'?'gana visitante':'empate'}).`);
+  saveAndRender();
+  return null;
+}
+function settleBetsForMatch(match){
+  const option = getBetOptionFromMatch(match);
+  if(!option) return;
+  const open = state.bets.tickets.filter(t=> t.matchId===match.id && t.status==='open');
+  if(!open.length) return;
+
+  open.forEach(t=>{
+    const bettor = findPlayer(t.playerId);
+    if(!bettor){ t.status='void'; t.settledAt=nowStr(); return; }
+    t.status='settled';
+    t.settledAt = nowStr();
+    if(t.pick===option){
+      // Cuota fija simple 2.0: recupera stake y gana stake.
+      const grossPayout = t.stake * 2;
+      const ceiling = getBetMoneyCeiling();
+      const maxAdd = Math.max(0, Math.floor(ceiling - (bettor.money||0)));
+      const applied = Math.max(0, Math.min(grossPayout, maxAdd));
+      if(applied>0){
+        bettor.money += applied;
+        state.finance.lifetimeByPlayer[t.playerId] = (state.finance.lifetimeByPlayer[t.playerId]||0) + applied;
+      }
+      t.payout = applied;
+      t.won = applied>0;
+      log('Sistema', `${playerName(t.playerId)} ${applied>0?'ganó':'acertó pero alcanzó el tope de apuestas,'} ${applied>0?fmtMoney(applied):'sin cobro adicional'} en apuesta del partido ${playerName(match.p1)} vs ${playerName(match.p2)}.`);
+    } else {
+      t.payout = 0;
+      t.won = false;
+      log('Sistema', `${playerName(t.playerId)} perdió ${fmtMoney(t.stake)} en apuesta del partido ${playerName(match.p1)} vs ${playerName(match.p2)}.`);
+    }
+  });
+}
+
 function registerLeagueMoney(match){
   const kBase = `league:${match.id}`;
   if(match.score1>match.score2){
@@ -729,6 +844,7 @@ function acceptReportedResult(match, byId, decisive){
     else match.winner = match.peno1>match.peno2? match.p1: match.p2;
   }
   if(state.phase==='league') registerLeagueMoney(match);
+  if(state.phase==='knockout' || state.phase==='playoff') settleBetsForMatch(match);
   log(player.name, 'aceptó el resultado '+match.score1+'-'+match.score2+(match.peno1!==null?` (pen. ${match.peno1}-${match.peno2})`:''));
   saveAndRender();
   return null;
@@ -772,6 +888,7 @@ function adminOverride(match, score1, score2, peno1, peno2, decisive){
     else match.winner = match.peno1>match.peno2? match.p1: match.p2;
   }
   if(state.phase==='league') registerLeagueMoney(match);
+  if(state.phase==='knockout' || state.phase==='playoff') settleBetsForMatch(match);
   log('Organizador','resolvió/corrigió el resultado a '+score1+'-'+score2+(match.peno1!==null?` (pen. ${match.peno1}-${match.peno2})`:''));
   saveAndRender();
   return null;
@@ -809,6 +926,10 @@ function masterResetAll(){
   state.champion = null;
   state.tieResolution = {};
   state.qualifiers = null;
+  state.bets = {
+    ...defaultState().bets,
+    championMoneyCap: state.finance.prizes.champion
+  };
 
   log('Organizador', 'ejecutó reseteo maestro: contadores a 0 e historial limpiado.');
   saveAndRender();
@@ -821,6 +942,7 @@ function startLeague(){
   state.players.forEach(p=> addMoney(p.id, state.finance.prizes.participation, `season:${state.season}:participation:${p.id}`, 'participación en Champions'));
   if(ids.length===2){
     // direct final, no league phase
+    state.qualifiers = [...ids];
     state.bracket = buildKnockoutSkeleton(2);
     state.bracket.rounds[0][0].p1 = ids[0];
     state.bracket.rounds[0][0].p2 = ids[1];
@@ -955,6 +1077,10 @@ function newSeason(){
   state.leagueMatches=[]; state.playoffMatches=[]; state.bracket=null; state.champion=null;
   state.knockoutDraw = null;
   state.leagueTieBreaker = null;
+  state.bets = {
+    ...defaultState().bets,
+    championMoneyCap: state.finance.prizes.champion
+  };
   state.qualifiers=null; state.tieResolution={};
   state.history.unshift({ts:nowStr(), actor:'Organizador', action:'inició una nueva temporada.'});
   saveAndRender();
@@ -1545,6 +1671,62 @@ function renderKnockoutTab(){
   if(!state.bracket){
     wrap.appendChild(el(`<div class="banner info">El cuadro de eliminatorias todavía no se ha generado.</div>`));
     return wrap;
+  }
+
+  const nonQualified = getNonQualifiedIds();
+  if(state.phase==='knockout' && nonQualified.length){
+    const ceiling = getBetMoneyCeiling();
+    const card = el(`<div class="card"><h3>Apuestas de eliminatorias (solo no clasificados)</h3><div class="muted" style="margin-bottom:8px;">Puedes apostar por <b>gana local</b>, <b>empate</b> o <b>gana visitante</b>. Si el partido termina en empate y no elegiste empate, pierdes la apuesta.</div></div>`);
+    card.appendChild(el(`<div class="muted" style="margin-bottom:8px;">Tope global de dinero por apuestas: <b>${fmtMoney(ceiling)}</b> · Apuesta máxima por ticket: <b>${Math.round(state.bets.maxStakePct*100)}%</b> de tu saldo actual.</div>`));
+
+    const row = el(`<div class="row"></div>`);
+    const bettorBox = el(`<div><label>Apostador</label><select id="bet-player"></select></div>`);
+    const matchBox = el(`<div><label>Partido</label><select id="bet-match"></select></div>`);
+    const pickBox = el(`<div><label>Pronóstico</label><select id="bet-pick"><option value="home">Gana local</option><option value="draw">Empate</option><option value="away">Gana visitante</option></select></div>`);
+    const stakeBox = el(`<div><label>Cantidad</label><input type="number" id="bet-stake" min="1" step="1"></div>`);
+    row.appendChild(bettorBox); row.appendChild(matchBox); row.appendChild(pickBox); row.appendChild(stakeBox);
+    card.appendChild(row);
+
+    const openMatches = getBettableMatches().filter(m=> m.status!=='confirmed');
+    const selPlayer = bettorBox.querySelector('#bet-player');
+    const selMatch = matchBox.querySelector('#bet-match');
+    const inputStake = stakeBox.querySelector('#bet-stake');
+    nonQualified.forEach(id=>{
+      const p = findPlayer(id);
+      selPlayer.appendChild(el(`<option value="${id}" ${(state.myPlayerId===id)?'selected':''}>${p.name} (${fmtMoney(p.money||0)})</option>`));
+    });
+    openMatches.forEach(m=>{
+      selMatch.appendChild(el(`<option value="${m.id}">${playerName(m.p1)} vs ${playerName(m.p2)}</option>`));
+    });
+    if(!openMatches.length){
+      card.appendChild(el(`<div class="muted">No hay partidos abiertos para apostar.</div>`));
+    } else {
+      const btn = el(`<button class="gold" type="button">Registrar apuesta</button>`);
+      const err = el(`<div class="muted" style="color:#ffb3ad;margin-top:8px;"></div>`);
+      btn.onclick=()=>{
+        const bettorId = selPlayer.value;
+        const matchId = selMatch.value;
+        const pick = pickBox.querySelector('#bet-pick').value;
+        const stake = parseInt(inputStake.value);
+        const e = placeBet(bettorId, matchId, pick, stake);
+        if(e){ err.textContent=e; return; }
+        err.textContent='Apuesta registrada.';
+      };
+      card.appendChild(btn);
+      card.appendChild(err);
+    }
+
+    const openTickets = state.bets.tickets.filter(t=> t.status==='open' && t.season===state.season);
+    if(openTickets.length){
+      const list = el(`<div class="matchlist" style="margin-top:10px;"></div>`);
+      openTickets.forEach(t=>{
+        const m = getBettableMatches().find(x=>x.id===t.matchId) || {p1:null,p2:null};
+        const pickTxt = t.pick==='home'?'gana local':(t.pick==='away'?'gana visitante':'empate');
+        list.appendChild(el(`<div class="match"><div class="vs"><span>${playerName(t.playerId)}</span><span>${fmtMoney(t.stake)} · ${pickTxt}</span><span>${playerName(m.p1)} vs ${playerName(m.p2)}</span></div><span class="tag pending">abierta</span></div>`));
+      });
+      card.appendChild(list);
+    }
+    wrap.appendChild(card);
   }
 
   if(state.knockoutDraw && !state.knockoutDraw.complete){
