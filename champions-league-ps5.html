@@ -1199,7 +1199,8 @@ function startLeague(){
   const ids = state.players.map(p=>p.id);
   if(!state.seasonKickoff) state.seasonKickoff = dayStr();
   state.players.forEach(p=> addMoney(p.id, state.finance.prizes.participation, `season:${state.season}:participation:${p.id}`, 'participación en Champions'));
-  const firstLegRounds = generateRoundRobinRounds(ids, Math.max(1, ids.length-1));
+  const firstLegRoundCount = ids.length % 2 === 0 ? Math.max(1, ids.length-1) : ids.length;
+  const firstLegRounds = generateRoundRobinRounds(ids, firstLegRoundCount);
   const secondLegRounds = firstLegRounds.map(pairs=> pairs.map(([a,b])=>[b,a]));
   const rounds = [...firstLegRounds, ...secondLegRounds];
   const matches=[];
