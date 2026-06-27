@@ -425,6 +425,7 @@ function migrateStateShape(s){
 async function addPlayerShared(name){
   const clean = normalizePlayerName(name);
   if(!clean) return 'Nombre inválido.';
+  let hadReadIssue = false;
 
   for(let attempt=0; attempt<10; attempt++){
     let remoteState = null;
@@ -433,19 +434,22 @@ async function addPlayerShared(name){
       const req = await fetchRemoteWithFallback('', { cache:'no-store' });
       const getRes = req.res;
       if(!getRes.ok){
+        hadReadIssue = true;
         state.sync.mode = 'local';
-        state.sync.lastError = 'No se pudo leer el servidor compartido.';
-        render();
-        return 'No se pudo leer el servidor compartido. Verifica que todos usen el mismo link de Netlify.';
+        state.sync.lastError = 'No se pudo leer remoto. Intentando guardar igualmente...';
+        remoteState = JSON.parse(JSON.stringify(state || defaultState()));
+        etag = remoteEtag || null;
+      } else {
+        const data = await getRes.json();
+        remoteState = data?.state || null;
+        etag = data?.etag || null;
       }
-      const data = await getRes.json();
-      remoteState = data?.state || null;
-      etag = data?.etag || null;
     }catch(_err){
+      hadReadIssue = true;
       state.sync.mode = 'local';
-      state.sync.lastError = 'Sin conexión al servidor compartido.';
-      render();
-      return 'Sin conexión al servidor compartido. Verifica internet y el link de Netlify.';
+      state.sync.lastError = 'Sin conexión remota. Intentando guardar igualmente...';
+      remoteState = JSON.parse(JSON.stringify(state || defaultState()));
+      etag = remoteEtag || null;
     }
 
     const nextState = migrateStateShape(remoteState ? JSON.parse(JSON.stringify(remoteState)) : defaultState());
@@ -470,7 +474,16 @@ async function addPlayerShared(name){
         await wait(80 + Math.floor(Math.random()*120));
         continue;
       }
-      if(!putRes.ok) return 'No se pudo guardar en remoto. Revisa conexión e inténtalo de nuevo.';
+      if(!putRes.ok){
+        // Fallback: no bloquear la creación local por una caída remota temporal.
+        state = migrateStateShape(nextState);
+        state.sync.mode = 'local';
+        state.sync.lastError = 'Guardado local temporal. Se sincronizará cuando vuelva la conexión remota.';
+        localStorage.setItem(STATE_KEY, JSON.stringify(state));
+        queueRemotePush();
+        render();
+        return null;
+      }
 
       state = migrateStateShape(nextState);
       remoteEtag = putData?.etag || etag || remoteEtag;
@@ -482,9 +495,16 @@ async function addPlayerShared(name){
       pullRemoteState();
       return null;
     }catch(_err){
-      return 'Error de red al guardar. Inténtalo de nuevo.';
+      state = migrateStateShape(nextState);
+      state.sync.mode = 'local';
+      state.sync.lastError = 'Guardado local temporal. Se sincronizará cuando vuelva la conexión remota.';
+      localStorage.setItem(STATE_KEY, JSON.stringify(state));
+      queueRemotePush();
+      render();
+      return null;
     }
   }
+  if(hadReadIssue) return 'Sin conexión estable al servidor compartido. Se guardó local y se intentará sincronizar solo.';
   return 'Hubo muchos cambios simultáneos en otros dispositivos. Vuelve a intentarlo.';
 }
 
