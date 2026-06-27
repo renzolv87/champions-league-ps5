@@ -2,6 +2,8 @@ const { getStore } = require('@netlify/blobs');
 
 const STORE_NAME = 'champions-ps5';
 const KEY = 'shared-state';
+const BLOBS_SITE_ID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID || process.env.NETLIFY_BLOBS_SITE_ID;
+const BLOBS_TOKEN = process.env.NETLIFY_TOKEN || process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_ACCESS_TOKEN || process.env.NETLIFY_BLOBS_TOKEN;
 
 function json(statusCode, body) {
   return {
@@ -14,10 +16,33 @@ function json(statusCode, body) {
   };
 }
 
+function getConfiguredStore() {
+  if (BLOBS_SITE_ID && BLOBS_TOKEN) {
+    return getStore({
+      name: STORE_NAME,
+      siteID: BLOBS_SITE_ID,
+      token: BLOBS_TOKEN
+    });
+  }
+  return getStore(STORE_NAME);
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return json(200, { ok: true });
 
-  const store = getStore(STORE_NAME);
+  let store;
+  try {
+    store = getConfiguredStore();
+  } catch (err) {
+    return json(500, {
+      error: 'Netlify Blobs no configurado.',
+      detail: 'Define NETLIFY_SITE_ID y NETLIFY_TOKEN en el sitio de Netlify para habilitar estado compartido.',
+      missing: {
+        NETLIFY_SITE_ID: !BLOBS_SITE_ID,
+        NETLIFY_TOKEN: !BLOBS_TOKEN
+      }
+    });
+  }
 
   if (event.httpMethod === 'GET') {
     const entry = await store.getWithMetadata(KEY, { type: 'json', consistency: 'strong' });

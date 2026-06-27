@@ -198,6 +198,7 @@ async function fetchRemoteWithFallback(path, opts){
   const endpoints = uniqueRemoteEndpoints();
   let lastRes = null;
   let lastErr = null;
+  let lastEndpoint = null;
   for(const base of endpoints){
     try{
       const res = await fetch(base + path, opts);
@@ -206,11 +207,12 @@ async function fetchRemoteWithFallback(path, opts){
         return { res, endpoint: base };
       }
       lastRes = res;
+      lastEndpoint = base;
     }catch(err){
       lastErr = err;
     }
   }
-  if(lastRes) return { res: lastRes, endpoint: null };
+  if(lastRes) return { res: lastRes, endpoint: lastEndpoint };
   throw lastErr || new Error('No se pudo conectar al endpoint remoto');
 }
 
@@ -317,7 +319,11 @@ async function pullRemoteState(opts = {}){
     if(!res.ok){
       if(state?.sync){
         state.sync.mode = 'local';
-        state.sync.lastError = 'Error remoto ('+res.status+') en '+(req.endpoint||'endpoint desconocido')+'.';
+        if(res.status===404){
+          state.sync.lastError = 'Function no desplegada (404) en '+(req.endpoint||'endpoint desconocido')+'. Revisa deploy de Netlify Functions.';
+        } else {
+          state.sync.lastError = 'Error remoto ('+res.status+') en '+(req.endpoint||'endpoint desconocido')+'.';
+        }
         render();
       }
       return;
