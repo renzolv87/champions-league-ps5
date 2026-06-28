@@ -2876,6 +2876,8 @@ function proposalKickoffOptions(total=3, messageLang=uiLang()){
     out.push({
       at: d,
       byZone,
+      dayLine: `${dayText}:`,
+      timeLine: byZone.join(' - '),
       line: `${dayText}: ${byZone.join(' - ')}`
     });
   }
@@ -2896,9 +2898,12 @@ function buildWhatsAppProposalText(messageLang = uiLang()){
     `⚽ ${tForLang(lang, 'waProposalTitle')}`,
     '',
     `🕒 ${tForLang(lang, 'waProposalOptionsTitle')}`,
-    `1) ${options[0]?.line || '—'}`,
-    `2) ${options[1]?.line || '—'}`,
-    `3) ${options[2]?.line || '—'}`,
+    `1. ${options[0]?.dayLine || '—'}`,
+    `    ${options[0]?.timeLine || '—'}`,
+    `2. ${options[1]?.dayLine || '—'}`,
+    `    ${options[1]?.timeLine || '—'}`,
+    `3. ${options[2]?.dayLine || '—'}`,
+    `    ${options[2]?.timeLine || '—'}`,
     '',
     `✅ ${tForLang(lang, 'waProposalVoteCall')}`,
     `🟩 ${tForLang(lang, 'waProposalDataLinkLabel')}`,
