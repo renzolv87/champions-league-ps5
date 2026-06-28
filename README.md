@@ -108,7 +108,7 @@ Comportamiento actual de contraseña maestra:
 ## Despliegue rapido
 
 1. Subir este proyecto a GitHub.
-2. Publicar frontend estatico donde prefieras (GitHub Pages, Netlify, Vercel, etc.).
+2. Publicar frontend estatico donde prefieras (GitHub Pages, Vercel, Cloudflare Pages, etc.).
 3. Configurar la tabla en Supabase.
 4. Abrir la app en /champions-league-ps5.html (o renombrar a index.html para abrir en raiz).
 
