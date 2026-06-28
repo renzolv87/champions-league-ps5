@@ -538,7 +538,7 @@ const I18N = {
     phasePlayoff: 'play-off',
     phaseKnockout: 'eliminatorias',
     phaseFinished: 'finalizado',
-    playersHint: 'Selecciona tu jugador activo al añadirlo desde este dispositivo.',
+    playersHint: 'Desde este dispositivo puedes registrar hasta 2 equipos para esta temporada.',
     noPlayersYet: 'Todavía no hay jugadores.',
     yourPlayer: 'Tu jugador',
     guestTeam: 'Invitado',
@@ -553,10 +553,10 @@ const I18N = {
     syncOk: 'OK',
     disconnected: 'desconectado',
     lastSync: 'Última',
-    alreadyRegisteredInfo: 'Ya registraste tu jugador en este dispositivo. El resto de jugadores debe añadirse de forma colaborativa desde sus propios dispositivos.',
+    alreadyRegisteredInfo: 'En este dispositivo ya registraste 2 equipos. El resto debe añadirse de forma colaborativa desde otros dispositivos.',
     startLeague: 'Iniciar liguilla / torneo',
     setupLockedInfo: 'La temporada ya está en curso. Este botón se habilita cuando la fase vuelva a configuración.',
-    needTwoPlayers: 'Añade al menos 2 jugadores para iniciar. Si sois pocos, el sistema agrega un invitado para mantener fases con sentido.',
+    needTwoPlayers: 'Se necesitan al menos 4 equipos para iniciar. Si sois 2 jugadores reales, cada uno debe registrar 2 equipos distintos.',
     langOptionEs: 'Español',
     langOptionEn: 'Inglés',
     langOptionLt: 'Lituano',
@@ -583,7 +583,7 @@ const I18N = {
     phasePlayoff: 'play-off',
     phaseKnockout: 'knockout',
     phaseFinished: 'finished',
-    playersHint: 'Pick your active player when adding from this device.',
+    playersHint: 'From this device you can register up to 2 teams for this season.',
     noPlayersYet: 'No players yet.',
     yourPlayer: 'Your player',
     guestTeam: 'Guest',
@@ -598,10 +598,10 @@ const I18N = {
     syncOk: 'OK',
     disconnected: 'offline',
     lastSync: 'Last',
-    alreadyRegisteredInfo: 'You already registered your player on this device. The rest must be added collaboratively from their own devices.',
+    alreadyRegisteredInfo: 'You already registered 2 teams on this device. The rest must be added collaboratively from other devices.',
     startLeague: 'Start league / tournament',
     setupLockedInfo: 'Season is already in progress. This button is enabled again when the phase returns to setup.',
-    needTwoPlayers: 'Add at least 2 players to start. If you are few, the system adds a guest team to keep meaningful phases.',
+    needTwoPlayers: 'At least 4 teams are required to start. If there are 2 real players, each should register 2 different teams.',
     langOptionEs: 'Spanish',
     langOptionEn: 'English',
     langOptionLt: 'Lithuanian',
@@ -628,7 +628,7 @@ const I18N = {
     phasePlayoff: 'atkrint. etapas',
     phaseKnockout: 'atkrintamosios',
     phaseFinished: 'baigta',
-    playersHint: 'Pridedant is sio irenginio pasirink savo aktyvu zaideja.',
+    playersHint: 'Siame irenginyje siam sezonui gali uzregistruoti iki 2 komandu.',
     noPlayersYet: 'Zaideju dar nera.',
     yourPlayer: 'Tavo zaidejas',
     guestTeam: 'Svecias',
@@ -643,10 +643,10 @@ const I18N = {
     syncOk: 'OK',
     disconnected: 'atsijungta',
     lastSync: 'Paskutinis',
-    alreadyRegisteredInfo: 'Siame irenginyje jau uzregistravai savo zaideja. Kitus zaidejus reikia prideti is ju irenginiu.',
+    alreadyRegisteredInfo: 'Siame irenginyje jau uzregistravai 2 komandas. Likusias reikia prideti is kitu irenginiu.',
     startLeague: 'Pradeti lyga / turnyra',
     setupLockedInfo: 'Sezonas jau vyksta. Mygtukas vel bus aktyvus, kai faze griz i nustatymus.',
-    needTwoPlayers: 'Pridek bent 2 zaidejus. Jei jusu mazai, sistema prides svecia kad fazes turetu prasme.',
+    needTwoPlayers: 'Pradziai reikia bent 4 komandu. Jei yra 2 tikri zaidejai, kiekvienas turi prideti po 2 skirtingas komandas.',
     langOptionEs: 'Ispanu',
     langOptionEn: 'Anglu',
     langOptionLt: 'Lietuviu',
@@ -673,7 +673,7 @@ const I18N = {
     phasePlayoff: 'play-off',
     phaseKnockout: 'eliminatories',
     phaseFinished: 'finalitzat',
-    playersHint: 'Selecciona el teu jugador actiu quan l\'afegeixis des d\'aquest dispositiu.',
+    playersHint: 'Des d\'aquest dispositiu pots registrar fins a 2 equips per aquesta temporada.',
     noPlayersYet: 'Encara no hi ha jugadors.',
     yourPlayer: 'El teu jugador',
     guestTeam: 'Convidat',
@@ -688,10 +688,10 @@ const I18N = {
     syncOk: 'OK',
     disconnected: 'desconnectat',
     lastSync: 'Ultima',
-    alreadyRegisteredInfo: 'Ja has registrat el teu jugador en aquest dispositiu. La resta de jugadors s\'han d\'afegir de manera colaborativa des dels seus dispositius.',
+    alreadyRegisteredInfo: 'En aquest dispositiu ja has registrat 2 equips. La resta s\'han d\'afegir de manera colaborativa des d\'altres dispositius.',
     startLeague: 'Iniciar lligueta / torneig',
     setupLockedInfo: 'La temporada ja esta en curs. Aquest boto s\'habilita quan la fase torni a configuracio.',
-    needTwoPlayers: 'Afegeix almenys 2 jugadors per iniciar. Si sou pocs, el sistema afegeix un convidat per mantenir fases amb sentit.',
+    needTwoPlayers: 'Calen almenys 4 equips per iniciar. Si sou 2 jugadors reals, cadascu ha de registrar 2 equips diferents.',
     langOptionEs: 'Espanyol',
     langOptionEn: 'Angles',
     langOptionLt: 'Lituà',
@@ -1039,18 +1039,44 @@ function supabaseApi(path){
 function stateForRemote(s){
   const clone = JSON.parse(JSON.stringify(s || {}));
   delete clone.myPlayerId;
+  delete clone.myPlayerIds;
   delete clone.uiLang;
   return clone;
 }
 
 function preserveLocalMyPlayer(prevState, nextState){
-  const localId = prevState?.myPlayerId || null;
+  const localIdsRaw = Array.isArray(prevState?.myPlayerIds)
+    ? prevState.myPlayerIds
+    : (prevState?.myPlayerId ? [prevState.myPlayerId] : []);
+  const localIds = localIdsRaw.filter(id=> Array.isArray(nextState?.players) && nextState.players.some(p=> p.id===id));
   const localLang = normalizeUiLang(prevState?.uiLang || persistedUiLang());
-  if(localId && Array.isArray(nextState?.players) && nextState.players.some(p=> p.id===localId)){
-    nextState.myPlayerId = localId;
-  }
+  nextState.myPlayerIds = [...new Set(localIds)].slice(0, 2);
+  nextState.myPlayerId = nextState.myPlayerIds[0] || null;
   nextState.uiLang = localLang;
   return nextState;
+}
+
+function getLocalPlayerIds(refState = state){
+  const st = refState || {};
+  const base = Array.isArray(st.myPlayerIds)
+    ? st.myPlayerIds
+    : (st.myPlayerId ? [st.myPlayerId] : []);
+  const set = new Set(base.filter(Boolean));
+  if(Array.isArray(st.players)){
+    return [...set].filter(id=> st.players.some(p=> p.id===id));
+  }
+  return [...set];
+}
+
+function isLocallyControlledPlayer(playerId){
+  return !!playerId && getLocalPlayerIds().includes(playerId);
+}
+
+function localTeamSlotLabel(playerId, refState = state){
+  const ids = getLocalPlayerIds(refState);
+  const idx = ids.indexOf(playerId);
+  if(idx<0) return '';
+  return `${t('yourPlayer')} ${idx+1}/2`;
 }
 
 function bindLocalPlayerId(playerId){
@@ -1059,7 +1085,10 @@ function bindLocalPlayerId(playerId){
   if(!state.players.some(p=> p.id===playerId)) return;
   // Tras iniciar liguilla, nunca se puede reasignar identidad en este dispositivo.
   if(state.phase!=='setup') return;
-  state.myPlayerId = playerId;
+  const next = getLocalPlayerIds();
+  if(!next.includes(playerId) && next.length<2) next.push(playerId);
+  state.myPlayerIds = next;
+  state.myPlayerId = next[0] || null;
   try{ localStorage.setItem(STATE_KEY, JSON.stringify(state)); }
   catch(_err){}
 }
@@ -1148,6 +1177,7 @@ function defaultState(){
     knockoutDraw: null, // { pairings:[[id,id],...], revealed:number, startedAt:number|null, nextRevealAt:number|null, complete:boolean }
     champion: null,
     myPlayerId: null,
+    myPlayerIds: [],
     uiLang: persistedUiLang(),
     finance: {
       applied: {},
@@ -1351,6 +1381,9 @@ function migrateStateShape(s){
   if(!s.sync) s.sync = defaultState().sync;
   if(!s.seasonKickoff) s.seasonKickoff = null;
   if(typeof s.myPlayerId==='undefined') s.myPlayerId = null;
+  if(!Array.isArray(s.myPlayerIds)) s.myPlayerIds = s.myPlayerId ? [s.myPlayerId] : [];
+  s.myPlayerIds = [...new Set(s.myPlayerIds.filter(Boolean))].slice(0, 2);
+  if(!s.myPlayerId && s.myPlayerIds.length) s.myPlayerId = s.myPlayerIds[0];
   if(typeof s.uiLang==='undefined') s.uiLang = persistedUiLang();
   s.uiLang = normalizeUiLang(s.uiLang);
   if(typeof s.champion==='undefined') s.champion = null;
@@ -1371,8 +1404,8 @@ async function addPlayerShared(name, preferredLang){
   const clean = normalizePlayerName(name);
   const chosenLang = normalizeUiLang(preferredLang || state?.uiLang || persistedUiLang());
   if(!clean) return 'Nombre inválido.';
-  if(state?.myPlayerId && Array.isArray(state?.players) && state.players.some(p=> p.id===state.myPlayerId)){
-    return 'Solo puedes añadir tu propio jugador una vez. El resto debe añadirse desde sus propios dispositivos.';
+  if(state?.phase==='setup' && getLocalPlayerIds().length>=2){
+    return 'En este dispositivo puedes registrar hasta 2 equipos para la temporada actual.';
   }
   let hadReadIssue = false;
 
@@ -1408,7 +1441,10 @@ async function addPlayerShared(name, preferredLang){
     }
     if(!saved.ok){
       state = migrateStateShape(nextState);
-      state.myPlayerId = id;
+      const local = getLocalPlayerIds(state);
+      if(!local.includes(id) && local.length<2) local.push(id);
+      state.myPlayerIds = local;
+      state.myPlayerId = local[0] || id;
       setUiLang(chosenLang);
       state.sync.mode = 'local';
       state.sync.lastError = 'Guardado local temporal. Se sincronizará cuando vuelva la conexión remota.';
@@ -1419,7 +1455,10 @@ async function addPlayerShared(name, preferredLang){
     }
 
     state = migrateStateShape(nextState);
-    state.myPlayerId = id;
+  const local = getLocalPlayerIds(state);
+  if(!local.includes(id) && local.length<2) local.push(id);
+  state.myPlayerIds = local;
+  state.myPlayerId = local[0] || id;
     setUiLang(chosenLang);
     remoteEtag = typeof saved.etag==='number' ? saved.etag : etag;
     state.sync.mode = 'remoto';
@@ -1463,6 +1502,10 @@ async function removePlayerShared(playerId){
     nextState.players.splice(idx, 1);
     if(nextState.finance?.lifetimeByPlayer) delete nextState.finance.lifetimeByPlayer[playerId];
     if(nextState.myPlayerId===playerId) nextState.myPlayerId = null;
+    if(Array.isArray(nextState.myPlayerIds)){
+      nextState.myPlayerIds = nextState.myPlayerIds.filter(id=> id!==playerId);
+      if(!nextState.myPlayerId && nextState.myPlayerIds.length) nextState.myPlayerId = nextState.myPlayerIds[0];
+    }
     if(nextState.tieResolution && typeof nextState.tieResolution==='object') delete nextState.tieResolution[playerId];
     if(nextState.bets?.tickets) nextState.bets.tickets = nextState.bets.tickets.filter(t=> t.playerId!==playerId);
     nextState.history = nextState.history || [];
@@ -2366,16 +2409,19 @@ function canOpenBetForMatch(match){
   return true;
 }
 function getEligibleBettorsForMatch(match){
-  if(!state.myPlayerId) return [];
+  const localIds = getLocalPlayerIds();
+  if(!localIds.length) return [];
   if(state.phase==='league'){
-    const p = findPlayer(state.myPlayerId);
-    if(!p) return [];
-    return (p.id!==match.p1 && p.id!==match.p2) ? [p] : [];
+    return localIds
+      .map(findPlayer)
+      .filter(Boolean)
+      .filter(p=> p.id!==match.p1 && p.id!==match.p2);
   }
   if(state.phase==='knockout' || state.phase==='playoff'){
-    if(getQualifiedIds().includes(state.myPlayerId)) return [];
-    const p = findPlayer(state.myPlayerId);
-    return p ? [p] : [];
+    return localIds
+      .filter(id=> !getQualifiedIds().includes(id))
+      .map(findPlayer)
+      .filter(Boolean);
   }
   return [];
 }
@@ -2465,7 +2511,7 @@ function openBetForMatchModal(matchId){
 function placeBet(playerId, matchId, pick, stake){
   const bettor = findPlayer(playerId);
   if(!bettor) return 'Apostador no encontrado.';
-  if(!state.myPlayerId || playerId!==state.myPlayerId) return 'Solo puedes apostar con tu jugador activo.';
+  if(!isLocallyControlledPlayer(playerId)) return 'Solo puedes apostar con tus equipos de este dispositivo.';
   const isLeagueMode = state.phase==='league';
   const isKnockoutMode = state.phase==='knockout' || state.phase==='playoff';
   if(!isLeagueMode && !isKnockoutMode) return 'Las apuestas solo se permiten en liguilla o eliminatorias.';
@@ -2551,7 +2597,7 @@ function registerLeagueMoney(match){
 function reportResult(match, byId, score1, score2, peno1, peno2, decisive){
   const player = findPlayer(byId);
   if(!player) return 'Jugador no encontrado.';
-  if(state.myPlayerId && byId!==state.myPlayerId) return 'Solo puedes reportar con tu jugador activo.';
+  if(!isLocallyControlledPlayer(byId)) return 'Solo puedes reportar con uno de tus equipos en este dispositivo.';
   if(match.p1!==byId && match.p2!==byId) return 'No formas parte de este partido.';
   if(match.status==='pending') return 'Este resultado está pendiente de aceptación/rechazo del rival.';
   if(match.mustReReportBy && byId!==match.mustReReportBy) return 'El jugador que reportó inicialmente debe volver a cargar el resultado.';
@@ -2581,7 +2627,7 @@ function reportResult(match, byId, score1, score2, peno1, peno2, decisive){
 function acceptReportedResult(match, byId, decisive){
   const player = findPlayer(byId);
   if(!player) return 'Jugador no encontrado.';
-  if(state.myPlayerId && byId!==state.myPlayerId) return 'Solo puedes aceptar con tu jugador activo.';
+  if(!isLocallyControlledPlayer(byId)) return 'Solo puedes aceptar con uno de tus equipos en este dispositivo.';
   if(match.status!=='pending') return 'Este partido no está pendiente.';
   if(byId!==match.p1 && byId!==match.p2) return 'No formas parte de este partido.';
   if(byId===match.reportedBy) return 'Quien reportó no puede auto-confirmar: debe aceptar el rival.';
@@ -2607,7 +2653,7 @@ function acceptReportedResult(match, byId, decisive){
 function rejectReportedResult(match, byId){
   const player = findPlayer(byId);
   if(!player) return 'Jugador no encontrado.';
-  if(state.myPlayerId && byId!==state.myPlayerId) return 'Solo puedes rechazar con tu jugador activo.';
+  if(!isLocallyControlledPlayer(byId)) return 'Solo puedes rechazar con uno de tus equipos en este dispositivo.';
   if(match.status!=='pending') return 'Este partido no está pendiente.';
   if(byId!==match.p1 && byId!==match.p2) return 'No formas parte de este partido.';
   if(byId===match.reportedBy) return 'Quien reportó no puede rechazarse a sí mismo.';
@@ -2674,6 +2720,7 @@ function masterResetAll(){
   state = defaultState();
   state.players = [];
   state.myPlayerId = null;
+  state.myPlayerIds = [];
   state.sync = syncSnapshot;
   state.finance = {
     ...defaultState().finance,
@@ -2877,6 +2924,7 @@ function restartCurrentSeason(){
   state.season = keepSeason;
   state.players = [];
   state.myPlayerId = null;
+  state.myPlayerIds = [];
   state.pastChampions = keepPastChampions;
   state.sync = keepSync;
   state.finance.lifetimeByPlayer = {};
@@ -3055,11 +3103,16 @@ function renderTabBody(){
 function renderPlayersTab(){
   const wrap = document.createElement('div');
   const locked = state.phase!=='setup';
-  const hasLocalPlayer = !!(state?.myPlayerId && Array.isArray(state?.players) && state.players.some(p=> p.id===state.myPlayerId));
+  const localPlayerIds = getLocalPlayerIds();
+  const hasLocalPlayer = localPlayerIds.length>0;
+  const remainingSlots = Math.max(0, 2 - localPlayerIds.length);
+  const setupHint = !locked && remainingSlots>0
+    ? `${t('playersHint')} (${remainingSlots} cupo${remainingSlots===1?'':'s'} disponible${remainingSlots===1?'':'s'} en este dispositivo)`
+    : t('playersHint');
   const card = el(`<div class="card">
     <div class="players-panel-head">
       <h3>Plantilla (${state.players.length})</h3>
-      <div class="muted">${t('playersHint')}</div>
+      <div class="muted">${setupHint}</div>
     </div>
     <div id="plist" class="player-grid"></div>
   </div>`);
@@ -3067,12 +3120,13 @@ function renderPlayersTab(){
   const plist = card.querySelector('#plist');
   state.players.forEach(p=>{
     const totalMoney = state.finance?.lifetimeByPlayer?.[p.id] ?? p.money ?? 0;
-    const isMine = state.myPlayerId===p.id;
+    const isMine = localPlayerIds.includes(p.id);
+    const myBadge = isMine ? localTeamSlotLabel(p.id) : '';
     const tile = el(`<div class="player-tile ${isMine?'is-me':''}">
       <div class="player-tile-name">${p.name}</div>
       <div class="player-tile-meta">
         <span>${fmtMoney(totalMoney)}</span>
-        <span class="player-tile-actions">${isMine?`<span class="player-tile-badge">${t('yourPlayer')}</span>`:''}${!locked?`<button class="small danger" type="button">${t('deletePlayer')}</button>`:''}</span>
+        <span class="player-tile-actions">${isMine?`<span class="player-tile-badge">${myBadge}</span>`:''}${!locked?`<button class="small danger" type="button">${t('deletePlayer')}</button>`:''}</span>
       </div>
     </div>`);
     if(!locked){
@@ -3090,7 +3144,7 @@ function renderPlayersTab(){
   });
   if(!state.players.length) plist.appendChild(el(`<div class="muted">${t('noPlayersYet')}</div>`));
 
-  if(!locked && !hasLocalPlayer){
+  if(!locked && localPlayerIds.length<2){
     const addPanel = el(`<div class="card add-player-panel">
       <h3>${t('addPlayerTitle')}</h3>
       <div class="muted">${t('addPlayerHint')}</div>
@@ -3184,7 +3238,7 @@ function renderPlayersTab(){
       }
       renderCatalog();
     };
-  } else if(!locked && hasLocalPlayer){
+  } else if(!locked && localPlayerIds.length>=2){
     wrap.appendChild(el(`<div class="card"><div class="banner info" style="margin-bottom:0;">${t('alreadyRegisteredInfo')}</div></div>`));
   }
 
@@ -3383,13 +3437,13 @@ function renderMatchRow(m, decisive){
 }
 
 function canActOnMatch(match){
-  const activeId = state.myPlayerId || null;
-  if(!activeId || !match) return false;
+  const localIds = getLocalPlayerIds();
+  if(!localIds.length || !match) return false;
   if(match.status==='pending'){
     const expectedDecider = match.reportedBy===match.p1 ? match.p2 : (match.reportedBy===match.p2 ? match.p1 : null);
-    return activeId===expectedDecider;
+    return localIds.includes(expectedDecider);
   }
-  return activeId===match.p1 || activeId===match.p2;
+  return localIds.includes(match.p1) || localIds.includes(match.p2);
 }
 
 function ensureTieLeg(tie, idx){
@@ -3576,14 +3630,16 @@ function openMatchModal(match, decisive, isAdminEdit){
 }
 
 function renderPlayerForm(match, decisive){
-  const autoWho = (state.myPlayerId===match.p1 || state.myPlayerId===match.p2) ? state.myPlayerId : null;
+  const localIds = getLocalPlayerIds();
+  const autoWho = localIds.find(id=> id===match.p1 || id===match.p2) || null;
   if(!autoWho){
-    return el(`<div class="banner warn">Solo puedes reportar resultados de partidos donde participa tu jugador activo.</div>`);
+    return el(`<div class="banner warn">Solo puedes reportar resultados de partidos donde participa uno de tus equipos de este dispositivo.</div>`);
   }
+  const actorLabel = localTeamSlotLabel(autoWho);
   const p1Name = playerName(match.p1);
   const p2Name = playerName(match.p2);
   const box = el(`<div class="result-entry">
-    <div class="muted">Registrando como <b>${playerName(autoWho)}</b>.</div>
+    <div class="muted">Registrando como <b>${playerName(autoWho)}</b>${actorLabel?` · <b>${actorLabel}</b>`:''}.</div>
     <input type="hidden" id="m-who" value="${autoWho}">
     <div class="result-scoreboard">
       <div class="result-team-box">
@@ -3713,17 +3769,18 @@ function renderPendingDecisionForm(match, decisive){
   const expectedDecider = reporterId===match.p1
     ? match.p2
     : (reporterId===match.p2 ? match.p1 : null);
-  const autoDecider = (state.myPlayerId && state.myPlayerId===expectedDecider)
-    ? state.myPlayerId
+  const autoDecider = getLocalPlayerIds().includes(expectedDecider)
+    ? expectedDecider
     : null;
   if(!autoDecider){
-    return el(`<div class="banner warn">Este resultado lo debe confirmar <b>${playerName(expectedDecider)}</b>. Solo puedes confirmar con tu jugador activo.</div>`);
+    return el(`<div class="banner warn">Este resultado lo debe confirmar <b>${playerName(expectedDecider)}</b>. Solo puedes confirmar con ese equipo en este dispositivo.</div>`);
   }
+  const deciderLabel = localTeamSlotLabel(autoDecider);
   const scoreTxt = `${match.score1} - ${match.score2}` + (match.peno1!==null? ` (pen. ${match.peno1}-${match.peno2})` : '');
 
   const box = el(`<div>
     <div class="banner info">Resultado propuesto por <b>${playerName(reporterId)}</b>: <b>${scoreTxt}</b></div>
-    <div class="muted" style="margin-bottom:8px;">Respondiendo como <b>${playerName(autoDecider)}</b>.</div>
+    <div class="muted" style="margin-bottom:8px;">Respondiendo como <b>${playerName(autoDecider)}</b>${deciderLabel?` · <b>${deciderLabel}</b>`:''}.</div>
     <input type="hidden" id="m-decider" value="${autoDecider}">
     <div id="m-derr" class="muted" style="color:#ffb3ad;margin-bottom:8px;"></div>
     <div class="row">
