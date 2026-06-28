@@ -1243,7 +1243,7 @@ function openGuideModal(){
   pendingModal = ()=>{
     const betCeiling = getBetMoneyCeiling();
     const n = state.players.length;
-    const maxMatches = Math.max(1, 2*(n-1));
+    const maxMatches = Math.max(1, n-1);
     const q = effectiveNumQualifiers();
     const prize = state.finance.prizes;
     const bg = el(`<div class="modal-bg"><div class="modal guide-modal">
@@ -1255,7 +1255,7 @@ function openGuideModal(){
         <p><b>Flujo de temporada</b></p>
         <ol style="padding-left:18px;margin:0 0 10px;">
           <li>En <b>Jugadores</b> cada persona registra su jugador desde su propio dispositivo.</li>
-          <li>Arranca la liguilla: todos contra todos, ida y vuelta.</li>
+          <li>Arranca la liguilla en formato Champions: fase liga limitada (sin ida y vuelta completa).</li>
           <li>Clasifican aprox. 2 de cada 3 jugadores. Si el número no es potencia de 2, hay <b>play-off</b> para completar el cuadro.</li>
           <li>Luego se juegan eliminatorias hasta coronar al campeón de la temporada.</li>
         </ol>
@@ -2312,15 +2312,18 @@ function generateDemoSeason(requestedCount){
   });
 
   const leagueMatches = [];
-  for(let i=0;i<players.length;i++){
-    for(let j=i+1;j<players.length;j++){
-      const home = players[i];
-      const away = players[j];
-      const m1 = demoPlayMatch(home, away, true);
-      const m2 = demoPlayMatch(away, home, true);
-      leagueMatches.push(m1, m2);
-    }
-  }
+  const demoIds = players.map(p=> p.id);
+  const targetRounds = autoMatchesPerPlayer(players.length);
+  const rounds = generateRoundRobinRounds(demoIds, targetRounds);
+  const byId = Object.fromEntries(players.map(p=> [p.id, p]));
+  rounds.forEach(round=>{
+    round.forEach(([a,b])=>{
+      const home = byId[a];
+      const away = byId[b];
+      if(!home || !away) return;
+      leagueMatches.push(demoPlayMatch(home, away, true));
+    });
+  });
 
   leagueMatches.forEach(m=>{
     const a = table[m.p1.id];
@@ -2519,7 +2522,7 @@ function openDemoSeasonModalWithCount(count){
         </div>
         <div>
           ${playoffHtml}
-          ${drawState.complete ? roundsHtml : '<div class="demo-box"><h4>Eliminatorias</h4><div class="muted">El cuadro final aparece cuando termina el sorteo.</div></div>'}
+          ${roundsHtml}
         </div>
       </div>
       <div class="row" style="margin-top:12px;justify-content:flex-end;">
@@ -2669,8 +2672,9 @@ function restartInvalidLeagueSeason(){
 
 /* ---------------- BRACKET HELPERS ---------------- */
 function autoMatchesPerPlayer(n){
-  // En esta app, la liguilla es todos contra todos a ida y vuelta.
-  return Math.max(1, 2*(n-1));
+  // Formato Champions League (fase liga): tope de 8 partidos por equipo.
+  // Si hay pocos jugadores, cada equipo juega como maximo contra todos una vez.
+  return Math.max(1, Math.min(8, n-1));
 }
 function autoQualifiers(n){
   // Formato forzado para experiencia uniforme:
@@ -3325,29 +3329,9 @@ function startLeague(){
   if(ids.length<4) return 'Se necesitan al menos 4 jugadores para iniciar la liguilla.';
   if(!state.seasonKickoff) state.seasonKickoff = dayStr();
   state.players.forEach(p=> addMoney(p.id, state.finance.prizes.participation, `season:${state.season}:participation:${p.id}`, 'participación en Champions'));
-  const firstLegRoundCount = ids.length % 2 === 0 ? Math.max(1, ids.length-1) : ids.length;
-  let firstLegRounds = generateRoundRobinRounds(ids, firstLegRoundCount);
-  firstLegRounds = firstLegRounds.map(round=> round.filter(([a,b])=> !cannotFaceEachOther(a,b)));
-  const expectedUniquePairs = ids.reduce((acc, a, i)=>{
-    for(let j=i+1;j<ids.length;j++) if(!cannotFaceEachOther(a, ids[j])) acc++;
-    return acc;
-  }, 0);
-  const pairSet = new Set();
-  firstLegRounds.forEach(round=> round.forEach(([a,b])=> pairSet.add([a,b].sort().join('|'))));
-  if(pairSet.size !== expectedUniquePairs){
-    // Fallback defensivo: construir cruces permitidos una vez para asegurar cobertura completa.
-    const allPairs = [];
-    for(let i=0;i<ids.length;i++){
-      for(let j=i+1;j<ids.length;j++){
-        if(!cannotFaceEachOther(ids[i], ids[j])) allPairs.push([ids[i], ids[j]]);
-      }
-    }
-    const perRound = Math.max(1, Math.floor(ids.length/2));
-    firstLegRounds = [];
-    for(let i=0;i<allPairs.length;i+=perRound) firstLegRounds.push(allPairs.slice(i, i+perRound));
-  }
-  const secondLegRounds = firstLegRounds.map(pairs=> pairs.map(([a,b])=>[b,a]));
-  const rounds = [...firstLegRounds, ...secondLegRounds].filter(pairs=> pairs.length>0);
+  const targetRounds = autoMatchesPerPlayer(ids.length);
+  let rounds = generateRoundRobinRounds(ids, targetRounds);
+  rounds = rounds.map(round=> round.filter(([a,b])=> !cannotFaceEachOther(a,b))).filter(pairs=> pairs.length>0);
   if(!rounds.length) return 'No se pudo generar la liguilla con los jugadores actuales. Revisa los nombres bloqueados por la regla de no enfrentarse entre mismos nombres base.';
   const matches=[];
   rounds.forEach((pairs, rIdx)=>{
