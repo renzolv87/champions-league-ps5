@@ -1642,7 +1642,7 @@ const I18N = {
     waProposalBtn: 'Compartir propuesta por WhatsApp',
     waProposalHint: 'Genera un mensaje con temporada, formato y 3 horarios para votar en el grupo.',
     waProposalNeedPlayers: 'Necesitas al menos 1 jugador para compartir propuesta.',
-    waProposalTitle: 'Propuesta de inicio de temporada',
+    waProposalTitle: 'Un partidito???',
     waProposalSeason: 'Temporada: {season}',
     waProposalPlayers: 'Jugadores ({count}): {list}',
     waProposalFormat: 'Formato propuesto: {format}',
@@ -1653,6 +1653,7 @@ const I18N = {
     waProposalFormatGroups: 'fase de grupos (tamano aprox. {groupSize}) y {matches} partidos por equipo',
     waProposalOptionsTitle: 'Dia y horas: BCN LIM VNO',
     waProposalVoteCall: 'Responde con 1, 2 o 3 para confirmar horario.',
+    waProposalDataLinkLabel: 'Mete tus datos aqui:',
     sharedDataNote: 'Datos compartidos por Supabase. Si dos personas editan a la vez, el sistema resuelve conflictos refrescando el estado más reciente.'
   },
   en: {
@@ -1909,7 +1910,7 @@ const I18N = {
     waProposalBtn: 'Share proposal on WhatsApp',
     waProposalHint: 'Builds a message with season details, format and 3 time options to vote in your group.',
     waProposalNeedPlayers: 'You need at least 1 player before sharing a proposal.',
-    waProposalTitle: 'Season start proposal',
+    waProposalTitle: 'Un partidito???',
     waProposalSeason: 'Season: {season}',
     waProposalPlayers: 'Players ({count}): {list}',
     waProposalFormat: 'Proposed format: {format}',
@@ -1920,6 +1921,7 @@ const I18N = {
     waProposalFormatGroups: 'group stage (approx size {groupSize}) and {matches} matches per team',
     waProposalOptionsTitle: 'Day and times: BCN LIM VNO',
     waProposalVoteCall: 'Reply with 1, 2 or 3 to confirm the time.',
+    waProposalDataLinkLabel: 'Enter your data here:',
     sharedDataNote: 'Shared data via Supabase. If two people edit at the same time, the app resolves conflicts by refreshing the latest state.'
   },
   lt: {
@@ -2176,7 +2178,7 @@ const I18N = {
     waProposalBtn: 'Dalintis pasiulymu per WhatsApp',
     waProposalHint: 'Sukuria zinute su sezono info, formatu ir 3 laiko variantais balsavimui.',
     waProposalNeedPlayers: 'Pries dalinantis pasiulymu reikia bent 1 zaidejo.',
-    waProposalTitle: 'Sezono starto pasiulymas',
+    waProposalTitle: 'Un partidito???',
     waProposalSeason: 'Sezonas: {season}',
     waProposalPlayers: 'Zaidejai ({count}): {list}',
     waProposalFormat: 'Siulomas formatas: {format}',
@@ -2187,6 +2189,7 @@ const I18N = {
     waProposalFormatGroups: 'grupiu etapas (apytikslis dydis {groupSize}) ir {matches} rungtynes komandai',
     waProposalOptionsTitle: 'Diena ir laikai: BCN LIM VNO',
     waProposalVoteCall: 'Atsakyk 1, 2 arba 3 ir patvirtink laika.',
+    waProposalDataLinkLabel: 'Ivesk savo duomenis cia:',
     sharedDataNote: 'Bendrinami duomenys per Supabase. Jei du zmones redaguoja vienu metu, sistema issprendzia konfliktus atnaujindama naujausia busena.'
   },
   ca: {
@@ -2443,7 +2446,7 @@ const I18N = {
     waProposalBtn: 'Compartir proposta per WhatsApp',
     waProposalHint: 'Genera un missatge amb temporada, format i 3 horaris per votar al grup.',
     waProposalNeedPlayers: 'Necessites almenys 1 jugador per compartir proposta.',
-    waProposalTitle: 'Proposta d inici de temporada',
+    waProposalTitle: 'Un partidito???',
     waProposalSeason: 'Temporada: {season}',
     waProposalPlayers: 'Jugadors ({count}): {list}',
     waProposalFormat: 'Format proposat: {format}',
@@ -2454,6 +2457,7 @@ const I18N = {
     waProposalFormatGroups: 'fase de grups (mida aprox. {groupSize}) i {matches} partits per equip',
     waProposalOptionsTitle: 'Dia i hores: BCN LIM VNO',
     waProposalVoteCall: 'Respon amb 1, 2 o 3 per confirmar horari.',
+    waProposalDataLinkLabel: 'Introdueix les teves dades aqui:',
     sharedDataNote: 'Dades compartides per Supabase. Si dues persones editen alhora, el sistema resol conflictes refrescant l\'estat mes recent.'
   }
 };
@@ -2857,12 +2861,17 @@ function proposalKickoffOptions(total=3, messageLang=uiLang()){
   for(let i=0;i<total;i++){
     const d = new Date(base);
     d.setMinutes(d.getMinutes() + (i * 30));
-    const byZone = zoneFormatters.map(entry=> `(${entry.code}) ${entry.fmt.format(d)}`);
+    const byCode = {};
+    zoneFormatters.forEach(entry=>{ byCode[entry.code] = entry.fmt.format(d); });
+    const bcn = byCode.BCN || '--:--';
+    const vno = byCode.VNO || '--:--';
+    const lim = byCode.LIM || '--:--';
+    const byZone = [`${bcn} (BCN)`, `${vno} (VNO)`, `${lim} (LIM)`];
     const dayText = dayFmt.format(d);
     out.push({
       at: d,
       byZone,
-      line: `${dayText} ${byZone.join(' ')}`
+      line: `${dayText}: ${byZone.join(' - ')}`
     });
   }
   return out;
@@ -2876,25 +2885,18 @@ function proposalFormatText(playerCount, messageLang=uiLang()){
 }
 function buildWhatsAppProposalText(messageLang = uiLang()){
   const lang = normalizeUiLang(messageLang);
-  const playerCount = state.players.length;
-  const playerNames = state.players.map(p=> p.name).join(', ');
-  const qualifiers = effectiveNumQualifiers();
-  const kickoff = state.seasonKickoff || tForLang(lang, 'waProposalToDefine');
   const options = proposalKickoffOptions(3, lang);
+  const dataUrl = 'https://github.com/renzolv87/champions-league-ps5';
   return [
     tForLang(lang, 'waProposalTitle'),
-    tfForLang(lang, 'waProposalSeason', {season: seasonTagLabel()}),
-    tfForLang(lang, 'waProposalPlayers', {count: playerCount, list: playerNames || '—'}),
-    tfForLang(lang, 'waProposalFormat', {format: proposalFormatText(playerCount, lang)}),
-    tfForLang(lang, 'waProposalQualifiers', {count: qualifiers}),
-    tfForLang(lang, 'waProposalKickoff', {kickoff}),
     '',
     tForLang(lang, 'waProposalOptionsTitle'),
     `1) ${options[0]?.line || '—'}`,
     `2) ${options[1]?.line || '—'}`,
     `3) ${options[2]?.line || '—'}`,
     '',
-    tForLang(lang, 'waProposalVoteCall')
+    tForLang(lang, 'waProposalVoteCall'),
+    `${tForLang(lang, 'waProposalDataLinkLabel')} ${dataUrl}`
   ].join('\n');
 }
 function openWhatsAppProposal(messageLang = uiLang()){
