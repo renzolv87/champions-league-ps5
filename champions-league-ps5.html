@@ -459,8 +459,176 @@ tbody tr:hover td{background:rgba(0,61,165,.045);}
 .tag.dispute{background:#ffe2e6;color:#b42639;}
 .tag.empty{background:#e5ecff;color:#355591;}
 
-.bracket-round{margin-bottom:18px;}
-.bracket-round h4{font-size:.82rem;color:#003da5;text-transform:uppercase;letter-spacing:.65px;margin:0 0 8px;}
+.bracket-board{
+  display:grid;
+  grid-auto-flow:column;
+  grid-auto-columns:minmax(260px,1fr);
+  gap:16px;
+  overflow-x:auto;
+  padding:8px 4px 12px;
+  margin-top:10px;
+}
+.bracket-board::-webkit-scrollbar{height:10px;}
+.bracket-board::-webkit-scrollbar-thumb{background:#93b1e8;border-radius:999px;}
+.bracket-col{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.bracket-col-head{
+  position:sticky;
+  top:0;
+  z-index:2;
+  font-size:.74rem;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.55px;
+  color:#eaf2ff;
+  background:linear-gradient(135deg,#003da5,#00a3e0);
+  border:1px solid #003da5;
+  border-radius:999px;
+  padding:7px 10px;
+  text-align:center;
+}
+.bracket-col-body{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  min-height:100%;
+  --bracket-branch:12px;
+  --bracket-line:#7aa3ea;
+}
+.bracket-col-body.round-depth-1{gap:12px;padding-top:0;padding-bottom:0;--bracket-branch:12px;}
+.bracket-col-body.round-depth-2{gap:34px;padding-top:17px;padding-bottom:17px;--bracket-branch:22px;}
+.bracket-col-body.round-depth-3{gap:72px;padding-top:36px;padding-bottom:36px;--bracket-branch:36px;}
+.bracket-col-body.round-depth-4{gap:128px;padding-top:64px;padding-bottom:64px;--bracket-branch:54px;}
+.bracket-col-body.round-depth-5{gap:176px;padding-top:88px;padding-bottom:88px;--bracket-branch:70px;}
+.bracket-col-body.round-depth-6{gap:220px;padding-top:110px;padding-bottom:110px;--bracket-branch:86px;}
+.bracket-node{
+  position:relative;
+}
+.bracket-node:not(.last-col)::after{
+  content:'';
+  position:absolute;
+  right:-14px;
+  top:50%;
+  width:14px;
+  height:2px;
+  background:linear-gradient(90deg,var(--bracket-line),#00a3e0);
+  opacity:.8;
+}
+.bracket-node:not(.last-col)::before{
+  content:'';
+  position:absolute;
+  right:-14px;
+  width:14px;
+  border-right:2px solid var(--bracket-line);
+  opacity:.72;
+}
+.bracket-col-body .bracket-node:nth-child(odd):not(.last-col)::before{
+  top:50%;
+  height:var(--bracket-branch);
+  border-bottom:2px solid var(--bracket-line);
+  border-radius:0 0 9px 0;
+}
+.bracket-col-body .bracket-node:nth-child(even):not(.last-col)::before{
+  top:calc(50% - var(--bracket-branch));
+  height:var(--bracket-branch);
+  border-top:2px solid var(--bracket-line);
+  border-radius:0 9px 0 0;
+}
+.bracket-node.resolved{--bracket-line:#2a8cc7;}
+.bracket-node.champion-path{--bracket-line:#d7aa2f;}
+.bracket-node.resolved:not(.last-col)::after,
+.bracket-node.resolved:not(.last-col)::before{
+  opacity:.95;
+}
+.bracket-node.champion-path:not(.last-col)::after,
+.bracket-node.champion-path:not(.last-col)::before{
+  opacity:1;
+  filter:drop-shadow(0 0 4px rgba(215,170,47,.4));
+  animation:bracketLinePulse 1.9s ease-in-out infinite;
+}
+.bracket-node.newly-decided:not(.last-col)::after{
+  transform-origin:left center;
+  animation:bracketLinkReveal .55s ease-out;
+}
+.bracket-node.newly-decided:not(.last-col)::before{
+  transform-origin:right top;
+  animation:bracketBranchReveal .55s ease-out;
+}
+.bracket-col-body .bracket-node:nth-child(even).newly-decided:not(.last-col)::before{
+  transform-origin:right bottom;
+}
+.bracket-placeholder{
+  border:1px dashed #9bb6e8;
+  border-radius:12px;
+  background:linear-gradient(180deg,#f6f9ff,#edf3ff);
+  padding:12px;
+  color:#3a5f9d;
+  font-size:.83rem;
+  font-weight:700;
+}
+.bracket-placeholder.pending{opacity:.86;}
+.bracket-tie-card{
+  margin:0;
+  border-color:#b9cef5;
+  box-shadow:0 6px 18px rgba(0,42,128,.1);
+}
+.bracket-tie-card > div:first-child{
+  font-size:.82rem;
+  color:#0b337c;
+  text-transform:uppercase;
+  letter-spacing:.4px;
+}
+.bracket-tie-card.winner-locked{
+  border-color:#61a8de;
+  box-shadow:0 8px 24px rgba(0,84,153,.2);
+}
+.bracket-tie-card.champion-path{
+  border-color:#d7aa2f;
+  box-shadow:0 10px 26px rgba(187,135,0,.25);
+  animation:championCardPulse 2.2s ease-in-out infinite;
+}
+.bracket-tie-card.newly-decided{
+  animation:tieReveal .62s cubic-bezier(.2,.7,.2,1);
+}
+
+@keyframes bracketLinePulse{
+  0%,100%{opacity:.78;}
+  50%{opacity:1;}
+}
+
+@keyframes bracketLinkReveal{
+  from{opacity:0;transform:scaleX(.08);}
+  to{opacity:1;transform:scaleX(1);}
+}
+
+@keyframes bracketBranchReveal{
+  from{opacity:0;transform:scaleY(.08);}
+  to{opacity:.95;transform:scaleY(1);}
+}
+
+@keyframes championCardPulse{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-1px);}
+}
+
+@keyframes tieReveal{
+  0%{opacity:.36;transform:translateY(6px) scale(.985);}
+  100%{opacity:1;transform:translateY(0) scale(1);}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .bracket-node.champion-path:not(.last-col)::after,
+  .bracket-node.champion-path:not(.last-col)::before,
+  .bracket-node.newly-decided:not(.last-col)::after,
+  .bracket-node.newly-decided:not(.last-col)::before,
+  .bracket-tie-card.champion-path,
+  .bracket-tie-card.newly-decided{
+    animation:none !important;
+  }
+}
 
 .player-chip{
   display:inline-flex;
@@ -683,6 +851,34 @@ body.theme-night .museum-card,
 body.theme-night .bet-ticket{
   box-shadow:0 6px 22px rgba(0,0,0,.28);
 }
+body.theme-night .bracket-col-head{
+  background:linear-gradient(135deg,#003da5,#00a3e0);
+  border-color:#00a3e0;
+  color:#e9f4ff;
+}
+body.theme-night .bracket-placeholder{
+  background:linear-gradient(180deg,#10214a,#0c1b42);
+  border-color:#3c5fae;
+  color:#c9dbff;
+}
+body.theme-night .bracket-node:not(.last-col)::after{
+  background:linear-gradient(90deg,#4f79ca,#00a3e0);
+}
+body.theme-night .bracket-col-body{--bracket-line:#4f79ca;}
+body.theme-night .bracket-tie-card{
+  border-color:#3d63b4;
+}
+body.theme-night .bracket-tie-card > div:first-child{
+  color:#d7e7ff;
+}
+body.theme-night .bracket-tie-card.winner-locked{
+  border-color:#56a4d8;
+  box-shadow:0 8px 24px rgba(0,65,115,.35);
+}
+body.theme-night .bracket-tie-card.champion-path{
+  border-color:#d7aa2f;
+  box-shadow:0 10px 26px rgba(120,84,0,.4);
+}
 body.theme-night .card::before{opacity:.78;}
 body.theme-night .brand-badge{box-shadow:0 3px 10px rgba(0,0,0,.2);}
 body.theme-night tbody tr:hover td{background:rgba(0,163,224,.08);}
@@ -706,6 +902,10 @@ body.theme-night tbody tr:hover td{background:rgba(0,163,224,.08);}
   .modal-bg{padding:10px;align-items:flex-end;}
   .modal.demo-modal,.modal.guide-modal{max-width:96vw;max-height:88vh;overflow:auto;}
   .player-grid{max-height:min(52vh,480px);}
+  .bracket-col-body.round-depth-2{gap:24px;padding-top:12px;padding-bottom:12px;--bracket-branch:16px;}
+  .bracket-col-body.round-depth-3{gap:42px;padding-top:21px;padding-bottom:21px;--bracket-branch:24px;}
+  .bracket-col-body.round-depth-4{gap:64px;padding-top:32px;padding-bottom:32px;--bracket-branch:32px;}
+  .bracket-col-body.round-depth-5,.bracket-col-body.round-depth-6{gap:76px;padding-top:38px;padding-bottom:38px;--bracket-branch:38px;}
 }
 
 .foot-note{font-size:.72rem;color:#4f6d6f;text-align:center;margin-top:30px;line-height:1.5;font-weight:700;}
@@ -784,7 +984,7 @@ const I18N = {
     phasePlayoff: 'play-off',
     phaseKnockout: 'eliminatorias',
     phaseFinished: 'finalizado',
-    playersHint: 'Desde este dispositivo puedes registrar hasta 2 equipos para esta temporada.',
+    playersHint: 'Registra tu equipo. Solo podrás añadir un segundo si aún no se llega al mínimo de 4 equipos.',
     noPlayersYet: 'Todavía no hay jugadores.',
     yourPlayer: 'Tu jugador',
     guestTeam: 'Invitado',
@@ -799,10 +999,12 @@ const I18N = {
     syncOk: 'OK',
     disconnected: 'desconectado',
     lastSync: 'Última',
-    alreadyRegisteredInfo: 'En este dispositivo ya registraste 2 equipos. El resto debe añadirse de forma colaborativa desde otros dispositivos.',
+    alreadyRegisteredInfo: 'En este dispositivo ya registraste 2 equipos. El resto debe añadirse desde otros dispositivos.',
+    secondTeamOnlyWhenNeeded: 'Tu segundo equipo solo se permite cuando aún faltan equipos para llegar al mínimo de 4.',
     startLeague: 'Iniciar liguilla / torneo',
     setupLockedInfo: 'La temporada ya está en curso. Este botón se habilita cuando la fase vuelva a configuración.',
     needTwoPlayers: 'Se necesitan al menos 4 equipos para iniciar. Si sois 2 jugadores reales, cada uno debe registrar 2 equipos distintos.',
+    teamsMissingHint: 'Faltan {count} equipo(s) para llegar al minimo de 4.',
     langOptionEs: 'Español',
     langOptionEn: 'Inglés',
     langOptionLt: 'Lituano',
@@ -829,7 +1031,7 @@ const I18N = {
     phasePlayoff: 'play-off',
     phaseKnockout: 'knockout',
     phaseFinished: 'finished',
-    playersHint: 'From this device you can register up to 2 teams for this season.',
+    playersHint: 'Register your team. A second team is only allowed if the tournament still has fewer than 4 teams.',
     noPlayersYet: 'No players yet.',
     yourPlayer: 'Your player',
     guestTeam: 'Guest',
@@ -844,10 +1046,12 @@ const I18N = {
     syncOk: 'OK',
     disconnected: 'offline',
     lastSync: 'Last',
-    alreadyRegisteredInfo: 'You already registered 2 teams on this device. The rest must be added collaboratively from other devices.',
+    alreadyRegisteredInfo: 'You already registered 2 teams on this device. The rest must be added from other devices.',
+    secondTeamOnlyWhenNeeded: 'Your second team is only allowed when the tournament still needs teams to reach the minimum of 4.',
     startLeague: 'Start league / tournament',
     setupLockedInfo: 'Season is already in progress. This button is enabled again when the phase returns to setup.',
     needTwoPlayers: 'At least 4 teams are required to start. If there are 2 real players, each should register 2 different teams.',
+    teamsMissingHint: '{count} team(s) missing to reach the minimum of 4.',
     langOptionEs: 'Spanish',
     langOptionEn: 'English',
     langOptionLt: 'Lithuanian',
@@ -874,7 +1078,7 @@ const I18N = {
     phasePlayoff: 'atkrint. etapas',
     phaseKnockout: 'atkrintamosios',
     phaseFinished: 'baigta',
-    playersHint: 'Siame irenginyje siam sezonui gali uzregistruoti iki 2 komandu.',
+    playersHint: 'Uzregistruok savo komanda. Antra komanda leidziama tik jei turnyre dar nera minimaliu 4 komandu.',
     noPlayersYet: 'Zaideju dar nera.',
     yourPlayer: 'Tavo zaidejas',
     guestTeam: 'Svecias',
@@ -890,9 +1094,11 @@ const I18N = {
     disconnected: 'atsijungta',
     lastSync: 'Paskutinis',
     alreadyRegisteredInfo: 'Siame irenginyje jau uzregistravai 2 komandas. Likusias reikia prideti is kitu irenginiu.',
+    secondTeamOnlyWhenNeeded: 'Antra komanda leidziama tik tada, kai iki minimaliu 4 komandu dar truksta.',
     startLeague: 'Pradeti lyga / turnyra',
     setupLockedInfo: 'Sezonas jau vyksta. Mygtukas vel bus aktyvus, kai faze griz i nustatymus.',
     needTwoPlayers: 'Pradziai reikia bent 4 komandu. Jei yra 2 tikri zaidejai, kiekvienas turi prideti po 2 skirtingas komandas.',
+    teamsMissingHint: 'Iki minimaliu 4 komandu truksta: {count}.',
     langOptionEs: 'Ispanu',
     langOptionEn: 'Anglu',
     langOptionLt: 'Lietuviu',
@@ -919,7 +1125,7 @@ const I18N = {
     phasePlayoff: 'play-off',
     phaseKnockout: 'eliminatories',
     phaseFinished: 'finalitzat',
-    playersHint: 'Des d\'aquest dispositiu pots registrar fins a 2 equips per aquesta temporada.',
+    playersHint: 'Registra el teu equip. El segon equip només es permet si el torneig encara no arriba al mínim de 4 equips.',
     noPlayersYet: 'Encara no hi ha jugadors.',
     yourPlayer: 'El teu jugador',
     guestTeam: 'Convidat',
@@ -934,10 +1140,12 @@ const I18N = {
     syncOk: 'OK',
     disconnected: 'desconnectat',
     lastSync: 'Ultima',
-    alreadyRegisteredInfo: 'En aquest dispositiu ja has registrat 2 equips. La resta s\'han d\'afegir de manera colaborativa des d\'altres dispositius.',
+    alreadyRegisteredInfo: 'En aquest dispositiu ja has registrat 2 equips. La resta s\'han d\'afegir des d\'altres dispositius.',
+    secondTeamOnlyWhenNeeded: 'El segon equip només es permet quan encara falten equips per arribar al mínim de 4.',
     startLeague: 'Iniciar lligueta / torneig',
     setupLockedInfo: 'La temporada ja esta en curs. Aquest boto s\'habilita quan la fase torni a configuracio.',
     needTwoPlayers: 'Calen almenys 4 equips per iniciar. Si sou 2 jugadors reals, cadascu ha de registrar 2 equips diferents.',
+    teamsMissingHint: 'Falten {count} equip(s) per arribar al minim de 4.',
     langOptionEs: 'Espanyol',
     langOptionEn: 'Angles',
     langOptionLt: 'Lituà',
@@ -959,6 +1167,8 @@ let celebrationShownKey = null;
 let demoDrawState = null;
 let currentTheme = 'day';
 let themeAutoTimer = null;
+const bracketRevealSeen = new Set();
+const MIN_TEAMS_FOR_KNOCKOUT = 4;
 
 function uid(){ return Math.random().toString(36).slice(2,10); }
 function normalizeUiLang(lang){
@@ -1006,6 +1216,13 @@ function uiLocale(){ return ({es:'es-ES', en:'en-GB', lt:'lt-LT', ca:'ca-ES'})[u
 function t(key){
   const lang = uiLang();
   return I18N[lang]?.[key] || I18N.es[key] || key;
+}
+function tf(key, vars = {}){
+  let txt = t(key);
+  Object.keys(vars).forEach(k=>{
+    txt = txt.replaceAll(`{${k}}`, String(vars[k]));
+  });
+  return txt;
 }
 function setUiLang(lang){
   const next = normalizeUiLang(lang);
@@ -1338,6 +1555,18 @@ function getLocalPlayerIds(refState = state){
 
 function isLocallyControlledPlayer(playerId){
   return !!playerId && getLocalPlayerIds().includes(playerId);
+}
+
+function canRegisterAnotherLocalTeam(totalTeams, localCount){
+  if(localCount<=0) return true;
+  if(localCount===1) return totalTeams < MIN_TEAMS_FOR_KNOCKOUT;
+  return false;
+}
+
+function localTeamAddBlockReason(totalTeams, localCount){
+  if(localCount>=2) return t('alreadyRegisteredInfo');
+  if(localCount===1 && totalTeams>=MIN_TEAMS_FOR_KNOCKOUT) return t('secondTeamOnlyWhenNeeded');
+  return null;
 }
 
 function localTeamSlotLabel(playerId, refState = state){
@@ -1679,8 +1908,9 @@ async function addPlayerShared(name, preferredLang){
   const clean = normalizePlayerName(name);
   const chosenLang = normalizeUiLang(preferredLang || state?.uiLang || persistedUiLang());
   if(!clean) return 'Nombre inválido.';
-  if(state?.phase==='setup' && getLocalPlayerIds().length>=2){
-    return 'En este dispositivo puedes registrar hasta 2 equipos para la temporada actual.';
+  if(state?.phase==='setup'){
+    const upfrontReason = localTeamAddBlockReason(state?.players?.length || 0, getLocalPlayerIds().length);
+    if(upfrontReason) return upfrontReason;
   }
   let hadReadIssue = false;
 
@@ -1700,6 +1930,10 @@ async function addPlayerShared(name, preferredLang){
     }
 
     const nextState = migrateStateShape(remoteState ? JSON.parse(JSON.stringify(remoteState)) : defaultState());
+    if(nextState.phase==='setup'){
+      const ruleReason = localTeamAddBlockReason(nextState.players.length, getLocalPlayerIds().length);
+      if(ruleReason) return ruleReason;
+    }
     const exists = nextState.players.some(p=> normalizePlayerName(p.name)===normalizePlayerName(clean));
     if(exists) return 'Ese jugador ya existe. No se permiten nombres duplicados.';
 
@@ -3378,8 +3612,12 @@ function renderPlayersTab(){
   const wrap = document.createElement('div');
   const locked = state.phase!=='setup';
   const localPlayerIds = getLocalPlayerIds();
+  const totalTeams = state.players.length;
+  const canAddLocalTeam = !locked && canRegisterAnotherLocalTeam(totalTeams, localPlayerIds.length);
   const hasLocalPlayer = localPlayerIds.length>0;
-  const remainingSlots = Math.max(0, 2 - localPlayerIds.length);
+  const remainingSlots = localPlayerIds.length===0
+    ? (totalTeams<MIN_TEAMS_FOR_KNOCKOUT ? 2 : 1)
+    : (localPlayerIds.length===1 && totalTeams<MIN_TEAMS_FOR_KNOCKOUT ? 1 : 0);
   const setupHint = !locked && remainingSlots>0
     ? `${t('playersHint')} (${remainingSlots} cupo${remainingSlots===1?'':'s'} disponible${remainingSlots===1?'':'s'} en este dispositivo)`
     : t('playersHint');
@@ -3418,7 +3656,7 @@ function renderPlayersTab(){
   });
   if(!state.players.length) plist.appendChild(el(`<div class="muted">${t('noPlayersYet')}</div>`));
 
-  if(!locked && localPlayerIds.length<2){
+  if(canAddLocalTeam){
     const addPanel = el(`<div class="card add-player-panel">
       <h3>${t('addPlayerTitle')}</h3>
       <div class="muted">${t('addPlayerHint')}</div>
@@ -3512,11 +3750,13 @@ function renderPlayersTab(){
       }
       renderCatalog();
     };
-  } else if(!locked && localPlayerIds.length>=2){
-    wrap.appendChild(el(`<div class="card"><div class="banner info" style="margin-bottom:0;">${t('alreadyRegisteredInfo')}</div></div>`));
+  } else if(!locked && hasLocalPlayer){
+    const blockReason = localTeamAddBlockReason(totalTeams, localPlayerIds.length) || t('alreadyRegisteredInfo');
+    wrap.appendChild(el(`<div class="card"><div class="banner info" style="margin-bottom:0;">${blockReason}</div></div>`));
   }
 
   const canStartLeague = !locked && state.players.length>=4;
+  const missingTeams = Math.max(0, MIN_TEAMS_FOR_KNOCKOUT - state.players.length);
   const startBtn = el(`<button class="gold" style="margin-left:8px;" ${canStartLeague?'':'disabled'}>${t('startLeague')}</button>`);
   startBtn.onclick=()=>{
     const n = state.players.length;
@@ -3526,6 +3766,16 @@ function renderPlayersTab(){
     if(err) alert(err);
   };
   wrap.appendChild(startBtn);
+
+  if(!locked){
+    const statusCard = el(`<div class="card" style="padding:10px 12px; margin-top:8px;">
+      <div class="muted" style="margin-bottom:6px; font-weight:800;">${tf('teamsMissingHint', {count: missingTeams})}</div>
+      <div style="height:8px; border:1px solid #b7c9ee; border-radius:999px; overflow:hidden; background:#edf3ff;">
+        <div style="height:100%; width:${Math.min(100, Math.round((state.players.length/MIN_TEAMS_FOR_KNOCKOUT)*100))}%; background:linear-gradient(90deg,#003da5,#00a3e0);"></div>
+      </div>
+    </div>`);
+    wrap.appendChild(statusCard);
+  }
 
   if(locked){
     wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">${t('setupLockedInfo')}</div>`));
@@ -3846,7 +4096,7 @@ function openLeagueTiePairPenaltyModal(pairingId){
 }
 
 function renderKnockoutTieRow(tie){
-  const box = el(`<div class="card" style="padding:12px;"></div>`);
+  const box = el(`<div class="card bracket-tie-card" style="padding:12px;"></div>`);
   const title = tie.legs===1
     ? `${playerName(tie.p1)} vs ${playerName(tie.p2)} · Final`
     : `${playerName(tie.p1)} vs ${playerName(tie.p2)} · Ida y vuelta`;
@@ -3870,6 +4120,9 @@ function renderKnockoutTieRow(tie){
     }
   } else {
     box.appendChild(renderMatchRow(tie, true));
+    if(tie.winner){
+      box.appendChild(el(`<div class="muted" style="margin-top:8px;">Clasificado: <b>${playerName(tie.winner)}</b></div>`));
+    }
   }
   return box;
 }
@@ -4163,16 +4416,51 @@ function renderKnockoutTab(){
     wrap.appendChild(btn);
   }
   const roundNames = roundLabels(state.bracket.rounds.length);
+  const board = el(`<div class="bracket-board"></div>`);
+  const championPathKeys = new Set();
+  if(state.champion){
+    const tracedPlayers = new Set([state.champion]);
+    for(let ri=state.bracket.rounds.length-1; ri>=0; ri--){
+      const round = state.bracket.rounds[ri];
+      round.forEach((tie,mi)=>{
+        if(!tie?.winner || !tracedPlayers.has(tie.winner)) return;
+        championPathKeys.add(`${ri}-${mi}`);
+        if(tie.p1) tracedPlayers.add(tie.p1);
+        if(tie.p2) tracedPlayers.add(tie.p2);
+      });
+    }
+  }
   state.bracket.rounds.forEach((round,ri)=>{
-    const rd = el(`<div class="bracket-round"><h4>${roundNames[ri]}</h4><div class="matchlist"></div></div>`);
-    const list = rd.querySelector('.matchlist');
-    round.forEach(m=>{
-      if(!m.p1 && !m.p2){ list.appendChild(el(`<div class="match"><div class="vs muted">Por determinar</div></div>`)); return; }
-      if(!m.p1 || !m.p2){ list.appendChild(el(`<div class="match"><div class="vs">${m.p1?playerName(m.p1):'?'} vs ${m.p2?playerName(m.p2):'?'} <span class="muted">(esperando rival)</span></div></div>`)); return; }
-      list.appendChild(renderKnockoutTieRow(m));
+    const depthClass = `round-depth-${Math.min(ri+1,6)}`;
+    const rd = el(`<div class="bracket-col"><div class="bracket-col-head">${roundNames[ri]}</div><div class="bracket-col-body ${depthClass}"></div></div>`);
+    const list = rd.querySelector('.bracket-col-body');
+    const isLastCol = ri===state.bracket.rounds.length-1;
+    round.forEach((m,mi)=>{
+      const tieKey = `${ri}-${mi}`;
+      const isChampionPath = championPathKeys.has(tieKey);
+      const decisionKey = m?.winner ? `${state.season}|${ri}|${mi}|${m.winner}` : null;
+      const isNewlyDecided = !!decisionKey && !bracketRevealSeen.has(decisionKey);
+      if(isNewlyDecided) bracketRevealSeen.add(decisionKey);
+      if(!m.p1 && !m.p2){
+        list.appendChild(el(`<div class="bracket-node ${isLastCol?'last-col':''}"><div class="bracket-placeholder">Por determinar</div></div>`));
+        return;
+      }
+      if(!m.p1 || !m.p2){
+        list.appendChild(el(`<div class="bracket-node ${isLastCol?'last-col':''}"><div class="bracket-placeholder pending">${m.p1?playerName(m.p1):'?'} vs ${m.p2?playerName(m.p2):'?'} <span class="muted">(esperando rival)</span></div></div>`));
+        return;
+      }
+      const tieCard = renderKnockoutTieRow(m);
+      tieCard.classList.add('bracket-tie-card');
+      if(m.winner) tieCard.classList.add('winner-locked');
+      if(isChampionPath) tieCard.classList.add('champion-path');
+      if(isNewlyDecided) tieCard.classList.add('newly-decided');
+      const node = el(`<div class="bracket-node ${isLastCol?'last-col':''} ${m.winner?'resolved':''} ${isChampionPath?'champion-path':''} ${isNewlyDecided?'newly-decided':''}"></div>`);
+      node.appendChild(tieCard);
+      list.appendChild(node);
     });
-    wrap.appendChild(rd);
+    board.appendChild(rd);
   });
+  wrap.appendChild(board);
   return wrap;
 }
 function roundLabels(total){
