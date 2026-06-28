@@ -1110,8 +1110,8 @@ function loadState(){
   if(!state.finance.lifetimeByPlayer) state.finance.lifetimeByPlayer = {};
   if(!state.sync) state.sync = defaultState().sync;
   if(!state.seasonKickoff) state.seasonKickoff = null;
-  state.uiLang = normalizeUiLang(state.uiLang || persistedUiLang());
-  setUiLang(state.uiLang);
+  state.uiLang = 'es';
+  setUiLang('es');
   if(!state.season || state.season==='Champions PS5') state.season = GAME_NAME+' - T1';
   state.players.forEach(p=>{
     p.name = normalizePlayerName(p.name);
