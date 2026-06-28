@@ -29,13 +29,25 @@ h1,h2,h3,.disp{font-family:'Space Grotesk',sans-serif;}
 .app{max-width:920px;margin:0 auto;padding:20px 16px 80px;}
 
 .hero{
-  display:flex;align-items:center;gap:14px;margin-bottom:18px;
+  display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap;
 }
 .hero .crest{
   width:46px;height:46px;flex:0 0 auto;
 }
 .hero h1{font-size:1.5rem;margin:0;letter-spacing:.3px;}
 .hero .sub{color:var(--text-dim);font-size:.82rem;margin-top:2px;}
+.brand-strip{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.brand-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:4px 10px;
+  font-size:.72rem;
+  font-weight:700;
+  letter-spacing:.2px;
+}
+.brand-badge .icon{font-size:.85rem;}
 
 .stepper{display:flex;gap:6px;margin:14px 0 22px;flex-wrap:wrap;}
 .step{
@@ -187,6 +199,11 @@ tr.tied td{outline:1px dashed var(--bad);outline-offset:-1px;}
 .modal .close{float:right;cursor:pointer;color:var(--text-dim);font-size:1.1rem;}
 
 .foot-note{font-size:.72rem;color:var(--text-dim);text-align:center;margin-top:30px;line-height:1.5;}
+
+@media (max-width:640px){
+  .hero{align-items:flex-start;}
+  .hero h1{font-size:1.25rem;}
+}
 </style>
 </head>
 <body>
@@ -1660,6 +1677,12 @@ function renderHero(){
     <div>
       <h1>${state.season}</h1>
       <div class="sub">${state.players.length} jugador${state.players.length===1?'':'es'} · fase: ${phaseLabel(state.phase)} · ${seasonDateText(state.seasonKickoff)} · sync: ${syncTxt}${syncWarn}</div>
+      <div class="brand-strip">
+        <span class="brand-badge"><span class="icon">⭐</span>Champions League</span>
+        <span class="brand-badge"><span class="icon">🏆</span>Mundial</span>
+        <span class="brand-badge"><span class="icon">🎮</span>EA FC26</span>
+        <span class="brand-badge"><span class="icon">🎮</span>PlayStation</span>
+      </div>
     </div>
   </div>`);
 }
@@ -1895,75 +1918,7 @@ function renderLeagueTab(){
 
   if(state.phase==='league'){
     if(state.players.length===3){
-      const bettingCard = el(`<div class="card"><h3>Apuesta del jugador que descansa (solo liguilla de 3)</h3><div class="muted" style="margin-bottom:8px;">En este formato, el jugador que no participa en el partido de la jornada puede apostar 1X2.</div></div>`);
-      const openLeagueMatches = state.leagueMatches.filter(m=> m.p1 && m.p2 && m.status!=='confirmed');
-      if(openLeagueMatches.length){
-        const row = el(`<div class="row"></div>`);
-        const matchBox = el(`<div><label>Partido</label><select id="lg-bet-match"></select></div>`);
-        const bettorBox = el(`<div><label>Apostador (descansa)</label><input id="lg-bet-bettor" type="text" disabled></div>`);
-        const pickBox = el(`<div><label>Pronóstico</label><select id="lg-bet-pick"><option value="home">Gana local</option><option value="draw">Empate</option><option value="away">Gana visitante</option></select></div>`);
-        const stakeBox = el(`<div><label>Cantidad</label><input type="number" id="lg-bet-stake" min="1" step="1" readonly><div id="lg-bet-max" class="muted" style="margin-bottom:6px;"></div><div id="lg-bet-presets" class="bet-presets"></div></div>`);
-        row.appendChild(matchBox); row.appendChild(bettorBox); row.appendChild(pickBox); row.appendChild(stakeBox);
-        bettingCard.appendChild(row);
-
-        const selMatch = matchBox.querySelector('#lg-bet-match');
-        const inputBettor = bettorBox.querySelector('#lg-bet-bettor');
-        const pickSel = pickBox.querySelector('#lg-bet-pick');
-        const stakeInput = stakeBox.querySelector('#lg-bet-stake');
-        const maxInfo = stakeBox.querySelector('#lg-bet-max');
-        const presetsWrap = stakeBox.querySelector('#lg-bet-presets');
-
-        function restingPlayerFor(match){
-          return state.players.find(p=> p.id!==match.p1 && p.id!==match.p2) || null;
-        }
-
-        openLeagueMatches.forEach(m=>{
-          const rest = restingPlayerFor(m);
-          selMatch.appendChild(el(`<option value="${m.id}">${playerName(m.p1)} vs ${playerName(m.p2)}${rest?` · descansa: ${rest.name}`:''}</option>`));
-        });
-
-        function refreshResting(){
-          const m = openLeagueMatches.find(x=> x.id===selMatch.value) || openLeagueMatches[0];
-          const rest = m ? restingPlayerFor(m) : null;
-          inputBettor.value = rest ? `${rest.name} (${fmtMoney(rest.money||0)})` : '—';
-          const maxStake = rest ? getMaxStakeForPlayer(rest.id) : 0;
-          maxInfo.textContent = `Máximo que puedes apostar: ${fmtMoney(maxStake)}`;
-          presetsWrap.innerHTML = '';
-          let selected = null;
-          getStakePresets(maxStake).forEach((amount, idx)=>{
-            const btn = el(`<button type="button" class="small ${idx===2?'active':''}">${fmtMoney(amount)}</button>`);
-            if(idx===2){ selected = amount; }
-            btn.onclick = ()=>{
-              selected = amount;
-              stakeInput.value = String(amount);
-              presetsWrap.querySelectorAll('button').forEach(b=> b.classList.remove('active'));
-              btn.classList.add('active');
-            };
-            presetsWrap.appendChild(btn);
-          });
-          stakeInput.value = selected!==null ? String(selected) : '';
-        }
-        selMatch.onchange = refreshResting;
-        refreshResting();
-
-        const betBtn = el(`<button class="gold" type="button">Registrar apuesta</button>`);
-        const betErr = el(`<div class="muted" style="color:#ffb3ad;margin-top:8px;"></div>`);
-        betBtn.onclick=()=>{
-          const m = openLeagueMatches.find(x=> x.id===selMatch.value);
-          if(!m){ betErr.textContent='No hay partido disponible.'; return; }
-          const rest = restingPlayerFor(m);
-          if(!rest){ betErr.textContent='No se pudo determinar el jugador que descansa.'; return; }
-          const pick = pickSel.value;
-          const stake = parseInt(stakeInput.value);
-          const err = placeBet(rest.id, m.id, pick, stake);
-          if(err){ betErr.textContent = err; return; }
-          betErr.textContent = 'Apuesta registrada.';
-        };
-        bettingCard.appendChild(betBtn);
-        bettingCard.appendChild(betErr);
-      } else {
-        bettingCard.appendChild(el(`<div class="muted">No hay partidos abiertos para apostar en este momento.</div>`));
-      }
+      const bettingCard = el(`<div class="card"><h3>Apuesta del jugador que descansa (solo liguilla de 3)</h3><div class="muted" style="margin-bottom:8px;">Para evitar botones duplicados, las apuestas ahora se hacen desde cada partido con el botón <b>Apostar</b>.</div></div>`);
       wrap.appendChild(bettingCard);
     }
     wrap.appendChild(renderBetActivityBoard('Panel de apuestas de la liguilla'));
@@ -2321,68 +2276,8 @@ function renderKnockoutTab(){
   const nonQualified = getNonQualifiedIds();
   if(state.phase==='knockout' && nonQualified.length){
     const ceiling = getBetMoneyCeiling();
-    const card = el(`<div class="card"><h3>Apuestas de eliminatorias (solo no clasificados)</h3><div class="muted" style="margin-bottom:8px;">Puedes apostar por <b>gana local</b>, <b>empate</b> o <b>gana visitante</b>. Si el partido termina en empate y no elegiste empate, pierdes la apuesta.</div></div>`);
+    const card = el(`<div class="card"><h3>Apuestas de eliminatorias (solo no clasificados)</h3><div class="muted" style="margin-bottom:8px;">Ahora las apuestas se hacen desde cada emparejamiento con el botón <b>Apostar</b>.</div></div>`);
     card.appendChild(el(`<div class="muted" style="margin-bottom:8px;">Tope global de dinero por apuestas: <b>${fmtMoney(ceiling)}</b> · Apuesta máxima por ticket: <b>${Math.round(state.bets.maxStakePct*100)}%</b> de tu saldo actual.</div>`));
-
-    const row = el(`<div class="row"></div>`);
-    const bettorBox = el(`<div><label>Apostador</label><select id="bet-player"></select></div>`);
-    const matchBox = el(`<div><label>Partido</label><select id="bet-match"></select></div>`);
-    const pickBox = el(`<div><label>Pronóstico</label><select id="bet-pick"><option value="home">Gana local</option><option value="draw">Empate</option><option value="away">Gana visitante</option></select></div>`);
-    const stakeBox = el(`<div><label>Cantidad</label><input type="number" id="bet-stake" min="1" step="1" readonly><div id="bet-max" class="muted" style="margin-bottom:6px;"></div><div id="bet-presets" class="bet-presets"></div></div>`);
-    row.appendChild(bettorBox); row.appendChild(matchBox); row.appendChild(pickBox); row.appendChild(stakeBox);
-    card.appendChild(row);
-
-    const openMatches = getBettableMatches().filter(m=> m.status!=='confirmed');
-    const selPlayer = bettorBox.querySelector('#bet-player');
-    const selMatch = matchBox.querySelector('#bet-match');
-    const inputStake = stakeBox.querySelector('#bet-stake');
-    const maxInfo = stakeBox.querySelector('#bet-max');
-    const presetsWrap = stakeBox.querySelector('#bet-presets');
-    nonQualified.forEach(id=>{
-      const p = findPlayer(id);
-      selPlayer.appendChild(el(`<option value="${id}" ${(state.myPlayerId===id)?'selected':''}>${p.name} (${fmtMoney(p.money||0)})</option>`));
-    });
-    openMatches.forEach(m=>{
-      selMatch.appendChild(el(`<option value="${m.id}">${playerName(m.p1)} vs ${playerName(m.p2)}</option>`));
-    });
-    function refreshBetStakeOptions(){
-      const playerId = selPlayer.value;
-      const maxStake = playerId ? getMaxStakeForPlayer(playerId) : 0;
-      maxInfo.textContent = `Máximo que puedes apostar: ${fmtMoney(maxStake)}`;
-      presetsWrap.innerHTML = '';
-      let selected = null;
-      getStakePresets(maxStake).forEach((amount, idx)=>{
-        const btnPreset = el(`<button type="button" class="small ${idx===2?'active':''}">${fmtMoney(amount)}</button>`);
-        if(idx===2){ selected = amount; }
-        btnPreset.onclick = ()=>{
-          selected = amount;
-          inputStake.value = String(amount);
-          presetsWrap.querySelectorAll('button').forEach(b=> b.classList.remove('active'));
-          btnPreset.classList.add('active');
-        };
-        presetsWrap.appendChild(btnPreset);
-      });
-      inputStake.value = selected!==null ? String(selected) : '';
-    }
-    selPlayer.onchange = refreshBetStakeOptions;
-    refreshBetStakeOptions();
-    if(!openMatches.length){
-      card.appendChild(el(`<div class="muted">No hay partidos abiertos para apostar.</div>`));
-    } else {
-      const btn = el(`<button class="gold" type="button">Registrar apuesta</button>`);
-      const err = el(`<div class="muted" style="color:#ffb3ad;margin-top:8px;"></div>`);
-      btn.onclick=()=>{
-        const bettorId = selPlayer.value;
-        const matchId = selMatch.value;
-        const pick = pickBox.querySelector('#bet-pick').value;
-        const stake = parseInt(inputStake.value);
-        const e = placeBet(bettorId, matchId, pick, stake);
-        if(e){ err.textContent=e; return; }
-        err.textContent='Apuesta registrada.';
-      };
-      card.appendChild(btn);
-      card.appendChild(err);
-    }
 
     wrap.appendChild(card);
   }
