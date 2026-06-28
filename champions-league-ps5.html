@@ -204,6 +204,19 @@ tr.tied td{outline:1px dashed var(--bad);outline-offset:-1px;}
   text-transform:capitalize;
 }
 .catalog-chip.active{background:var(--gold);color:#1a1200;border-color:var(--gold);}
+.catalog-chip-row{display:inline-flex;align-items:center;gap:6px;}
+.catalog-chip-remove{
+  border:1px solid rgba(225,87,76,.45);
+  background:rgba(225,87,76,.2);
+  color:#ffd4d0;
+  border-radius:999px;
+  width:22px;
+  height:22px;
+  padding:0;
+  line-height:1;
+  font-size:.78rem;
+  font-weight:800;
+}
 .add-player-actions{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
 .add-player-actions input{margin-bottom:0;min-width:220px;flex:1;}
 
@@ -439,6 +452,7 @@ const UI_LANG_KEY = 'cl-ps5-ui-lang';
 const SUPPORTED_UI_LANGS = ['es','en','lt','ca'];
 const PRESET_PLAYER_NAMES = ['renzo','johan','giank','felipe','jordi','ithan','miguel'];
 const PLAYER_CATALOG_KEY = 'cl-ps5-player-catalog-custom';
+const PLAYER_CATALOG_HIDDEN_KEY = 'cl-ps5-player-catalog-hidden';
 const MASTER_RESET_PASSWORD_KEY = 'cl-ps5-master-reset-password';
 const RESTART_SEASON_PASSWORD = '01234';
 const I18N = {
@@ -655,6 +669,10 @@ function setUiLang(lang){
 function openGuideModal(){
   pendingModal = ()=>{
     const betCeiling = getBetMoneyCeiling();
+    const n = state.players.length;
+    const maxMatches = Math.max(1, 2*(n-1));
+    const q = effectiveNumQualifiers();
+    const prize = state.finance.prizes;
     const bg = el(`<div class="modal-bg"><div class="modal guide-modal">
       <span class="close">✕</span>
       <h3>Cómo se juega</h3>
@@ -688,6 +706,25 @@ function openGuideModal(){
           <li>Si el empate sigue justo en el corte: cruces aleatorios a penaltis hasta desempatar.</li>
           <li>En play-off/eliminatorias no puede quedar empate: si empatan en goles, se registra tanda de penaltis obligatoriamente.</li>
         </ul>
+
+        <p style="margin-top:12px;"><b>Parámetros automáticos de esta temporada</b></p>
+        <ul style="padding-left:18px;margin:0 0 10px;">
+          <li>Partidos por jugador en liguilla: <b>${n ? `${autoMatchesPerPlayer(n)} de ${maxMatches}` : '—'}</b>.</li>
+          <li>Clasifican a eliminatorias: <b>${n ? `${q} de ${n}` : '—'}</b> (aprox. 2 de cada 3).</li>
+        </ul>
+
+        <p><b>Premios económicos (referencia Champions 2025/26)</b></p>
+        <ul style="padding-left:18px;margin:0 0 10px;">
+          <li>Participación: <b>${fmtMoney(prize.participation)}</b>.</li>
+          <li>Victoria en liguilla: <b>${fmtMoney(prize.leagueWin)}</b>.</li>
+          <li>Empate en liguilla: <b>${fmtMoney(prize.leagueDraw)}</b>.</li>
+          <li>Clasificarse a octavos: <b>${fmtMoney(prize.round16)}</b>.</li>
+          <li>Clasificarse a cuartos: <b>${fmtMoney(prize.quarter)}</b>.</li>
+          <li>Clasificarse a semifinales: <b>${fmtMoney(prize.semi)}</b>.</li>
+          <li>Subcampeón: <b>${fmtMoney(prize.runnerUp)}</b>.</li>
+          <li>Campeón: <b>${fmtMoney(prize.champion)}</b>.</li>
+        </ul>
+
       </div>
     </div></div>`);
     bg.querySelector('.close').onclick = ()=>{ pendingModal=null; render(); };
@@ -840,12 +877,43 @@ function setStoredCustomPlayerNames(names){
   try{ localStorage.setItem(PLAYER_CATALOG_KEY, JSON.stringify(names)); }
   catch(_err){}
 }
+function getHiddenPresetNames(){
+  try{
+    const raw = localStorage.getItem(PLAYER_CATALOG_HIDDEN_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    if(!Array.isArray(parsed)) return [];
+    return parsed
+      .map(n=> normalizePlayerName(n))
+      .filter(Boolean)
+      .filter((n, i, arr)=> arr.indexOf(n)===i)
+      .filter(n=> PRESET_PLAYER_NAMES.includes(n));
+  }catch(_err){
+    return [];
+  }
+}
+function setHiddenPresetNames(names){
+  try{ localStorage.setItem(PLAYER_CATALOG_HIDDEN_KEY, JSON.stringify(names)); }
+  catch(_err){}
+}
+function unhidePresetName(name){
+  const clean = normalizePlayerName(name);
+  if(!PRESET_PLAYER_NAMES.includes(clean)) return;
+  const hidden = getHiddenPresetNames();
+  const next = hidden.filter(n=> n!==clean);
+  if(next.length!==hidden.length) setHiddenPresetNames(next);
+}
 function getPlayerNameCatalog(){
-  return [...PRESET_PLAYER_NAMES, ...getStoredCustomPlayerNames()];
+  const hidden = new Set(getHiddenPresetNames());
+  const visiblePreset = PRESET_PLAYER_NAMES.filter(n=> !hidden.has(n));
+  return [...visiblePreset, ...getStoredCustomPlayerNames()];
 }
 function addNameToCatalog(name){
   const clean = normalizePlayerName(name);
-  if(!clean || PRESET_PLAYER_NAMES.includes(clean)) return;
+  if(!clean) return;
+  if(PRESET_PLAYER_NAMES.includes(clean)){
+    unhidePresetName(clean);
+    return;
+  }
   const custom = getStoredCustomPlayerNames();
   if(custom.includes(clean)) return;
   custom.push(clean);
@@ -854,7 +922,15 @@ function addNameToCatalog(name){
 }
 function removeNameFromCatalog(name){
   const clean = normalizePlayerName(name);
-  if(!clean || PRESET_PLAYER_NAMES.includes(clean)) return false;
+  if(!clean) return false;
+  if(PRESET_PLAYER_NAMES.includes(clean)){
+    const hidden = getHiddenPresetNames();
+    if(hidden.includes(clean)) return false;
+    hidden.push(clean);
+    hidden.sort((a,b)=> a.localeCompare(b, 'es-ES'));
+    setHiddenPresetNames(hidden);
+    return true;
+  }
   const custom = getStoredCustomPlayerNames();
   const next = custom.filter(n=> n!==clean);
   if(next.length===custom.length) return false;
@@ -1605,7 +1681,35 @@ function generateDemoSeason(requestedCount){
 function openDemoSeasonModal(){
   const demoMax = getDemoPlayersDynamicMax();
   const defaultCount = state.players.length>=2 ? Math.min(demoMax, state.players.length) : 6;
-  openDemoSeasonModalWithCount(defaultCount);
+  pendingModal = ()=>{
+    const bg = el(`<div class="modal-bg"><div class="modal" style="max-width:520px;">
+      <span class="close">✕</span>
+      <h3>Configurar demo</h3>
+      <div class="muted" style="margin-bottom:12px;">Primero elige cuántos jugadores quieres simular y luego se genera la temporada demo.</div>
+      <div>
+        <label>Jugadores para la demo (2-${demoMax})</label>
+        <input id="demo-count-picker" type="number" min="2" max="${demoMax}" step="1" value="${defaultCount}">
+      </div>
+      <div class="row" style="margin-top:12px;justify-content:flex-end;">
+        <button id="demo-start" class="gold" type="button">Empezar demo</button>
+      </div>
+    </div></div>`);
+
+    bg.querySelector('.close').onclick = ()=>{ pendingModal=null; render(); };
+    const input = bg.querySelector('#demo-count-picker');
+    const startBtn = bg.querySelector('#demo-start');
+    if(input) input.focus();
+    const start = ()=>{
+      const requested = input ? input.value : defaultCount;
+      openDemoSeasonModalWithCount(requested);
+    };
+    if(startBtn) startBtn.onclick = start;
+    if(input) input.onkeydown = (ev)=>{
+      if(ev.key==='Enter') start();
+    };
+    return bg;
+  };
+  render();
 }
 
 function openDemoSeasonModalWithCount(count){
@@ -2753,85 +2857,21 @@ function renderTabBody(){
 /* ---- CONFIG TAB ---- */
 function renderConfigTab(){
   const wrap = document.createElement('div');
-  const locked = state.phase!=='setup';
-  const n = state.players.length;
-  const maxMatches = Math.max(1,2*(n-1));
-  const q = effectiveNumQualifiers();
-
-  if(locked){
-    wrap.appendChild(el(`<div class="banner info">La configuración está bloqueada porque el torneo ya empezó. Puedes iniciar una nueva temporada desde la pestaña Historial cuando termine.</div>`));
-  }
-
   const guideCard = el(`<div class="card">
-    <h3>Guía del juego</h3>
-    <div class="muted" style="margin-bottom:10px;">Abre la explicación completa del torneo, apuestas y desempates en un popup interactivo.</div>
+    <h3>Cómo se juega</h3>
+    <div class="muted" style="margin-bottom:10px;">Todo el apartado de información está centralizado en este popup: reglas, parámetros automáticos y premios.</div>
     <button id="open-guide-config" class="secondary" type="button">Abrir guía completa</button>
   </div>`);
   guideCard.querySelector('#open-guide-config').onclick = ()=> openGuideModal();
   wrap.appendChild(guideCard);
 
-  const card = el(`<div class="card">
-    <h3>Parámetros de la liguilla</h3>
-    <div class="row">
-      <div>
-        <label>Partidos por jugador en la liguilla (automático)</label>
-        <input type="text" value="${n? autoMatchesPerPlayer(n)+' de '+maxMatches+' partidos posibles' : '—'}" disabled>
-        <div class="muted">Formato liga completa: todos juegan contra todos a ida y vuelta.</div>
-      </div>
-      <div>
-        <label>Pasan a eliminatorias (automático)</label>
-        <input type="text" value="${n? q+' de '+n : '—'}" disabled>
-        <div class="muted">Pasan aprox. 2 de cada 3 jugadores (24 de 36 en el formato oficial). Para 3 o más jugadores, siempre se elimina al menos uno en liguilla. Si ese número no es potencia de 2, se genera play-off para completar el cuadro.</div>
-      </div>
-    </div>
-  </div>`);
-  wrap.appendChild(card);
-
-  const tieCard = el(`<div class="card">
-    <h3>Cómo se resuelven los empates</h3>
-    <ol class="muted" style="padding-left:18px;line-height:1.6;">
-      <li>Puntos en la liguilla.</li>
-      <li>Diferencia de goles.</li>
-      <li>Goles a favor.</li>
-      <li>Resultado del partido directo entre los empatados (si jugaron entre sí).</li>
-      <li>Si sigue empatado justo en la línea de clasificación, se generan cruces aleatorios de tanda de penaltis entre los empatados hasta dejar un único ganador.</li>
-    </ol>
-    <h3 style="margin-top:16px;">Empates en eliminatorias y play-off</h3>
-    <p class="muted">En partido único de play-off o eliminatoria, un empate en el marcador de PS5 se resuelve siempre pidiendo el resultado de la tanda de penaltis dentro del propio partido — el programa no deja avanzar sin un ganador.</p>
-  </div>`);
-  wrap.appendChild(tieCard);
-
-  const prize = state.finance.prizes;
-  const moneyCard = el(`<div class="card">
-    <h3>Premios económicos (referencia Champions 2025/26)</h3>
-    <div class="muted">Importes aproximados en euros por rendimiento deportivo (ciclo UEFA 2024-27).</div>
-    <table style="margin-top:8px;">
-      <tr><th>Concepto</th><th>Premio</th></tr>
-      <tr><td class="name">Participación</td><td>${fmtMoney(prize.participation)}</td></tr>
-      <tr><td class="name">Victoria en liguilla</td><td>${fmtMoney(prize.leagueWin)}</td></tr>
-      <tr><td class="name">Empate en liguilla</td><td>${fmtMoney(prize.leagueDraw)}</td></tr>
-      <tr><td class="name">Clasificarse a octavos</td><td>${fmtMoney(prize.round16)}</td></tr>
-      <tr><td class="name">Clasificarse a cuartos</td><td>${fmtMoney(prize.quarter)}</td></tr>
-      <tr><td class="name">Clasificarse a semifinales</td><td>${fmtMoney(prize.semi)}</td></tr>
-      <tr><td class="name">Subcampeón</td><td>${fmtMoney(prize.runnerUp)}</td></tr>
-      <tr><td class="name">Campeón</td><td>${fmtMoney(prize.champion)}</td></tr>
-    </table>
-  </div>`);
-  wrap.appendChild(moneyCard);
-
   const demoCard = el(`<div class="card">
-    <h3>Modo demo</h3>
-    <div class="muted" style="margin-bottom:10px;">Genera una temporada ejemplo al azar para explicar el formato. No cambia ni guarda datos reales.</div>
-    <button id="open-demo-season" class="secondary" type="button">Ver demo aleatoria</button>
+    <h3>Demo</h3>
+    <div class="muted" style="margin-bottom:10px;">Este botón es exclusivo para generar y ejecutar la demo aleatoria.</div>
+    <button id="open-demo-sector" class="secondary" type="button">Abrir demo aleatoria</button>
   </div>`);
-  demoCard.querySelector('#open-demo-season').onclick = ()=> openDemoSeasonModal();
+  demoCard.querySelector('#open-demo-sector').onclick = ()=> openDemoSeasonModal();
   wrap.appendChild(demoCard);
-
-
-
-  if(!locked){
-    wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">Inicia la liguilla desde la pestaña Jugadores cuando la plantilla esté lista.</div>`));
-  }
   return wrap;
 }
 
@@ -2901,6 +2941,7 @@ function renderPlayersTab(){
       catalog.innerHTML = '';
       options.forEach(name=>{
         const label = name==='INS' ? t('insNew') : name;
+        const row = el(`<div class="catalog-chip-row"></div>`);
         const chip = el(`<button type="button" class="catalog-chip ${selectedName===name?'active':''}">${label}</button>`);
         chip.onclick = ()=>{
           selectedName = name;
@@ -2910,7 +2951,18 @@ function renderPlayersTab(){
           renderCatalog();
           if(isIns) nameInput.focus();
         };
-        catalog.appendChild(chip);
+        row.appendChild(chip);
+        if(name!=='INS'){
+          const removeBtn = el(`<button type="button" class="catalog-chip-remove" title="Quitar de la lista">×</button>`);
+          removeBtn.onclick = ()=>{
+            const ok = removeNameFromCatalog(name);
+            if(!ok) return;
+            if(selectedName===name) selectedName = getPlayerNameCatalog()[0] || 'INS';
+            renderCatalog();
+          };
+          row.appendChild(removeBtn);
+        }
+        catalog.appendChild(row);
       });
       const isIns = selectedName==='INS';
       nameInput.style.display = isIns ? '' : 'none';
@@ -2922,7 +2974,7 @@ function renderPlayersTab(){
         {code:'en', label:t('langOptionEn')},
         {code:'lt', label:t('langOptionLt')},
         {code:'ca', label:t('langOptionCa')}
-      ];
+      ].sort((a,b)=> a.label.localeCompare(b.label, uiLocale(), {sensitivity:'base'}));
       langCatalog.innerHTML = '';
       options.forEach(opt=>{
         const chip = el(`<button type="button" class="catalog-chip ${selectedLang===opt.code?'active':''}">${opt.label}</button>`);
