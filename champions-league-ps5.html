@@ -2145,7 +2145,7 @@ function renderMatchRow(m, decisive){
     <div class="vs"><span>${p1}</span><span>${scoreTxt}</span><span>${p2}</span></div>
     <span class="tag ${m.status}">${({empty:'sin jugar',pending:'pendiente',confirmed:'confirmado',dispute:'disputa'})[m.status]}</span>
   </div>`);
-  const btnLabel = m.status==='confirmed' ? 'Corregir' : (m.status==='pending' ? 'Revisar' : 'resultado');
+  const btnLabel = m.status==='confirmed' ? 'Corregir' : (m.status==='pending' ? 'Confirmar' : 'Resultado');
   const btn = el(`<button class="small secondary">${btnLabel}</button>`);
   btn.onclick=()=> openMatchModal(m, decisive, m.status==='confirmed');
   row.appendChild(btn);
@@ -2367,11 +2367,11 @@ function renderPlayerForm(match, decisive){
 
 function renderPendingDecisionForm(match, decisive){
   const reporterId = match.reportedBy;
-  const autoDecider = state.myPlayerId && state.myPlayerId!==reporterId && (state.myPlayerId===match.p1||state.myPlayerId===match.p2)
-    ? state.myPlayerId
-    : null;
+  const autoDecider = reporterId===match.p1
+    ? match.p2
+    : (reporterId===match.p2 ? match.p1 : null);
   if(!autoDecider){
-    return el(`<div class="banner warn">Solo puedes aceptar/rechazar resultados de partidos donde participa tu jugador activo y no fuiste quien reportó.</div>`);
+    return el(`<div class="banner warn">No se pudo identificar automáticamente al rival que debe confirmar este resultado.</div>`);
   }
   const scoreTxt = `${match.score1} - ${match.score2}` + (match.peno1!==null? ` (pen. ${match.peno1}-${match.peno2})` : '');
 
