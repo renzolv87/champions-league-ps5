@@ -1223,11 +1223,16 @@ function canOpenBetForMatch(match){
   return false;
 }
 function getEligibleBettorsForMatch(match){
+  if(!state.myPlayerId) return [];
   if(state.phase==='league'){
-    return state.players.filter(p=> p.id!==match.p1 && p.id!==match.p2);
+    const p = findPlayer(state.myPlayerId);
+    if(!p) return [];
+    return (p.id!==match.p1 && p.id!==match.p2) ? [p] : [];
   }
   if(state.phase==='knockout' || state.phase==='playoff'){
-    return getNonQualifiedIds().map(id=> findPlayer(id)).filter(Boolean);
+    if(getQualifiedIds().includes(state.myPlayerId)) return [];
+    const p = findPlayer(state.myPlayerId);
+    return p ? [p] : [];
   }
   return [];
 }
@@ -1245,15 +1250,12 @@ function openBetForMatchModal(matchId){
   }
 
   pendingModal = ()=>{
-    const singleBettor = bettors.length===1;
     const header = `${playerName(match.p1)} vs ${playerName(match.p2)}`;
     const bg = el(`<div class="modal-bg"><div class="modal">
       <span class="close">✕</span>
       <h3>Apostar en ${header}</h3>
       <div class="muted" style="margin-bottom:10px;">Elige pronóstico y monto para este emparejamiento.</div>
-      ${singleBettor
-        ? `<label>Apostador</label><input id="bm-bettor" type="text" disabled>`
-        : `<label>Apostador</label><select id="bm-bettor"></select>`}
+      <label>Apostador</label><input id="bm-bettor" type="text" disabled>
       <label>Pronóstico</label>
       <select id="bm-pick"></select>
       <label>Monto</label>
@@ -1274,19 +1276,12 @@ function openBetForMatchModal(matchId){
     const presetsEl = bg.querySelector('#bm-presets');
     const errEl = bg.querySelector('#bm-err');
 
-    if(singleBettor){
-      bettorEl.value = `${bettors[0].name} (${fmtMoney(bettors[0].money||0)})`;
-      bettorEl.dataset.playerId = bettors[0].id;
-    } else {
-      bettors.forEach((p, idx)=>{
-        bettorEl.appendChild(el(`<option value="${p.id}" ${idx===0?'selected':''}>${p.name} (${fmtMoney(p.money||0)})</option>`));
-      });
-      if(state.myPlayerId && bettors.some(p=> p.id===state.myPlayerId)) bettorEl.value = state.myPlayerId;
-    }
+    bettorEl.value = `${bettors[0].name} (${fmtMoney(bettors[0].money||0)})`;
+    bettorEl.dataset.playerId = bettors[0].id;
     fillPickOptions(pickEl, match);
 
     function selectedBettorId(){
-      return singleBettor ? bettorEl.dataset.playerId : bettorEl.value;
+      return bettorEl.dataset.playerId;
     }
     function refreshStakeOptions(){
       const pid = selectedBettorId();
@@ -1308,7 +1303,6 @@ function openBetForMatchModal(matchId){
       stakeEl.value = selected!==null ? String(selected) : '';
     }
 
-    if(!singleBettor) bettorEl.onchange = refreshStakeOptions;
     refreshStakeOptions();
 
     bg.querySelector('#bm-go').onclick = ()=>{
@@ -1328,6 +1322,7 @@ function openBetForMatchModal(matchId){
 function placeBet(playerId, matchId, pick, stake){
   const bettor = findPlayer(playerId);
   if(!bettor) return 'Apostador no encontrado.';
+  if(!state.myPlayerId || playerId!==state.myPlayerId) return 'Solo puedes apostar con tu jugador activo.';
   const isLeagueMode = state.phase==='league';
   const isKnockoutMode = state.phase==='knockout' || state.phase==='playoff';
   if(!isLeagueMode && !isKnockoutMode) return 'Las apuestas solo se permiten en liguilla o eliminatorias.';
@@ -1412,6 +1407,7 @@ function registerLeagueMoney(match){
 function reportResult(match, byId, score1, score2, peno1, peno2, decisive){
   const player = findPlayer(byId);
   if(!player) return 'Jugador no encontrado.';
+  if(state.myPlayerId && byId!==state.myPlayerId) return 'Solo puedes reportar con tu jugador activo.';
   if(match.p1!==byId && match.p2!==byId) return 'No formas parte de este partido.';
   if(match.status==='pending') return 'Este resultado está pendiente de aceptación/rechazo del rival.';
   if(match.mustReReportBy && byId!==match.mustReReportBy) return 'El jugador que reportó inicialmente debe volver a cargar el resultado.';
@@ -1441,6 +1437,7 @@ function reportResult(match, byId, score1, score2, peno1, peno2, decisive){
 function acceptReportedResult(match, byId, decisive){
   const player = findPlayer(byId);
   if(!player) return 'Jugador no encontrado.';
+  if(state.myPlayerId && byId!==state.myPlayerId) return 'Solo puedes aceptar con tu jugador activo.';
   if(match.status!=='pending') return 'Este partido no está pendiente.';
   if(byId!==match.p1 && byId!==match.p2) return 'No formas parte de este partido.';
   if(byId===match.reportedBy) return 'Quien reportó no puede auto-confirmar: debe aceptar el rival.';
@@ -1466,6 +1463,7 @@ function acceptReportedResult(match, byId, decisive){
 function rejectReportedResult(match, byId){
   const player = findPlayer(byId);
   if(!player) return 'Jugador no encontrado.';
+  if(state.myPlayerId && byId!==state.myPlayerId) return 'Solo puedes rechazar con tu jugador activo.';
   if(match.status!=='pending') return 'Este partido no está pendiente.';
   if(byId!==match.p1 && byId!==match.p2) return 'No formas parte de este partido.';
   if(byId===match.reportedBy) return 'Quien reportó no puede rechazarse a sí mismo.';
@@ -1915,20 +1913,18 @@ function renderPlayersTab(){
   if(!locked){
     const addRow = el(`<div class="row" style="margin-top:14px;">
       <div>
-        <label>Selecciona jugador</label>
+        <label>Jugador</label>
         <select id="np-preset"></select>
-        <div class="muted" style="margin-top:-6px;">Tip: pulsa un nombre de la lista rápida para seleccionarlo al instante.</div>
-        <div id="np-chip-list" class="name-chip-list"></div>
+        <div class="muted" style="margin-top:-6px;">Elige un nombre o INS para escribir uno nuevo.</div>
       </div>
       <div>
-        <label>Nombre personalizado (INS)</label>
+        <label>INS (nombre nuevo)</label>
         <input id="np-name" placeholder="Escribe un nombre nuevo" style="display:none;">
       </div>
     </div>`);
     wrap.appendChild(addRow);
     const presetSel = addRow.querySelector('#np-preset');
     const nameInput = addRow.querySelector('#np-name');
-    const chipList = addRow.querySelector('#np-chip-list');
 
     function populatePresetOptions(selectedValue){
       presetSel.innerHTML = '';
@@ -1941,34 +1937,7 @@ function renderPlayersTab(){
         presetSel.value = selectedValue;
       }
     }
-    function renderNameChips(){
-      chipList.innerHTML = '';
-      const customSet = new Set(getStoredCustomPlayerNames());
-      getPlayerNameCatalog().forEach(name=>{
-        const isCustom = customSet.has(name);
-        const chip = el(`<span class="name-chip"><span>${name}</span></span>`);
-        chip.onclick = ()=>{
-          presetSel.value = name;
-          presetSel.onchange();
-        };
-        if(isCustom){
-          const del = el(`<button type="button" title="Eliminar del listado">x</button>`);
-          del.onclick = (ev)=>{
-            ev.stopPropagation();
-            if(!removeNameFromCatalog(name)) return;
-            const nextSelection = presetSel.value===name ? 'INS' : presetSel.value;
-            populatePresetOptions(nextSelection);
-            renderNameChips();
-            presetSel.onchange();
-          };
-          chip.appendChild(del);
-        }
-        chipList.appendChild(chip);
-      });
-    }
-
     populatePresetOptions();
-    renderNameChips();
 
     presetSel.onchange = ()=>{
       const isIns = presetSel.value==='INS';
@@ -1988,7 +1957,6 @@ function renderPlayersTab(){
       addNameToCatalog(name);
       if(selected==='INS') nameInput.value = '';
       populatePresetOptions(selected==='INS' ? name : selected);
-      renderNameChips();
     };
     wrap.appendChild(addBtn);
   }
@@ -2321,15 +2289,12 @@ function openMatchModal(match, decisive, isAdminEdit){
 
 function renderPlayerForm(match, decisive){
   const autoWho = (state.myPlayerId===match.p1 || state.myPlayerId===match.p2) ? state.myPlayerId : null;
-  const defaultWho = autoWho || match.p1;
+  if(!autoWho){
+    return el(`<div class="banner warn">Solo puedes reportar resultados de partidos donde participa tu jugador activo.</div>`);
+  }
   const box = el(`<div>
-    ${autoWho
-      ? `<div class="muted" style="margin-bottom:8px;">Reportando automáticamente como <b>${playerName(autoWho)}</b>.</div><input type="hidden" id="m-who" value="${autoWho}">`
-      : `<label>¿Quién reporta el resultado?</label>
-    <select id="m-who">
-      <option value="${match.p1}" ${defaultWho===match.p1?'selected':''}>${playerName(match.p1)}</option>
-      <option value="${match.p2}" ${defaultWho===match.p2?'selected':''}>${playerName(match.p2)}</option>
-    </select>`}
+    <div class="muted" style="margin-bottom:8px;">Reportando como <b>${playerName(autoWho)}</b>.</div>
+    <input type="hidden" id="m-who" value="${autoWho}">
     <div class="row">
       <div><label>Goles ${playerName(match.p1)}</label><input type="number" id="m-s1" min="0" value="${match.score1??0}"></div>
       <div><label>Goles ${playerName(match.p2)}</label><input type="number" id="m-s2" min="0" value="${match.score2??0}"></div>
@@ -2358,20 +2323,15 @@ function renderPendingDecisionForm(match, decisive){
   const autoDecider = state.myPlayerId && state.myPlayerId!==reporterId && (state.myPlayerId===match.p1||state.myPlayerId===match.p2)
     ? state.myPlayerId
     : null;
-  const opponentDefault = autoDecider
-    ? state.myPlayerId
-    : (reporterId===match.p1 ? match.p2 : match.p1);
+  if(!autoDecider){
+    return el(`<div class="banner warn">Solo puedes aceptar/rechazar resultados de partidos donde participa tu jugador activo y no fuiste quien reportó.</div>`);
+  }
   const scoreTxt = `${match.score1} - ${match.score2}` + (match.peno1!==null? ` (pen. ${match.peno1}-${match.peno2})` : '');
 
   const box = el(`<div>
     <div class="banner info">Resultado propuesto por <b>${playerName(reporterId)}</b>: <b>${scoreTxt}</b></div>
-    ${autoDecider
-      ? `<div class="muted" style="margin-bottom:8px;">Respondiendo automáticamente como <b>${playerName(autoDecider)}</b>.</div><input type="hidden" id="m-decider" value="${autoDecider}">`
-      : `<label>¿Quién responde?</label>
-    <select id="m-decider">
-      <option value="${match.p1}" ${opponentDefault===match.p1?'selected':''}>${playerName(match.p1)}</option>
-      <option value="${match.p2}" ${opponentDefault===match.p2?'selected':''}>${playerName(match.p2)}</option>
-    </select>`}
+    <div class="muted" style="margin-bottom:8px;">Respondiendo como <b>${playerName(autoDecider)}</b>.</div>
+    <input type="hidden" id="m-decider" value="${autoDecider}">
     <div id="m-derr" class="muted" style="color:#ffb3ad;margin-bottom:8px;"></div>
     <div class="row">
       <div><button id="m-accept" class="gold" type="button">Aceptar</button></div>
