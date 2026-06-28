@@ -178,7 +178,20 @@ tr.tied td{outline:1px dashed var(--bad);outline-offset:-1px;}
 
 .players-panel-head{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
 .players-panel-head h3{margin:0;}
-.player-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;}
+.player-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:10px;
+  max-height:min(58vh, 560px);
+  overflow:auto;
+  overscroll-behavior:contain;
+  padding-right:4px;
+  align-content:start;
+}
+.player-grid::-webkit-scrollbar{width:10px;height:10px;}
+.player-grid::-webkit-scrollbar-track{background:rgba(255,255,255,.03);border-radius:999px;}
+.player-grid::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#3b4593,#5964c0);border-radius:999px;border:2px solid rgba(11,16,38,.55);}
+.player-grid{scrollbar-color:#5964c0 rgba(255,255,255,.03);scrollbar-width:thin;}
 .player-tile{
   background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(0,0,0,.08));
   border:1px solid var(--line);
