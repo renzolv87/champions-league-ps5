@@ -1637,6 +1637,7 @@ const I18N = {
     guideAudioPlay: 'Reproducir audio',
     guideAudioStop: 'Detener audio',
     guideAudioNotSupported: 'Audio no compatible en este dispositivo',
+    waProposalLangLabel: 'Idioma del mensaje de WhatsApp',
     waProposalBtn: 'Compartir propuesta por WhatsApp',
     waProposalHint: 'Genera un mensaje con temporada, formato y 3 horarios para votar en el grupo.',
     waProposalNeedPlayers: 'Necesitas al menos 1 jugador para compartir propuesta.',
@@ -1902,6 +1903,7 @@ const I18N = {
     guideAudioPlay: 'Play audio',
     guideAudioStop: 'Stop audio',
     guideAudioNotSupported: 'Audio is not supported on this device',
+    waProposalLangLabel: 'WhatsApp message language',
     waProposalBtn: 'Share proposal on WhatsApp',
     waProposalHint: 'Builds a message with season details, format and 3 time options to vote in your group.',
     waProposalNeedPlayers: 'You need at least 1 player before sharing a proposal.',
@@ -2167,6 +2169,7 @@ const I18N = {
     guideAudioPlay: 'Paleisti garso skaityma',
     guideAudioStop: 'Sustabdyti garsa',
     guideAudioNotSupported: 'Siame irenginyje garso skaitymas nepalaikomas',
+    waProposalLangLabel: 'WhatsApp zinutes kalba',
     waProposalBtn: 'Dalintis pasiulymu per WhatsApp',
     waProposalHint: 'Sukuria zinute su sezono info, formatu ir 3 laiko variantais balsavimui.',
     waProposalNeedPlayers: 'Pries dalinantis pasiulymu reikia bent 1 zaidejo.',
@@ -2432,6 +2435,7 @@ const I18N = {
     guideAudioPlay: 'Reproduir audio',
     guideAudioStop: 'Aturar audio',
     guideAudioNotSupported: 'Audio no compatible en aquest dispositiu',
+    waProposalLangLabel: 'Idioma del missatge de WhatsApp',
     waProposalBtn: 'Compartir proposta per WhatsApp',
     waProposalHint: 'Genera un missatge amb temporada, format i 3 horaris per votar al grup.',
     waProposalNeedPlayers: 'Necessites almenys 1 jugador per compartir proposta.',
@@ -2524,12 +2528,24 @@ function syncAutoTheme(){
 }
 function uiLang(){ return normalizeUiLang(state?.uiLang || persistedUiLang()); }
 function uiLocale(){ return ({es:'es-ES', en:'en-GB', lt:'lt-LT', ca:'ca-ES'})[uiLang()] || 'es-ES'; }
+function localeForLang(lang){ return ({es:'es-ES', en:'en-GB', lt:'lt-LT', ca:'ca-ES'})[normalizeUiLang(lang)] || 'es-ES'; }
 function t(key){
   const lang = uiLang();
   return I18N[lang]?.[key] || I18N.es[key] || key;
 }
 function tf(key, vars = {}){
   let txt = t(key);
+  Object.keys(vars).forEach(k=>{
+    txt = txt.replaceAll(`{${k}}`, String(vars[k]));
+  });
+  return txt;
+}
+function tForLang(lang, key){
+  const safeLang = normalizeUiLang(lang);
+  return I18N[safeLang]?.[key] || I18N.es[key] || key;
+}
+function tfForLang(lang, key, vars = {}){
+  let txt = tForLang(lang, key);
   Object.keys(vars).forEach(k=>{
     txt = txt.replaceAll(`{${k}}`, String(vars[k]));
   });
@@ -2799,11 +2815,11 @@ function proposalSuggestedKickoffTime(){
   const mm = String(safe%60).padStart(2,'0');
   return `${hh}:${mm}`;
 }
-function proposalKickoffOptions(total=3){
+function proposalKickoffOptions(total=3, messageLang=uiLang()){
   const time = proposalSuggestedKickoffTime();
   const [hh, mm] = time.split(':').map(Number);
   const tz = detectDeviceTimeZone();
-  const fmt = new Intl.DateTimeFormat(uiLocale(), {
+  const fmt = new Intl.DateTimeFormat(localeForLang(messageLang), {
     weekday:'short',
     day:'2-digit',
     month:'2-digit',
@@ -2822,43 +2838,44 @@ function proposalKickoffOptions(total=3){
   }
   return out;
 }
-function proposalFormatText(playerCount){
+function proposalFormatText(playerCount, messageLang=uiLang()){
   const groupMode = shouldUseLeagueGroups(playerCount);
   const matches = Math.max(1, autoMatchesPerPlayer(playerCount));
   return groupMode
-    ? tf('waProposalFormatGroups', {groupSize: TARGET_GROUP_SIZE, matches})
-    : tf('waProposalFormatSingle', {matches});
+    ? tfForLang(messageLang, 'waProposalFormatGroups', {groupSize: TARGET_GROUP_SIZE, matches})
+    : tfForLang(messageLang, 'waProposalFormatSingle', {matches});
 }
-function buildWhatsAppProposalText(){
+function buildWhatsAppProposalText(messageLang = uiLang()){
+  const lang = normalizeUiLang(messageLang);
   const playerCount = state.players.length;
   const playerNames = state.players.map(p=> p.name).join(', ');
   const qualifiers = effectiveNumQualifiers();
-  const kickoff = state.seasonKickoff || t('waProposalToDefine');
-  const options = proposalKickoffOptions(3);
+  const kickoff = state.seasonKickoff || tForLang(lang, 'waProposalToDefine');
+  const options = proposalKickoffOptions(3, lang);
   const timeZoneLabel = displayTimeZone(detectDeviceTimeZone());
 
   return [
-    t('waProposalTitle'),
-    tf('waProposalSeason', {season: seasonTagLabel()}),
-    tf('waProposalPlayers', {count: playerCount, list: playerNames || '—'}),
-    tf('waProposalFormat', {format: proposalFormatText(playerCount)}),
-    tf('waProposalQualifiers', {count: qualifiers}),
-    tf('waProposalKickoff', {kickoff}),
+    tForLang(lang, 'waProposalTitle'),
+    tfForLang(lang, 'waProposalSeason', {season: seasonTagLabel()}),
+    tfForLang(lang, 'waProposalPlayers', {count: playerCount, list: playerNames || '—'}),
+    tfForLang(lang, 'waProposalFormat', {format: proposalFormatText(playerCount, lang)}),
+    tfForLang(lang, 'waProposalQualifiers', {count: qualifiers}),
+    tfForLang(lang, 'waProposalKickoff', {kickoff}),
     '',
-    tf('waProposalOptionsTitle', {timeZone: timeZoneLabel}),
+    tfForLang(lang, 'waProposalOptionsTitle', {timeZone: timeZoneLabel}),
     `1) ${options[0] || '—'}`,
     `2) ${options[1] || '—'}`,
     `3) ${options[2] || '—'}`,
     '',
-    t('waProposalVoteCall')
+    tForLang(lang, 'waProposalVoteCall')
   ].join('\n');
 }
-function openWhatsAppProposal(){
+function openWhatsAppProposal(messageLang = uiLang()){
   if(state.players.length<1){
     alert(t('waProposalNeedPlayers'));
     return;
   }
-  const msg = buildWhatsAppProposalText();
+  const msg = buildWhatsAppProposalText(messageLang);
   const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
   const win = window.open(url, '_blank', 'noopener,noreferrer');
   if(!win) window.location.href = url;
@@ -3096,6 +3113,7 @@ function stateForRemote(s){
   delete clone.myPlayerId;
   delete clone.myPlayerIds;
   delete clone.uiLang;
+  delete clone.whatsAppProposalLang;
   delete clone.setupNeedsAssociates;
   return clone;
 }
@@ -3106,9 +3124,11 @@ function preserveLocalMyPlayer(prevState, nextState){
     : (prevState?.myPlayerId ? [prevState.myPlayerId] : []);
   const localIds = localIdsRaw.filter(id=> Array.isArray(nextState?.players) && nextState.players.some(p=> p.id===id));
   const localLang = normalizeUiLang(prevState?.uiLang || persistedUiLang());
+  const localWaLang = normalizeUiLang(prevState?.whatsAppProposalLang || localLang);
   nextState.myPlayerIds = [...new Set(localIds)].slice(0, 2);
   nextState.myPlayerId = nextState.myPlayerIds[0] || null;
   nextState.uiLang = localLang;
+  nextState.whatsAppProposalLang = localWaLang;
   nextState.setupNeedsAssociates = !!prevState?.setupNeedsAssociates;
   return nextState;
 }
@@ -3251,6 +3271,7 @@ function defaultState(){
     myPlayerIds: [],
     setupNeedsAssociates: false,
     uiLang: persistedUiLang(),
+    whatsAppProposalLang: persistedUiLang(),
     finance: {
       applied: {},
       lifetimeByPlayer: {},
@@ -3293,6 +3314,7 @@ function loadState(){
   if(!state.sync) state.sync = defaultState().sync;
   if(!state.seasonKickoff) state.seasonKickoff = null;
   state.uiLang = normalizeUiLang(state.uiLang || persistedUiLang());
+  state.whatsAppProposalLang = normalizeUiLang(state.whatsAppProposalLang || state.uiLang);
   applyTheme(autoThemeByLocalTime());
   setUiLang(state.uiLang);
   if(!state.season || state.season==='Champions PS5') state.season = GAME_NAME+' - T1';
@@ -3468,6 +3490,8 @@ function migrateStateShape(s){
   if(!s.myPlayerId && s.myPlayerIds.length) s.myPlayerId = s.myPlayerIds[0];
   if(typeof s.uiLang==='undefined') s.uiLang = persistedUiLang();
   s.uiLang = normalizeUiLang(s.uiLang);
+  if(typeof s.whatsAppProposalLang==='undefined') s.whatsAppProposalLang = s.uiLang;
+  s.whatsAppProposalLang = normalizeUiLang(s.whatsAppProposalLang);
   if(typeof s.setupNeedsAssociates==='undefined') s.setupNeedsAssociates = false;
   s.setupNeedsAssociates = !!s.setupNeedsAssociates;
   if(typeof s.champion==='undefined') s.champion = null;
@@ -5568,8 +5592,23 @@ function renderPlayersTab(){
   };
   wrap.appendChild(startBtn);
 
+  const waLangLabel = el(`<label style="margin-top:10px;display:block;">${t('waProposalLangLabel')}</label>`);
+  wrap.appendChild(waLangLabel);
+  const waLangSelect = el(`<select id="wa-proposal-lang" style="max-width:260px;">
+    <option value="es">${t('langOptionEs')}</option>
+    <option value="en">${t('langOptionEn')}</option>
+    <option value="lt">${t('langOptionLt')}</option>
+    <option value="ca">${t('langOptionCa')}</option>
+  </select>`);
+  waLangSelect.value = normalizeUiLang(state.whatsAppProposalLang || uiLang());
+  waLangSelect.onchange = ()=>{
+    state.whatsAppProposalLang = normalizeUiLang(waLangSelect.value);
+    saveState();
+  };
+  wrap.appendChild(waLangSelect);
+
   const waBtn = el(`<button class="secondary" style="margin-left:8px;">${t('waProposalBtn')}</button>`);
-  waBtn.onclick=()=> openWhatsAppProposal();
+  waBtn.onclick=()=> openWhatsAppProposal(normalizeUiLang(state.whatsAppProposalLang || uiLang()));
   wrap.appendChild(waBtn);
   wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">${t('waProposalHint')}</div>`));
 
