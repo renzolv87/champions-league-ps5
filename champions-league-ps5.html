@@ -795,6 +795,14 @@ tbody tr:hover td{background:rgba(0,61,165,.045);}
 .demo-draw-item.pending{opacity:.74;}
 .demo-draw-item.revealed{border-color:#00a3e0;box-shadow:0 0 0 2px rgba(0,163,224,.2) inset,0 0 14px rgba(0,163,224,.18);animation:drawReveal .55s ease;}
 @keyframes drawReveal{from{transform:scale(.98);opacity:.35;}to{transform:scale(1);opacity:1;}}
+.demo-bracket-wrap{
+  border:1px solid #d5e4e1;
+  border-radius:12px;
+  padding:10px;
+  background:#fff;
+}
+.demo-bracket-wrap h4{margin:0 0 8px;font-size:.88rem;color:#003da5;text-transform:uppercase;letter-spacing:.6px;}
+.demo-bracket-wrap .bracket-board{margin-top:4px;}
 
 .celebration-layer{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:100;}
 .confetti-piece{position:absolute;top:-20px;width:9px;height:16px;border-radius:2px;opacity:.9;animation:confettiFall linear forwards;}
@@ -2187,6 +2195,54 @@ function demoMatchText(m){
   return base;
 }
 
+function demoRoundName(total, idx){
+  const remaining = total - idx;
+  if(remaining===1) return 'Final';
+  if(remaining===2) return 'Semifinales';
+  if(remaining===3) return 'Cuartos de final';
+  if(remaining===4) return 'Octavos de final';
+  return `Ronda ${idx+1}`;
+}
+
+function renderDemoBracketHtml(demo){
+  if(!demo?.knockoutRounds?.length) return '<div class="muted">Sin datos de eliminatorias para mostrar.</div>';
+  const championId = demo.champion?.id || null;
+  const championPathKeys = new Set();
+  if(championId){
+    const tracedPlayers = new Set([championId]);
+    for(let ri=demo.knockoutRounds.length-1; ri>=0; ri--){
+      const round = demo.knockoutRounds[ri];
+      round.forEach((m,mi)=>{
+        if(!m?.winner?.id || !tracedPlayers.has(m.winner.id)) return;
+        championPathKeys.add(`${ri}-${mi}`);
+        if(m.p1?.id) tracedPlayers.add(m.p1.id);
+        if(m.p2?.id) tracedPlayers.add(m.p2.id);
+      });
+    }
+  }
+
+  const cols = demo.knockoutRounds.map((round, ri)=>{
+    const depthClass = `round-depth-${Math.min(ri+1,6)}`;
+    const isLastCol = ri===demo.knockoutRounds.length-1;
+    const nodes = round.map((m,mi)=>{
+      const tieKey = `${ri}-${mi}`;
+      const isChampionPath = championPathKeys.has(tieKey);
+      const nodeClass = `bracket-node ${isLastCol?'last-col':''} resolved newly-decided ${isChampionPath?'champion-path':''}`.trim();
+      const cardClass = `card bracket-tie-card winner-locked newly-decided ${isChampionPath?'champion-path':''}`.trim();
+      return `<div class="${nodeClass}">
+        <div class="${cardClass}" style="padding:12px;">
+          <div style="font-weight:700;margin-bottom:6px;">${escapeHtml(m.p1.name)} vs ${escapeHtml(m.p2.name)}</div>
+          <div class="muted">${escapeHtml(demoMatchText(m))}</div>
+          <div class="muted" style="margin-top:6px;">Clasificado: <b>${escapeHtml(m.winner?.name || '—')}</b></div>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="bracket-col"><div class="bracket-col-head">${demoRoundName(demo.knockoutRounds.length, ri)}</div><div class="bracket-col-body ${depthClass}">${nodes}</div></div>`;
+  }).join('');
+
+  return `<div class="demo-bracket-wrap"><h4>Eliminatorias en modo bracket (demo)</h4><div class="bracket-board">${cols}</div></div>`;
+}
+
 function clampDemoPlayersCount(value){
   const max = getDemoPlayersDynamicMax();
   const parsed = parseInt(value);
@@ -2408,11 +2464,7 @@ function openDemoSeasonModalWithCount(count){
       ? `<div class="demo-box"><h4>Play-off (clasificación al cuadro final)</h4><div class="demo-list">${demo.playoffMatches.map(m=> `<div class="demo-line"><span>${escapeHtml(m.p1.name)} vs ${escapeHtml(m.p2.name)}</span><span>${escapeHtml(demoMatchText(m))}</span></div>`).join('')}</div></div>`
       : '';
 
-    const roundsHtml = demo.knockoutRounds.map((round, idx)=>{
-      const total = demo.knockoutRounds.length;
-      const name = total-idx===1 ? 'Final' : (total-idx===2 ? 'Semifinales' : (total-idx===3 ? 'Cuartos' : `Ronda ${idx+1}`));
-      return `<div class="demo-box"><h4>${name}</h4><div class="demo-list">${round.map(m=> `<div class="demo-line"><span>${escapeHtml(m.p1.name)} vs ${escapeHtml(m.p2.name)}</span><span>${escapeHtml(demoMatchText(m))}</span></div>`).join('')}</div></div>`;
-    }).join('');
+    const roundsHtml = renderDemoBracketHtml(demo);
 
     const drawRows = demo.drawPairings.map((pair, idx)=>{
       if(idx < drawState.revealed){
@@ -2446,7 +2498,7 @@ function openDemoSeasonModalWithCount(count){
           <div class="demo-draw-title">Sorteo de eliminatorias (demo)</div>
           <div class="demo-draw-status">${drawState.complete ? 'Sorteo completado' : (drawState.running ? `Siguiente cruce en ${countdown ?? 10}s` : 'Listo para iniciar')}</div>
         </div>
-        <div class="muted" style="margin-bottom:8px;">Se revela un emparejamiento cada 10 segundos para recrear el momento del bombo.</div>
+        <div class="muted" style="margin-bottom:8px;">Se revela un emparejamiento cada 10 segundos para recrear el momento del bombo. Al completarse, verás el bracket final con conectores y animaciones.</div>
         <div class="demo-draw-list">${drawRows}</div>
         <div class="row" style="margin-top:8px;justify-content:flex-end;">
           <button id="demo-start-draw" class="gold" type="button" ${drawState.running || drawState.complete ? 'disabled' : ''}>Iniciar sorteo animado</button>
