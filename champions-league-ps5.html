@@ -245,6 +245,50 @@ tr.tied td{outline:1px dashed var(--bad);outline-offset:-1px;}
 .modal h3{margin-top:0;}
 .modal .close{float:right;cursor:pointer;color:var(--text-dim);font-size:1.1rem;}
 
+.result-entry{display:flex;flex-direction:column;gap:12px;}
+.result-scoreboard{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  gap:10px;
+  align-items:end;
+}
+.result-team-box{
+  background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(0,0,0,.08));
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px;
+}
+.result-team-name{font-weight:700;font-size:.88rem;text-transform:capitalize;margin-bottom:6px;}
+.result-vs{
+  font-size:.72rem;
+  font-weight:800;
+  color:var(--gold);
+  letter-spacing:.5px;
+  padding-bottom:12px;
+}
+.result-goal-input{
+  width:100%;
+  margin-bottom:0;
+  text-align:center;
+  font-size:1.15rem;
+  font-weight:800;
+  padding:10px 8px;
+}
+.result-quick{display:flex;flex-wrap:wrap;gap:7px;}
+.result-quick button{background:var(--surface-2);border:1px solid var(--line);padding:6px 10px;font-size:.76rem;}
+.result-quick button.active{background:var(--gold);color:#1a1200;border-color:var(--gold);}
+.result-penalties{
+  border:1px dashed #4a5397;
+  border-radius:11px;
+  padding:10px;
+  background:rgba(30,37,80,.4);
+}
+
+@media (max-width:640px){
+  .result-scoreboard{grid-template-columns:1fr;}
+  .result-vs{padding:0;text-align:center;}
+}
+
 .foot-note{font-size:.72rem;color:var(--text-dim);text-align:center;margin-top:30px;line-height:1.5;}
 
 @media (max-width:640px){
@@ -2339,24 +2383,89 @@ function renderPlayerForm(match, decisive){
   if(!autoWho){
     return el(`<div class="banner warn">Solo puedes reportar resultados de partidos donde participa tu jugador activo.</div>`);
   }
-  const box = el(`<div>
-    <div class="muted" style="margin-bottom:8px;">Reportando como <b>${playerName(autoWho)}</b>.</div>
+  const p1Name = playerName(match.p1);
+  const p2Name = playerName(match.p2);
+  const box = el(`<div class="result-entry">
+    <div class="muted">Registrando como <b>${playerName(autoWho)}</b>.</div>
     <input type="hidden" id="m-who" value="${autoWho}">
-    <div class="row">
-      <div><label>Goles ${playerName(match.p1)}</label><input type="number" id="m-s1" min="0" value="${match.score1??0}"></div>
-      <div><label>Goles ${playerName(match.p2)}</label><input type="number" id="m-s2" min="0" value="${match.score2??0}"></div>
+    <div class="result-scoreboard">
+      <div class="result-team-box">
+        <div class="result-team-name">${p1Name}</div>
+        <label>Goles</label>
+        <input class="result-goal-input" type="number" id="m-s1" min="0" value="${match.score1??0}">
+      </div>
+      <div class="result-vs">VS</div>
+      <div class="result-team-box">
+        <div class="result-team-name">${p2Name}</div>
+        <label>Goles</label>
+        <input class="result-goal-input" type="number" id="m-s2" min="0" value="${match.score2??0}">
+      </div>
     </div>
-    ${decisive? `<div class="row"><div><label>Penaltis ${playerName(match.p1)}</label><input type="number" id="m-pn1" min="0"></div><div><label>Penaltis ${playerName(match.p2)}</label><input type="number" id="m-pn2" min="0"></div></div><div class="muted" style="margin-bottom:10px;">Solo rellena penaltis si el resultado queda empatado — en esta fase no puede haber empates.</div>`:''}
+    <div>
+      <div class="muted" style="margin-bottom:6px;">Marcadores rápidos</div>
+      <div class="result-quick" id="m-quick">
+        <button type="button" data-s1="1" data-s2="0">1-0</button>
+        <button type="button" data-s1="2" data-s2="1">2-1</button>
+        <button type="button" data-s1="0" data-s2="1">0-1</button>
+        <button type="button" data-s1="1" data-s2="1">1-1</button>
+        <button type="button" data-s1="2" data-s2="2">2-2</button>
+      </div>
+    </div>
+    ${decisive? `<div class="result-penalties" id="m-pen-wrap">
+      <div class="muted" style="margin-bottom:8px;">Si hay empate, registra penaltis para definir ganador.</div>
+      <div class="row"><div><label>Penaltis ${p1Name}</label><input type="number" id="m-pn1" min="0"></div><div><label>Penaltis ${p2Name}</label><input type="number" id="m-pn2" min="0"></div></div>
+    </div>`:''}
     <div id="m-err" class="muted" style="color:#ffb3ad;"></div>
-    <button id="m-submit">Guardar resultado</button>
+    <button id="m-submit" class="gold">Guardar resultado</button>
   </div>`);
+  const s1El = box.querySelector('#m-s1');
+  const s2El = box.querySelector('#m-s2');
+  const quickBtns = [...box.querySelectorAll('#m-quick button')];
+  const penWrap = decisive ? box.querySelector('#m-pen-wrap') : null;
+  const pn1El = decisive ? box.querySelector('#m-pn1') : null;
+  const pn2El = decisive ? box.querySelector('#m-pn2') : null;
+
+  function refreshQuickState(){
+    quickBtns.forEach(btn=>{
+      const q1 = parseInt(btn.dataset.s1);
+      const q2 = parseInt(btn.dataset.s2);
+      const active = parseInt(s1El.value)===q1 && parseInt(s2El.value)===q2;
+      btn.classList.toggle('active', active);
+    });
+  }
+
+  function refreshPenaltiesState(){
+    if(!decisive || !penWrap) return;
+    const s1 = parseInt(s1El.value);
+    const s2 = parseInt(s2El.value);
+    const isTie = !Number.isNaN(s1) && !Number.isNaN(s2) && s1===s2;
+    penWrap.style.display = isTie ? '' : 'none';
+    if(!isTie && pn1El && pn2El){
+      pn1El.value = '';
+      pn2El.value = '';
+    }
+  }
+
+  quickBtns.forEach(btn=>{
+    btn.onclick = ()=>{
+      s1El.value = btn.dataset.s1;
+      s2El.value = btn.dataset.s2;
+      refreshQuickState();
+      refreshPenaltiesState();
+    };
+  });
+  s1El.oninput = ()=>{ refreshQuickState(); refreshPenaltiesState(); };
+  s2El.oninput = ()=>{ refreshQuickState(); refreshPenaltiesState(); };
+  refreshQuickState();
+  refreshPenaltiesState();
+
   box.querySelector('#m-submit').onclick=()=>{
     const byId = box.querySelector('#m-who').value;
     bindLocalPlayerId(byId);
-    const s1 = parseInt(box.querySelector('#m-s1').value);
-    const s2 = parseInt(box.querySelector('#m-s2').value);
-    const pn1 = decisive? (box.querySelector('#m-pn1').value===''? null: parseInt(box.querySelector('#m-pn1').value)) : null;
-    const pn2 = decisive? (box.querySelector('#m-pn2').value===''? null: parseInt(box.querySelector('#m-pn2').value)) : null;
+    const s1 = parseInt(s1El.value);
+    const s2 = parseInt(s2El.value);
+    const pn1 = decisive? (pn1El.value===''? null: parseInt(pn1El.value)) : null;
+    const pn2 = decisive? (pn2El.value===''? null: parseInt(pn2El.value)) : null;
     if(isNaN(s1)||isNaN(s2)){ box.querySelector('#m-err').textContent='Indica un marcador.'; return; }
     const err = reportResult(match, byId, s1, s2, pn1, pn2, decisive);
     if(err){ box.querySelector('#m-err').textContent=err; }
