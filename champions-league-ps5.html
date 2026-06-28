@@ -1389,6 +1389,11 @@ function startDemoDraw(sessionId){
 function nowStr(){ const d=new Date(); return d.toLocaleDateString(uiLocale())+' '+d.toLocaleTimeString(uiLocale(),{hour:'2-digit',minute:'2-digit'}); }
 function dayStr(){ return new Date().toLocaleDateString(uiLocale()); }
 function seasonDateText(dateValue){ return dateValue ? `${t('seasonStartLabel')}: ${dateValue}` : `${t('seasonStartLabel')}: —`; }
+function seasonTagLabel(){
+  const raw = String(state?.season || '');
+  const m = raw.match(/\bT\d+\b/i);
+  return m ? m[0].toUpperCase() : 'T1';
+}
 function normalizePlayerName(name){ return (name||'').trim().toLocaleLowerCase('es-ES'); }
 function basePlayerName(name){
   const n = normalizePlayerName(name);
@@ -2816,6 +2821,10 @@ function propagateBracket(){
   }
 }
 function playerName(id){ const p=state.players.find(x=>x.id===id); return p? p.name : '—'; }
+function playerDisplayName(id, refState = state){
+  const label = localTeamSlotLabel(id, refState);
+  return label ? `${playerName(id)} (${label})` : playerName(id);
+}
 
 /* ---------------- RESULT REPORTING (generic, anti-cheat) ---------------- */
 function findPlayer(id){ return state.players.find(p=>p.id===id); }
@@ -3675,7 +3684,7 @@ function renderPlayersTab(){
     : t('playersHint');
   const card = el(`<div class="card">
     <div class="players-panel-head">
-      <h3>Temporada (${state.players.length})</h3>
+      <h3>Temporada ${seasonTagLabel()}</h3>
       <div class="muted">${setupHint}</div>
     </div>
     <div id="plist" class="player-grid"></div>
@@ -3868,6 +3877,7 @@ function renderLeagueTab(){
 
   standings.forEach((s,i)=>{
     const name = (s?.name || '').trim() || 'Jugador';
+    const displayName = s?.id ? playerDisplayName(s.id) : name;
     const pj = Number.isFinite(Number(s?.pj)) ? Number(s.pj) : 0;
     const g = Number.isFinite(Number(s?.g)) ? Number(s.g) : 0;
     const e = Number.isFinite(Number(s?.e)) ? Number(s.e) : 0;
@@ -3878,7 +3888,7 @@ function renderLeagueTab(){
     if(i<Q) tr.classList.add('qual');
     if(tiedIds.includes(s.id)) tr.classList.add('tied');
     appendCell(tr, i+1);
-    appendCell(tr, name, 'name');
+    appendCell(tr, displayName, 'name');
     appendCell(tr, pj);
     appendCell(tr, g);
     appendCell(tr, e);
@@ -3904,7 +3914,7 @@ function renderLeagueTab(){
   wrap.appendChild(card);
 
   if(tiedIds.length){
-    const tieCard = el(`<div class="card"><div class="banner warn">Hay un empate entre estos jugadores justo en la línea de clasificación: ${tiedIds.map(playerName).join(', ')}. Ya se comprobaron puntos, diferencia de goles, goles a favor y resultado directo.</div></div>`);
+    const tieCard = el(`<div class="card"><div class="banner warn">Hay un empate entre estos jugadores justo en la línea de clasificación: ${tiedIds.map(id=> playerDisplayName(id)).join(', ')}. Ya se comprobaron puntos, diferencia de goles, goles a favor y resultado directo.</div></div>`);
 
     if(isThreePlayersThreeDrawsInvalid(tiedIds)){
       tieCard.appendChild(el(`<div class="banner warn">Caso especial: 3 jugadores y todos los partidos terminaron en empate. Esta temporada se considera inválida y debe reiniciarse.</div>`));
@@ -3923,11 +3933,11 @@ function renderLeagueTab(){
         };
         tieCard.appendChild(btn);
       } else {
-        tieCard.appendChild(el(`<div class="muted" style="margin-bottom:8px;">Desempate en curso · Ronda ${activeTb.round}${activeTb.bye?` · Descansa: ${playerName(activeTb.bye)}`:''}</div>`));
+        tieCard.appendChild(el(`<div class="muted" style="margin-bottom:8px;">Desempate en curso · Ronda ${activeTb.round}${activeTb.bye?` · Descansa: ${playerDisplayName(activeTb.bye)}`:''}</div>`));
         const list = el(`<div class="matchlist"></div>`);
         activeTb.pairings.forEach(pair=>{
           const scoreTxt = pair.pen1!==null ? `${pair.pen1}-${pair.pen2}` : 'pendiente';
-          const row = el(`<div class="match"><div class="vs"><span>${playerName(pair.p1)}</span><span>${scoreTxt}</span><span>${playerName(pair.p2)}</span></div><span class="tag ${pair.winner?'confirmed':'pending'}">${pair.winner?'resuelto':'pendiente'}</span></div>`);
+          const row = el(`<div class="match"><div class="vs"><span>${playerDisplayName(pair.p1)}</span><span>${scoreTxt}</span><span>${playerDisplayName(pair.p2)}</span></div><span class="tag ${pair.winner?'confirmed':'pending'}">${pair.winner?'resuelto':'pendiente'}</span></div>`);
           if(!pair.winner){
             const b = el(`<button class="small danger">Cargar tanda</button>`);
             b.onclick=()=> openLeagueTiePairPenaltyModal(pair.id);
@@ -3990,7 +4000,7 @@ function renderLeagueTab(){
 
 /* ---- generic match row with report/confirm UI ---- */
 function renderMatchRow(m, decisive){
-  const p1 = playerName(m.p1), p2 = playerName(m.p2);
+  const p1 = playerDisplayName(m.p1), p2 = playerDisplayName(m.p2);
   const scoreTxt = m.score1!==null ? `${m.score1} - ${m.score2}` + (m.peno1!==null? ` (pen. ${m.peno1}-${m.peno2})`: '') : '— vs —';
   const row = el(`<div class="match">
     <div class="vs"><span>${p1}</span><span>${scoreTxt}</span><span>${p2}</span></div>
@@ -4150,8 +4160,8 @@ function openLeagueTiePairPenaltyModal(pairingId){
 function renderKnockoutTieRow(tie){
   const box = el(`<div class="card bracket-tie-card" style="padding:12px;"></div>`);
   const title = tie.legs===1
-    ? `${playerName(tie.p1)} vs ${playerName(tie.p2)} · Final`
-    : `${playerName(tie.p1)} vs ${playerName(tie.p2)} · Ida y vuelta`;
+    ? `${playerDisplayName(tie.p1)} vs ${playerDisplayName(tie.p2)} · Final`
+    : `${playerDisplayName(tie.p1)} vs ${playerDisplayName(tie.p2)} · Ida y vuelta`;
   box.appendChild(el(`<div style="font-weight:700;margin-bottom:8px;">${title}</div>`));
 
   if(tie.legs===2){
@@ -4164,7 +4174,7 @@ function renderKnockoutTieRow(tie){
     updateTieWinner(tie);
     const aggTxt = (tie.agg1!==null&&tie.agg2!==null) ? `Global: ${tie.agg1}-${tie.agg2}` : 'Global: por definir';
     const penTxt = tie.aggPeno1!==null && tie.aggPeno2!==null ? ` · Penaltis: ${tie.aggPeno1}-${tie.aggPeno2}` : '';
-    box.appendChild(el(`<div class="muted" style="margin-top:8px;">${aggTxt}${penTxt}${tie.winner?` · Clasificado: <b>${playerName(tie.winner)}</b>`:''}</div>`));
+    box.appendChild(el(`<div class="muted" style="margin-top:8px;">${aggTxt}${penTxt}${tie.winner?` · Clasificado: <b>${playerDisplayName(tie.winner)}</b>`:''}</div>`));
     if(tie.dispute?.aggregate){
       const rb = el(`<button class="small gold" style="margin-top:8px;">Registrar penaltis de desempate</button>`);
       rb.onclick=()=> openAggregatePenaltyModal(tie);
@@ -4173,7 +4183,7 @@ function renderKnockoutTieRow(tie){
   } else {
     box.appendChild(renderMatchRow(tie, true));
     if(tie.winner){
-      box.appendChild(el(`<div class="muted" style="margin-top:8px;">Clasificado: <b>${playerName(tie.winner)}</b></div>`));
+      box.appendChild(el(`<div class="muted" style="margin-top:8px;">Clasificado: <b>${playerDisplayName(tie.winner)}</b></div>`));
     }
   }
   return box;
@@ -4191,7 +4201,7 @@ function openMatchModal(match, decisive, isAdminEdit){
   pendingModal = ()=>{
     const bg = el(`<div class="modal-bg"><div class="modal">
       <span class="close">✕</span>
-      <h3>${playerName(match.p1)} vs ${playerName(match.p2)}</h3>
+      <h3>${playerDisplayName(match.p1)} vs ${playerDisplayName(match.p2)}</h3>
       ${match.status==='dispute'? `<div class="banner warn">En disputa: ${disputeText}</div>`:''}
     </div></div>`);
     const modal = bg.querySelector('.modal');
@@ -4215,8 +4225,8 @@ function renderPlayerForm(match, decisive){
     return el(`<div class="banner warn">Solo puedes reportar resultados de partidos donde participa uno de tus equipos de este dispositivo.</div>`);
   }
   const actorLabel = localTeamSlotLabel(autoWho);
-  const p1Name = playerName(match.p1);
-  const p2Name = playerName(match.p2);
+  const p1Name = playerDisplayName(match.p1);
+  const p2Name = playerDisplayName(match.p2);
   const box = el(`<div class="result-entry">
     <div class="muted">Registrando como <b>${playerName(autoWho)}</b>${actorLabel?` · <b>${actorLabel}</b>`:''}.</div>
     <input type="hidden" id="m-who" value="${autoWho}">
@@ -4352,13 +4362,13 @@ function renderPendingDecisionForm(match, decisive){
     ? expectedDecider
     : null;
   if(!autoDecider){
-    return el(`<div class="banner warn">Este resultado lo debe confirmar <b>${playerName(expectedDecider)}</b>. Solo puedes confirmar con ese equipo en este dispositivo.</div>`);
+    return el(`<div class="banner warn">Este resultado lo debe confirmar <b>${playerDisplayName(expectedDecider)}</b>. Solo puedes confirmar con ese equipo en este dispositivo.</div>`);
   }
   const deciderLabel = localTeamSlotLabel(autoDecider);
   const scoreTxt = `${match.score1} - ${match.score2}` + (match.peno1!==null? ` (pen. ${match.peno1}-${match.peno2})` : '');
 
   const box = el(`<div>
-    <div class="banner info">Resultado propuesto por <b>${playerName(reporterId)}</b>: <b>${scoreTxt}</b></div>
+    <div class="banner info">Resultado propuesto por <b>${playerDisplayName(reporterId)}</b>: <b>${scoreTxt}</b></div>
     <div class="muted" style="margin-bottom:8px;">Respondiendo como <b>${playerName(autoDecider)}</b>${deciderLabel?` · <b>${deciderLabel}</b>`:''}.</div>
     <input type="hidden" id="m-decider" value="${autoDecider}">
     <div id="m-derr" class="muted" style="color:#ffb3ad;margin-bottom:8px;"></div>
@@ -4391,10 +4401,10 @@ function renderAdminForm(match, decisive){
   const box = el(`<div>
     <div class="muted" style="margin-bottom:8px;">Corrección del organizador.</div>
     <div class="row">
-      <div><label>Goles ${playerName(match.p1)}</label><input type="number" id="m-as1" min="0" value="${match.score1??''}"></div>
-      <div><label>Goles ${playerName(match.p2)}</label><input type="number" id="m-as2" min="0" value="${match.score2??''}"></div>
+      <div><label>Goles ${playerDisplayName(match.p1)}</label><input type="number" id="m-as1" min="0" value="${match.score1??''}"></div>
+      <div><label>Goles ${playerDisplayName(match.p2)}</label><input type="number" id="m-as2" min="0" value="${match.score2??''}"></div>
     </div>
-    ${decisive? `<div class="row"><div><label>Penaltis ${playerName(match.p1)}</label><input type="number" id="m-apn1" min="0" value="${match.peno1??''}"></div><div><label>Penaltis ${playerName(match.p2)}</label><input type="number" id="m-apn2" min="0" value="${match.peno2??''}"></div></div>`:''}
+    ${decisive? `<div class="row"><div><label>Penaltis ${playerDisplayName(match.p1)}</label><input type="number" id="m-apn1" min="0" value="${match.peno1??''}"></div><div><label>Penaltis ${playerDisplayName(match.p2)}</label><input type="number" id="m-apn2" min="0" value="${match.peno2??''}"></div></div>`:''}
     <div id="m-aerr" class="muted" style="color:#ffb3ad;"></div>
     <button id="m-asubmit" class="gold">Confirmar / corregir</button>
   </div>`);
@@ -4498,7 +4508,7 @@ function renderKnockoutTab(){
         return;
       }
       if(!m.p1 || !m.p2){
-        list.appendChild(el(`<div class="bracket-node ${isLastCol?'last-col':''}"><div class="bracket-placeholder pending">${m.p1?playerName(m.p1):'?'} vs ${m.p2?playerName(m.p2):'?'} <span class="muted">(esperando rival)</span></div></div>`));
+        list.appendChild(el(`<div class="bracket-node ${isLastCol?'last-col':''}"><div class="bracket-placeholder pending">${m.p1?playerDisplayName(m.p1):'?'} vs ${m.p2?playerDisplayName(m.p2):'?'} <span class="muted">(esperando rival)</span></div></div>`));
         return;
       }
       const tieCard = renderKnockoutTieRow(m);
@@ -4673,7 +4683,7 @@ function renderMuseumTab(){
 /* ---- HISTORY TAB ---- */
 function renderHistoryTab(){
   const wrap = document.createElement('div');
-  const seasonCard = el(`<div class="card"><h3>Temporada</h3><div class="muted" style="margin-bottom:10px;">Empieza una nueva temporada cuando ya haya campeón.</div></div>`);
+  const seasonCard = el(`<div class="card"><h3>Temporada ${seasonTagLabel()}</h3><div class="muted" style="margin-bottom:10px;">Empieza una nueva temporada cuando ya haya campeón.</div></div>`);
   const canStartNewSeason = state.phase==='finished' && !!state.champion;
   const seasonBtn = el(`<button class="gold" ${canStartNewSeason?'':'disabled'}>Iniciar nueva temporada</button>`);
   seasonBtn.onclick=()=> newSeason();
