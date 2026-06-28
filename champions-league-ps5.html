@@ -48,6 +48,18 @@ h1,h2,h3,.disp{font-family:'Space Grotesk',sans-serif;}
   letter-spacing:.2px;
 }
 .brand-badge .icon{font-size:.85rem;}
+.hero-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.hero-guide-btn{
+  background:linear-gradient(180deg,#f7d56f,#e8b339);
+  color:#1a1200;
+  border:1px solid #f0c95a;
+  border-radius:999px;
+  padding:6px 12px;
+  font-size:.76rem;
+  font-weight:800;
+  letter-spacing:.2px;
+  box-shadow:0 4px 16px rgba(232,179,57,.25);
+}
 .name-chip-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
 .name-chip{
   display:inline-flex;align-items:center;gap:6px;
@@ -247,6 +259,7 @@ tr.tied td{outline:1px dashed var(--bad);outline-offset:-1px;}
 .modal .close{float:right;cursor:pointer;color:var(--text-dim);font-size:1.1rem;}
 .modal.result-modal{max-width:560px;}
 .modal.demo-modal{max-width:min(960px,95vw);}
+.modal.guide-modal{max-width:min(860px,95vw);}
 
 .demo-summary{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
 .demo-pill{font-size:.72rem;font-weight:700;border:1px solid var(--line);border-radius:999px;padding:5px 10px;background:var(--surface-2);}
@@ -255,6 +268,83 @@ tr.tied td{outline:1px dashed var(--bad);outline-offset:-1px;}
 .demo-box h4{margin:0 0 8px;font-size:.85rem;color:var(--gold);text-transform:uppercase;letter-spacing:.4px;}
 .demo-list{display:flex;flex-direction:column;gap:6px;}
 .demo-line{display:flex;justify-content:space-between;gap:8px;font-size:.82rem;background:rgba(11,16,38,.45);padding:7px 8px;border:1px solid #303873;border-radius:8px;}
+.demo-draw-card{
+  border:1px solid #4954a0;
+  border-radius:12px;
+  padding:12px;
+  background:
+    radial-gradient(500px 120px at 10% 0%, rgba(91,61,245,.22), transparent 60%),
+    radial-gradient(500px 120px at 90% 0%, rgba(232,179,57,.18), transparent 60%),
+    rgba(18,24,60,.78);
+}
+.demo-draw-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;}
+.demo-draw-title{font-size:.8rem;font-weight:800;color:#f3dd9a;letter-spacing:.4px;text-transform:uppercase;}
+.demo-draw-status{font-size:.74rem;color:var(--text-dim);}
+.demo-draw-list{display:flex;flex-direction:column;gap:6px;}
+.demo-draw-item{
+  display:flex;justify-content:space-between;gap:8px;
+  border:1px solid #3e488d;border-radius:9px;padding:7px 9px;
+  background:rgba(9,14,37,.65);
+  font-size:.8rem;
+}
+.demo-draw-item.pending{opacity:.75;}
+.demo-draw-item.revealed{
+  border-color:#e8b339;
+  box-shadow:0 0 0 1px rgba(232,179,57,.25) inset, 0 0 16px rgba(232,179,57,.2);
+  animation: drawReveal .55s ease;
+}
+@keyframes drawReveal{
+  from{transform:scale(.98);opacity:.35;}
+  to{transform:scale(1);opacity:1;}
+}
+
+.celebration-layer{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  overflow:hidden;
+  z-index:100;
+}
+.confetti-piece{
+  position:absolute;
+  top:-20px;
+  width:9px;
+  height:16px;
+  border-radius:2px;
+  opacity:.9;
+  animation: confettiFall linear forwards;
+}
+@keyframes confettiFall{
+  to{transform:translateY(110vh) rotate(700deg);opacity:.95;}
+}
+.firework{
+  position:absolute;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  box-shadow:
+    0 0 0 0 rgba(255,255,255,.9),
+    0 0 0 0 rgba(232,179,57,.8),
+    0 0 0 0 rgba(91,61,245,.8);
+  animation: fireworkBoom 1.2s ease-out forwards;
+}
+@keyframes fireworkBoom{
+  0%{transform:scale(.2);opacity:1;}
+  80%{opacity:1;}
+  100%{
+    transform:scale(1.2);
+    opacity:0;
+    box-shadow:
+      0 -46px 0 0 rgba(255,255,255,0),
+      40px 0 0 0 rgba(232,179,57,0),
+      -40px 0 0 0 rgba(91,61,245,0),
+      0 46px 0 0 rgba(63,167,150,0),
+      30px -30px 0 0 rgba(255,255,255,0),
+      -30px -30px 0 0 rgba(232,179,57,0),
+      30px 30px 0 0 rgba(91,61,245,0),
+      -30px 30px 0 0 rgba(63,167,150,0);
+  }
+}
 
 @media (min-width:860px){
   .demo-grid{grid-template-columns:1.1fr .9fr;}
@@ -360,7 +450,7 @@ const I18N = {
     syncLocal: 'solo local',
     playersSingular: 'jugador',
     playersPlural: 'jugadores',
-    tabConfig: 'Guía del juego',
+    tabConfig: 'Información',
     tabPlayers: 'Jugadores',
     tabLeague: 'Liguilla',
     tabKnockout: 'Eliminatorias',
@@ -392,7 +482,9 @@ const I18N = {
     langOptionEs: 'Español',
     langOptionEn: 'Inglés',
     langOptionLt: 'Lituano',
-    langOptionCa: 'Catalán'
+    langOptionCa: 'Catalán',
+    guideButton: 'Cómo jugar',
+    sharedDataNote: 'Datos compartidos por Supabase. Si dos personas editan a la vez, el sistema resuelve conflictos refrescando el estado más reciente.'
   },
   en: {
     seasonStartLabel: 'Season kickoff',
@@ -402,7 +494,7 @@ const I18N = {
     syncLocal: 'local only',
     playersSingular: 'player',
     playersPlural: 'players',
-    tabConfig: 'Game Guide',
+    tabConfig: 'Info',
     tabPlayers: 'Players',
     tabLeague: 'League',
     tabKnockout: 'Knockout',
@@ -434,7 +526,9 @@ const I18N = {
     langOptionEs: 'Spanish',
     langOptionEn: 'English',
     langOptionLt: 'Lithuanian',
-    langOptionCa: 'Catalan'
+    langOptionCa: 'Catalan',
+    guideButton: 'How to play',
+    sharedDataNote: 'Shared data via Supabase. If two people edit at the same time, the app resolves conflicts by refreshing the latest state.'
   },
   lt: {
     seasonStartLabel: 'Sezono startas',
@@ -444,7 +538,7 @@ const I18N = {
     syncLocal: 'tik vietoje',
     playersSingular: 'zaidejas',
     playersPlural: 'zaidejai',
-    tabConfig: 'Zaidimo gidas',
+    tabConfig: 'Info',
     tabPlayers: 'Zaidejai',
     tabLeague: 'Lyga',
     tabKnockout: 'Atkrintamosios',
@@ -476,7 +570,9 @@ const I18N = {
     langOptionEs: 'Ispanu',
     langOptionEn: 'Anglu',
     langOptionLt: 'Lietuviu',
-    langOptionCa: 'Katalonu'
+    langOptionCa: 'Katalonu',
+    guideButton: 'Kaip zaisti',
+    sharedDataNote: 'Bendrinami duomenys per Supabase. Jei du zmones redaguoja vienu metu, sistema issprendzia konfliktus atnaujindama naujausia busena.'
   },
   ca: {
     seasonStartLabel: 'Inici de campanya',
@@ -486,7 +582,7 @@ const I18N = {
     syncLocal: 'nomes local',
     playersSingular: 'jugador',
     playersPlural: 'jugadors',
-    tabConfig: 'Guia del joc',
+    tabConfig: 'Info',
     tabPlayers: 'Jugadors',
     tabLeague: 'Lligueta',
     tabKnockout: 'Eliminatories',
@@ -518,17 +614,21 @@ const I18N = {
     langOptionEs: 'Espanyol',
     langOptionEn: 'Angles',
     langOptionLt: 'Lituà',
-    langOptionCa: 'Català'
+    langOptionCa: 'Català',
+    guideButton: 'Com jugar',
+    sharedDataNote: 'Dades compartides per Supabase. Si dues persones editen alhora, el sistema resol conflictes refrescant l\'estat mes recent.'
   }
 };
 let state = null;
-let currentTab = 'config';
+let currentTab = 'players';
 let pendingModal = null;
 let remoteEtag = null;
 let pullTimer = null;
 let pushTimer = null;
 let pushInFlight = false;
 let pushQueued = false;
+let celebrationShownKey = null;
+let demoDrawState = null;
 
 function uid(){ return Math.random().toString(36).slice(2,10); }
 function normalizeUiLang(lang){
@@ -551,6 +651,130 @@ function setUiLang(lang){
   try{ localStorage.setItem(UI_LANG_KEY, next); }
   catch(_err){}
   document.documentElement.lang = next;
+}
+function openGuideModal(){
+  pendingModal = ()=>{
+    const betCeiling = getBetMoneyCeiling();
+    const bg = el(`<div class="modal-bg"><div class="modal guide-modal">
+      <span class="close">✕</span>
+      <h3>Cómo se juega</h3>
+      <div class="muted" style="line-height:1.6;max-height:72vh;overflow:auto;padding-right:4px;">
+        <p><b>Objetivo final</b><br>El ganador histórico se ve en <b>Museo</b>. El orden se define así: <b>1) más copas</b>, <b>2) más dinero histórico</b>, <b>3) mejor diferencia de goles</b>.</p>
+
+        <p><b>Flujo de temporada</b></p>
+        <ol style="padding-left:18px;margin:0 0 10px;">
+          <li>En <b>Jugadores</b> cada persona registra su jugador desde su propio dispositivo.</li>
+          <li>Arranca la liguilla: todos contra todos, ida y vuelta.</li>
+          <li>Clasifican aprox. 2 de cada 3 jugadores. Si el número no es potencia de 2, hay <b>play-off</b> para completar el cuadro.</li>
+          <li>Luego se juegan eliminatorias hasta coronar al campeón de la temporada.</li>
+        </ol>
+
+        <p><b>Reporte y confirmación de resultados</b><br>Un jugador reporta marcador y el rival lo <b>confirma</b> o <b>rechaza</b>. Si se rechaza, el reporte debe cargarse de nuevo.</p>
+
+        <p><b>Apuestas</b></p>
+        <ul style="padding-left:18px;margin:0 0 10px;">
+          <li>Solo apuestas con tu <b>jugador activo</b>.</li>
+          <li>En liguilla solo puede apostar quien <b>no juega</b> ese partido.</li>
+          <li>En eliminatorias/play-off solo apuestan los <b>no clasificados</b>.</li>
+          <li>Máximo una apuesta abierta por partido y jugador.</li>
+          <li>Apuesta máxima por ticket: <b>${Math.round(state.bets.maxStakePct*100)}%</b> de tu saldo actual.</li>
+          <li>Cuota fija ganadora: <b>x2</b>, con tope global de apuestas en <b>${fmtMoney(betCeiling)}</b>.</li>
+          <li>Las apuestas se liquidan cuando el resultado queda confirmado.</li>
+        </ul>
+
+        <p><b>Desempates</b></p>
+        <ul style="padding-left:18px;margin:0;">
+          <li>En liguilla: puntos, diferencia de goles, goles a favor, partido directo.</li>
+          <li>Si el empate sigue justo en el corte: cruces aleatorios a penaltis hasta desempatar.</li>
+          <li>En play-off/eliminatorias no puede quedar empate: si empatan en goles, se registra tanda de penaltis obligatoriamente.</li>
+        </ul>
+      </div>
+    </div></div>`);
+    bg.querySelector('.close').onclick = ()=>{ pendingModal=null; render(); };
+    return bg;
+  };
+  render();
+}
+
+function runChampionCelebration(){
+  const key = `${state?.season || ''}:${state?.champion || ''}`;
+  if(!state?.champion || celebrationShownKey===key) return;
+  celebrationShownKey = key;
+
+  const layer = document.createElement('div');
+  layer.className = 'celebration-layer';
+  document.body.appendChild(layer);
+
+  const colors = ['#e8b339','#5b3df5','#3fa796','#f4f2ff','#ff6b6b'];
+  for(let i=0;i<120;i++){
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = `${Math.random()*100}%`;
+    piece.style.background = colors[i % colors.length];
+    piece.style.animationDuration = `${2.8 + Math.random()*2.2}s`;
+    piece.style.animationDelay = `${Math.random()*0.8}s`;
+    piece.style.transform = `translateY(-20px) rotate(${Math.random()*120}deg)`;
+    layer.appendChild(piece);
+  }
+
+  for(let i=0;i<9;i++){
+    const fw = document.createElement('div');
+    fw.className = 'firework';
+    fw.style.left = `${12 + Math.random()*76}%`;
+    fw.style.top = `${12 + Math.random()*45}%`;
+    fw.style.animationDelay = `${i*0.22}s`;
+    layer.appendChild(fw);
+  }
+
+  setTimeout(()=>{
+    if(layer.parentNode) layer.parentNode.removeChild(layer);
+  }, 5200);
+}
+
+function stopDemoDrawTimer(){
+  if(demoDrawState?.timerId) clearTimeout(demoDrawState.timerId);
+  if(demoDrawState) demoDrawState.timerId = null;
+}
+
+function resetDemoDrawState(){
+  stopDemoDrawTimer();
+  demoDrawState = null;
+}
+
+function ensureDemoDrawState(sessionId, total){
+  if(!demoDrawState || demoDrawState.sessionId!==sessionId){
+    demoDrawState = {
+      sessionId,
+      total,
+      revealed:0,
+      running:false,
+      complete:false,
+      nextRevealAt:null,
+      timerId:null
+    };
+  }
+  return demoDrawState;
+}
+
+function tickDemoDraw(sessionId){
+  if(!demoDrawState || demoDrawState.sessionId!==sessionId || demoDrawState.complete) return;
+  demoDrawState.revealed = Math.min(demoDrawState.total, demoDrawState.revealed + 1);
+  demoDrawState.complete = demoDrawState.revealed>=demoDrawState.total;
+  demoDrawState.running = !demoDrawState.complete;
+  demoDrawState.nextRevealAt = demoDrawState.complete ? null : (Date.now() + 10000);
+  render();
+  if(!demoDrawState.complete){
+    demoDrawState.timerId = setTimeout(()=> tickDemoDraw(sessionId), 10000);
+  }
+}
+
+function startDemoDraw(sessionId){
+  if(!demoDrawState || demoDrawState.sessionId!==sessionId) return;
+  if(demoDrawState.running || demoDrawState.complete) return;
+  demoDrawState.running = true;
+  demoDrawState.nextRevealAt = Date.now() + 10000;
+  demoDrawState.timerId = setTimeout(()=> tickDemoDraw(sessionId), 10000);
+  render();
 }
 function nowStr(){ const d=new Date(); return d.toLocaleDateString(uiLocale())+' '+d.toLocaleTimeString(uiLocale(),{hour:'2-digit',minute:'2-digit'}); }
 function dayStr(){ return new Date().toLocaleDateString(uiLocale()); }
@@ -1243,13 +1467,37 @@ function demoMatchText(m){
   return base;
 }
 
-function generateDemoSeason(){
+function clampDemoPlayersCount(value){
+  const max = getDemoPlayersDynamicMax();
+  const parsed = parseInt(value);
+  if(Number.isNaN(parsed)) return 6;
+  return Math.max(2, Math.min(max, parsed));
+}
+
+function getDemoPlayersDynamicMax(){
+  const hw = (typeof navigator!=='undefined' && Number.isFinite(navigator.hardwareConcurrency))
+    ? navigator.hardwareConcurrency
+    : 4;
+  const mem = (typeof navigator!=='undefined' && Number.isFinite(navigator.deviceMemory))
+    ? navigator.deviceMemory
+    : 4;
+  // Presupuesto aproximado de partidos de liguilla para no bloquear el navegador.
+  const matchBudget = Math.max(500, Math.floor(hw * mem * 180));
+  const maxPlayers = Math.floor((1 + Math.sqrt(1 + 4*matchBudget)) / 2);
+  return Math.max(8, maxPlayers);
+}
+
+function generateDemoSeason(requestedCount){
+  const targetCount = clampDemoPlayersCount(requestedCount);
   const sourceNames = state.players.length>=3
     ? state.players.map(p=> p.name)
     : ['alex','bruno','carla','diego','elena','fabio'];
   const uniqueNames = [...new Set(sourceNames.map(n=> normalizePlayerName(n) || 'jugador'))];
-  const target = Math.min(8, Math.max(4, uniqueNames.length));
-  const picks = shuffle(uniqueNames).slice(0, target);
+  const pool = shuffle(uniqueNames);
+  while(pool.length < targetCount){
+    pool.push(`jugador ${pool.length+1}`);
+  }
+  const picks = pool.slice(0, targetCount);
   const players = picks.map((name, idx)=>({id:`d${idx+1}`, name}));
 
   const table = {};
@@ -1324,8 +1572,14 @@ function generateDemoSeason(){
     entrants = [...byes, ...playoffWinners];
   }
 
+  const drawOrder = shuffle(entrants);
+  const drawPairings = [];
+  for(let i=0;i<drawOrder.length;i+=2){
+    drawPairings.push([drawOrder[i], drawOrder[i+1]]);
+  }
+
   const knockoutRounds = [];
-  let active = shuffle(entrants);
+  let active = drawOrder;
   while(active.length>1){
     const round = [];
     for(let i=0;i<active.length;i+=2){
@@ -1342,14 +1596,27 @@ function generateDemoSeason(){
     standings,
     qualifiersCount: q,
     playoffMatches,
+    drawPairings,
     knockoutRounds,
     champion: active[0] || null
   };
 }
 
 function openDemoSeasonModal(){
-  const demo = generateDemoSeason();
+  const demoMax = getDemoPlayersDynamicMax();
+  const defaultCount = state.players.length>=2 ? Math.min(demoMax, state.players.length) : 6;
+  openDemoSeasonModalWithCount(defaultCount);
+}
+
+function openDemoSeasonModalWithCount(count){
+  resetDemoDrawState();
+  const demoMax = getDemoPlayersDynamicMax();
+  const demoCount = clampDemoPlayersCount(count);
+  const demo = generateDemoSeason(demoCount);
+  const sessionId = uid();
+  ensureDemoDrawState(sessionId, demo.drawPairings.length);
   pendingModal = ()=>{
+    const drawState = ensureDemoDrawState(sessionId, demo.drawPairings.length);
     const standingRows = demo.standings.map((r, idx)=>`
       <tr class="${idx<demo.qualifiersCount?'qual':''}">
         <td>${idx+1}</td>
@@ -1374,15 +1641,43 @@ function openDemoSeasonModal(){
       return `<div class="demo-box"><h4>${name}</h4><div class="demo-list">${round.map(m=> `<div class="demo-line"><span>${escapeHtml(m.p1.name)} vs ${escapeHtml(m.p2.name)}</span><span>${escapeHtml(demoMatchText(m))}</span></div>`).join('')}</div></div>`;
     }).join('');
 
+    const drawRows = demo.drawPairings.map((pair, idx)=>{
+      if(idx < drawState.revealed){
+        return `<div class="demo-draw-item revealed"><span>Bombo ${idx+1}</span><span>${escapeHtml(pair[0].name)} vs ${escapeHtml(pair[1].name)}</span></div>`;
+      }
+      return `<div class="demo-draw-item pending"><span>Bombo ${idx+1}</span><span>Esperando extracción...</span></div>`;
+    }).join('');
+
+    const countdown = drawState.running && drawState.nextRevealAt
+      ? Math.max(0, Math.ceil((drawState.nextRevealAt - Date.now()) / 1000))
+      : null;
+
     const bg = el(`<div class="modal-bg"><div class="modal demo-modal">
       <span class="close">✕</span>
       <h3>Demo de temporada (no se guarda)</h3>
       <div class="muted" style="margin-bottom:10px;">Simulación explicativa aleatoria. No modifica la temporada real, no suma premios y no se sincroniza.</div>
+      <div class="row" style="margin-bottom:10px;">
+        <div>
+          <label>Jugadores en esta demo (2-${demoMax})</label>
+          <input id="demo-count" type="number" min="2" max="${demoMax}" step="1" value="${demoCount}">
+        </div>
+      </div>
       <div class="demo-summary">
         <span class="demo-pill">Jugadores: ${demo.players.length}</span>
         <span class="demo-pill">Partidos liguilla: ${demo.leagueMatchesCount}</span>
         <span class="demo-pill">Clasifican: ${demo.qualifiersCount}</span>
         <span class="demo-pill">Campeón demo: ${escapeHtml(demo.champion ? demo.champion.name : '—')}</span>
+      </div>
+      <div class="demo-draw-card" style="margin-bottom:12px;">
+        <div class="demo-draw-head">
+          <div class="demo-draw-title">Sorteo de eliminatorias (demo)</div>
+          <div class="demo-draw-status">${drawState.complete ? 'Sorteo completado' : (drawState.running ? `Siguiente cruce en ${countdown ?? 10}s` : 'Listo para iniciar')}</div>
+        </div>
+        <div class="muted" style="margin-bottom:8px;">Se revela un emparejamiento cada 10 segundos para recrear el momento del bombo.</div>
+        <div class="demo-draw-list">${drawRows}</div>
+        <div class="row" style="margin-top:8px;justify-content:flex-end;">
+          <button id="demo-start-draw" class="gold" type="button" ${drawState.running || drawState.complete ? 'disabled' : ''}>Iniciar sorteo animado</button>
+        </div>
       </div>
       <div class="demo-grid">
         <div class="demo-box">
@@ -1394,7 +1689,7 @@ function openDemoSeasonModal(){
         </div>
         <div>
           ${playoffHtml}
-          ${roundsHtml}
+          ${drawState.complete ? roundsHtml : '<div class="demo-box"><h4>Eliminatorias</h4><div class="muted">El cuadro final aparece cuando termina el sorteo.</div></div>'}
         </div>
       </div>
       <div class="row" style="margin-top:12px;justify-content:flex-end;">
@@ -1402,8 +1697,16 @@ function openDemoSeasonModal(){
       </div>
     </div></div>`);
 
-    bg.querySelector('.close').onclick = ()=>{ pendingModal=null; render(); };
-    bg.querySelector('#demo-reroll').onclick = ()=> openDemoSeasonModal();
+    bg.querySelector('.close').onclick = ()=>{ resetDemoDrawState(); pendingModal=null; render(); };
+    const drawBtn = bg.querySelector('#demo-start-draw');
+    if(drawBtn){
+      drawBtn.onclick = ()=> startDemoDraw(sessionId);
+    }
+    bg.querySelector('#demo-reroll').onclick = ()=>{
+      const requested = bg.querySelector('#demo-count').value;
+      resetDemoDrawState();
+      openDemoSeasonModalWithCount(requested);
+    };
     return bg;
   };
   render();
@@ -2365,15 +2668,16 @@ function render(){
   body.id='tabbody';
   app.appendChild(body);
   renderTabBody();
-  app.appendChild(el(`<div class="foot-note">Datos compartidos por Supabase. Si dos personas editan a la vez, el sistema resuelve conflictos refrescando el estado más reciente.</div>`));
+  app.appendChild(el(`<div class="foot-note">${t('sharedDataNote')}</div>`));
   if(pendingModal) app.appendChild(pendingModal());
+  if(state?.phase==='finished' && state?.champion) runChampionCelebration();
 }
 
 function renderHero(){
   const syncTxt = state.sync?.mode==='remoto' ? t('syncRemote') : t('syncLocal');
   const syncWarn = state.sync?.lastError ? ` · ${state.sync.lastError}` : '';
   const playersLabel = state.players.length===1 ? t('playersSingular') : t('playersPlural');
-  return el(`<div class="hero">
+  const h = el(`<div class="hero">
     <svg class="crest" viewBox="0 0 48 48" fill="none">
       <path d="M24 3 L43 11 V24 C43 35 35 42 24 45 C13 42 5 35 5 24 V11 Z" fill="#1E2550" stroke="#E8B339" stroke-width="2"/>
       <path d="M24 14 L29 24 L24 34 L19 24 Z" fill="#E8B339"/>
@@ -2389,8 +2693,14 @@ function renderHero(){
         <span class="brand-badge"><span class="icon">🟢</span>Xbox</span>
         <span class="brand-badge"><span class="icon">💻</span>PC</span>
       </div>
+      <div class="hero-actions">
+        <button type="button" class="hero-guide-btn" id="open-guide">${t('guideButton')}</button>
+      </div>
     </div>
   </div>`);
+  const guideBtn = h.querySelector('#open-guide');
+  if(guideBtn) guideBtn.onclick = ()=> openGuideModal();
+  return h;
 }
 function phaseLabel(p){
   return {setup:t('phaseSetup'), league:t('phaseLeague'), playoff:t('phasePlayoff'), knockout:t('phaseKnockout'), finished:t('phaseFinished')}[p]||p;
@@ -2447,46 +2757,17 @@ function renderConfigTab(){
   const n = state.players.length;
   const maxMatches = Math.max(1,2*(n-1));
   const q = effectiveNumQualifiers();
-  const betCeiling = getBetMoneyCeiling();
 
   if(locked){
     wrap.appendChild(el(`<div class="banner info">La configuración está bloqueada porque el torneo ya empezó. Puedes iniciar una nueva temporada desde la pestaña Historial cuando termine.</div>`));
   }
 
   const guideCard = el(`<div class="card">
-    <h3>Cómo se juega</h3>
-    <div class="muted" style="line-height:1.6;">
-      <p><b>Objetivo final</b><br>El ganador histórico se ve en <b>Museo</b>. El orden se define así: <b>1) más copas</b>, <b>2) más dinero histórico</b>, <b>3) mejor diferencia de goles</b>.</p>
-
-      <p><b>Flujo de temporada</b></p>
-      <ol style="padding-left:18px;margin:0 0 10px;">
-        <li>En <b>Jugadores</b> cada persona registra su jugador desde su propio dispositivo.</li>
-        <li>Arranca la liguilla: todos contra todos, ida y vuelta.</li>
-        <li>Clasifican aprox. 2 de cada 3 jugadores. Si el número no es potencia de 2, hay <b>play-off</b> para completar el cuadro.</li>
-        <li>Luego se juegan eliminatorias hasta coronar al campeón de la temporada.</li>
-      </ol>
-
-      <p><b>Reporte y confirmación de resultados</b><br>Un jugador reporta marcador y el rival lo <b>confirma</b> o <b>rechaza</b>. Si se rechaza, el reporte debe cargarse de nuevo.</p>
-
-      <p><b>Apuestas</b></p>
-      <ul style="padding-left:18px;margin:0 0 10px;">
-        <li>Solo apuestas con tu <b>jugador activo</b>.</li>
-        <li>En liguilla solo puede apostar quien <b>no juega</b> ese partido.</li>
-        <li>En eliminatorias/play-off solo apuestan los <b>no clasificados</b>.</li>
-        <li>Máximo una apuesta abierta por partido y jugador.</li>
-        <li>Apuesta máxima por ticket: <b>${Math.round(state.bets.maxStakePct*100)}%</b> de tu saldo actual.</li>
-        <li>Cuota fija ganadora: <b>x2</b> (recuperas stake + ganancia equivalente), con tope global de apuestas en <b>${fmtMoney(betCeiling)}</b>.</li>
-        <li>Las apuestas se liquidan cuando el resultado queda confirmado.</li>
-      </ul>
-
-      <p><b>Desempates</b></p>
-      <ul style="padding-left:18px;margin:0;">
-        <li>En liguilla: puntos, diferencia de goles, goles a favor, partido directo.</li>
-        <li>Si el empate sigue justo en el corte de clasificación: cruces aleatorios a penaltis hasta desempatar.</li>
-        <li>En play-off/eliminatorias no puede quedar empate: si empatan en goles, se registra tanda de penaltis obligatoriamente.</li>
-      </ul>
-    </div>
+    <h3>Guía del juego</h3>
+    <div class="muted" style="margin-bottom:10px;">Abre la explicación completa del torneo, apuestas y desempates en un popup interactivo.</div>
+    <button id="open-guide-config" class="secondary" type="button">Abrir guía completa</button>
   </div>`);
+  guideCard.querySelector('#open-guide-config').onclick = ()=> openGuideModal();
   wrap.appendChild(guideCard);
 
   const card = el(`<div class="card">
@@ -3287,15 +3568,18 @@ function renderKnockoutTab(){
   }
 
   if(state.knockoutDraw && !state.knockoutDraw.complete){
-    const d = el(`<div class="card"><h3>Sorteo de eliminatorias</h3><div class="muted" style="margin-bottom:8px;">Se revela un emparejamiento cada 10 segundos.</div><div id="draw-list" class="matchlist"></div></div>`);
+    const remaining = state.knockoutDraw.startedAt && state.knockoutDraw.nextRevealAt
+      ? Math.max(0, Math.ceil((state.knockoutDraw.nextRevealAt - Date.now())/1000))
+      : null;
+    const d = el(`<div class="card demo-draw-card"><div class="demo-draw-head"><h3 style="margin:0;">Sorteo de eliminatorias</h3><div class="demo-draw-status">${state.knockoutDraw.startedAt ? `Siguiente cruce en ${remaining ?? 10}s` : 'Listo para iniciar'}</div></div><div class="muted" style="margin-bottom:8px;">Se revela un emparejamiento cada 10 segundos.</div><div id="draw-list" class="demo-draw-list"></div></div>`);
     const list = d.querySelector('#draw-list');
     const total = state.knockoutDraw.pairings.length;
     for(let i=0;i<total;i++){
       if(i<state.knockoutDraw.revealed){
         const pair = state.knockoutDraw.pairings[i];
-        list.appendChild(el(`<div class="match"><div class="vs"><span>${playerName(pair[0])}</span><span>vs</span><span>${playerName(pair[1])}</span></div><span class="tag confirmed">Revelado</span></div>`));
+        list.appendChild(el(`<div class="demo-draw-item revealed"><span>Bombo ${i+1}</span><span>${playerName(pair[0])} vs ${playerName(pair[1])}</span></div>`));
       } else {
-        list.appendChild(el(`<div class="match"><div class="vs muted">Emparejamiento ${i+1}: bolas en el bombo...</div><span class="tag pending">Pendiente</span></div>`));
+        list.appendChild(el(`<div class="demo-draw-item pending"><span>Bombo ${i+1}</span><span>Esperando extracción...</span></div>`));
       }
     }
     if(!state.knockoutDraw.startedAt){
