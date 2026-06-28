@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Champions PS5</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap');
 
 :root{
   --bg:#eef2fb;
@@ -37,8 +37,8 @@ body{
     var(--bg);
 }
 h1,h2,h3,.disp{
-  font-family:'Bebas Neue',sans-serif;
-  letter-spacing:.7px;
+  font-family:'Montserrat',sans-serif;
+  letter-spacing:.2px;
 }
 .app{
   max-width:min(1180px,96vw);
@@ -58,11 +58,14 @@ h1,h2,h3,.disp{
   gap:14px;
   margin-bottom:18px;
   flex-wrap:wrap;
-  background:linear-gradient(120deg, rgba(255,255,255,.86), rgba(255,255,255,.7));
-  border:1px solid rgba(0,61,165,.24);
+  background:
+    radial-gradient(220px 120px at 12% 10%, rgba(64,156,255,.25), transparent 70%),
+    radial-gradient(240px 130px at 88% 10%, rgba(0,163,224,.22), transparent 70%),
+    linear-gradient(135deg, #061a56, #002d87 55%, #0046b8);
+  border:1px solid rgba(170,206,255,.32);
   border-radius:20px;
   padding:16px 16px 14px;
-  box-shadow:var(--shadow-soft);
+  box-shadow:0 20px 42px rgba(0,20,78,.42);
   overflow:hidden;
 }
 .hero::after{
@@ -72,46 +75,47 @@ h1,h2,h3,.disp{
   width:200px;
   height:200px;
   border-radius:50%;
-  background:radial-gradient(circle, rgba(0,163,224,.28) 0%, rgba(0,163,224,0) 70%);
+  background:radial-gradient(circle, rgba(255,255,255,.2) 0%, rgba(255,255,255,0) 70%);
   pointer-events:none;
 }
 .hero .crest{width:48px;height:48px;flex:0 0 auto;filter:drop-shadow(0 3px 4px rgba(0,0,0,.12));}
-.hero h1{font-size:clamp(1.4rem,2.3vw,2.2rem);margin:0;line-height:.95;}
-.hero .sub{color:var(--text-dim);font-size:clamp(.8rem,1.2vw,.95rem);margin-top:4px;font-weight:700;}
+.hero h1{font-size:clamp(1.4rem,2.3vw,2.1rem);margin:0;line-height:1;color:#f4f8ff;font-weight:900;}
+.hero .sub{color:#c9dcff;font-size:clamp(.8rem,1.2vw,.95rem);margin-top:4px;font-weight:700;}
 .brand-strip{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
 .brand-badge{
   display:inline-flex;
   align-items:center;
   gap:6px;
-  background:#ffffff;
-  border:1px solid #d2dcf5;
+  background:rgba(255,255,255,.1);
+  border:1px solid rgba(196,221,255,.35);
   border-radius:999px;
   padding:5px 11px;
   font-size:.72rem;
   font-weight:800;
   letter-spacing:.3px;
-  box-shadow:0 2px 0 rgba(0,61,165,.08);
+  color:#f1f7ff;
+  box-shadow:0 2px 0 rgba(0,0,0,.14);
 }
 .brand-badge .icon{font-size:.9rem;}
 .hero-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
 .hero-guide-btn{
-  background:linear-gradient(160deg, #eef4ff, #dbe8ff);
-  color:#001c63;
-  border:1px solid #b8cdf7;
+  background:linear-gradient(160deg, rgba(255,255,255,.18), rgba(255,255,255,.08));
+  color:#f4f8ff;
+  border:1px solid rgba(197,222,255,.45);
   border-radius:999px;
   padding:7px 14px;
   font-size:.76rem;
   font-weight:900;
   letter-spacing:.25px;
-  box-shadow:0 6px 16px rgba(0,61,165,.22);
+  box-shadow:0 6px 16px rgba(0,12,52,.28);
   transition:transform .18s ease, box-shadow .18s ease;
 }
-.hero-guide-btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,61,165,.28);}
+.hero-guide-btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,18,82,.34);}
 .hero-theme-btn{
-  background:linear-gradient(160deg,#e9f2ff,#d7e8ff);
-  color:#012275;
-  border-color:#b6cdf4;
-  box-shadow:0 6px 16px rgba(0,61,165,.2);
+  background:linear-gradient(160deg, rgba(0,163,224,.28), rgba(64,156,255,.2));
+  color:#f0f7ff;
+  border-color:rgba(141,201,255,.6);
+  box-shadow:0 6px 16px rgba(0,34,112,.28);
 }
 
 body.theme-night{
@@ -1145,7 +1149,7 @@ function runChampionCelebration(){
   layer.className = 'celebration-layer';
   document.body.appendChild(layer);
 
-  const colors = ['#e8b339','#5b3df5','#3fa796','#f4f2ff','#ff6b6b'];
+  const colors = ['#003da5','#005fcc','#00a3e0','#69b4ff','#eef4ff'];
   for(let i=0;i<120;i++){
     const piece = document.createElement('div');
     piece.className = 'confetti-piece';
@@ -3352,19 +3356,17 @@ function renderHero(){
   const playersLabel = state.players.length===1 ? t('playersSingular') : t('playersPlural');
   const h = el(`<div class="hero">
     <svg class="crest" viewBox="0 0 48 48" fill="none">
-      <path d="M24 3 L43 11 V24 C43 35 35 42 24 45 C13 42 5 35 5 24 V11 Z" fill="#1E2550" stroke="#E8B339" stroke-width="2"/>
-      <path d="M24 14 L29 24 L24 34 L19 24 Z" fill="#E8B339"/>
+      <path d="M24 3 L43 11 V24 C43 35 35 42 24 45 C13 42 5 35 5 24 V11 Z" fill="#031a55" stroke="#dbe7ff" stroke-width="2"/>
+      <path d="M24 14 L29 24 L24 34 L19 24 Z" fill="#00a3e0"/>
     </svg>
     <div>
       <h1>${state.season}</h1>
       <div class="sub">${state.players.length} ${playersLabel} · ${t('phaseWord')}: ${phaseLabel(state.phase)} · ${seasonDateText(state.seasonKickoff)} · ${t('syncWord')}: ${syncTxt}${syncWarn}</div>
       <div class="brand-strip">
-        <span class="brand-badge"><span class="icon">⭐</span>Champions League</span>
-        <span class="brand-badge"><span class="icon">🏆</span>Mundial</span>
-        <span class="brand-badge"><span class="icon">🎮</span>EA FC26</span>
-        <span class="brand-badge"><span class="icon">🎮</span>PlayStation</span>
-        <span class="brand-badge"><span class="icon">🟢</span>Xbox</span>
-        <span class="brand-badge"><span class="icon">💻</span>PC</span>
+        <span class="brand-badge"><span class="icon">⭐</span>UEFA Champions League</span>
+        <span class="brand-badge"><span class="icon">⚽</span>Noche de Champions</span>
+        <span class="brand-badge"><span class="icon">🏟️</span>Road to Final</span>
+        <span class="brand-badge"><span class="icon">🎮</span>EA Sports FC</span>
       </div>
       <div class="hero-actions">
         <button type="button" class="hero-guide-btn" id="open-guide">${t('guideButton')}</button>
