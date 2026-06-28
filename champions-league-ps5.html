@@ -853,7 +853,11 @@ function computeStandings(){
     return Number.isFinite(s1) && Number.isFinite(s2) && s1>=0 && s2>=0;
   };
   const table = {};
-  state.players.forEach(p=> table[p.id] = {id:p.id, name:p.name, pj:0,g:0,e:0,p:0,gf:0,gc:0,dg:0,pts:0});
+  state.players.forEach((p, idx)=>{
+    const pid = p?.id || `player-${idx}`;
+    const pname = (p?.name || '').trim() || `Jugador ${idx+1}`;
+    table[pid] = {id:pid, name:pname, pj:0,g:0,e:0,p:0,gf:0,gc:0,dg:0,pts:0};
+  });
   state.leagueMatches.forEach(m=>{
     if(!countsForStandings(m)) return;
     const s1 = Number(m.score1);
@@ -2123,16 +2127,24 @@ function renderLeagueTab(){
   const pendingWithScore = state.leagueMatches.filter(m=> m.status==='pending' && m.score1!==null && m.score2!==null).length;
   state.config.numQualifiers = Q;
   const card = el(`<div class="card"><h3>Clasificación</h3><table>
-    <tr><th>#</th><th class="name">Jugador</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>DG</th><th>Pts</th></tr>
+    <thead><tr><th>#</th><th class="name">Jugador</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>DG</th><th>Pts</th></tr></thead>
+    <tbody id="league-standings-body"></tbody>
   </table></div>`);
-  const table = card.querySelector('table');
+  const tableBody = card.querySelector('#league-standings-body');
   const tiedIds = state.phase==='league'? tiedGroupsAtCutoff(standings,Q) : [];
   standings.forEach((s,i)=>{
-    const tr = el(`<tr class="${i<Q?'qual':''} ${tiedIds.includes(s.id)?'tied':''}"><td>${i+1}</td><td class="name">${s.name}</td><td>${s.pj}</td><td>${s.g}</td><td>${s.e}</td><td>${s.p}</td><td>${s.dg>0?'+':''}${s.dg}</td><td><b>${s.pts}</b></td></tr>`);
-    table.appendChild(tr);
+    const name = (s?.name || '').trim() || 'Jugador';
+    const pj = Number.isFinite(Number(s?.pj)) ? Number(s.pj) : 0;
+    const g = Number.isFinite(Number(s?.g)) ? Number(s.g) : 0;
+    const e = Number.isFinite(Number(s?.e)) ? Number(s.e) : 0;
+    const p = Number.isFinite(Number(s?.p)) ? Number(s.p) : 0;
+    const dg = Number.isFinite(Number(s?.dg)) ? Number(s.dg) : 0;
+    const pts = Number.isFinite(Number(s?.pts)) ? Number(s.pts) : 0;
+    const tr = el(`<tr class="${i<Q?'qual':''} ${tiedIds.includes(s.id)?'tied':''}"><td>${i+1}</td><td class="name">${name}</td><td>${pj}</td><td>${g}</td><td>${e}</td><td>${p}</td><td>${dg>0?'+':''}${dg}</td><td><b>${pts}</b></td></tr>`);
+    tableBody.appendChild(tr);
   });
   if(!standings.length){
-    table.appendChild(el(`<tr><td colspan="8" class="muted">Sin datos de clasificación todavía.</td></tr>`));
+    tableBody.appendChild(el(`<tr><td colspan="8" class="muted">Sin datos de clasificación todavía.</td></tr>`));
   }
   card.appendChild(el(`<div class="muted" style="margin-top:8px;">Los ${Q} primeros (resaltados) pasan a la fase eliminatoria.</div>`));
   if(pendingWithScore>0){
