@@ -198,7 +198,9 @@ body.theme-night .museum-seasons,
 body.theme-night th,
 body.theme-night .audit,
 body.theme-night .player-tile-meta,
-body.theme-night .player-chip .pin{color:#c2d4ff;}
+body.theme-night .player-chip .pin,
+body.theme-night .player-timezones{color:#c2d4ff;}
+body.theme-night .player-timezones{border-top-color:#35579d;}
 body.theme-night .tab.active,
 body.theme-night .step.active,
 body.theme-night button,
@@ -674,6 +676,8 @@ tbody tr:hover td{background:rgba(0,61,165,.045);}
 .player-tile-meta{margin-top:4px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.78rem;color:#45649f;}
 .player-tile-badge{font-size:.68rem;font-weight:900;color:#eff7ff;background:linear-gradient(145deg,#003da5,#00a3e0);border-radius:999px;padding:2px 7px;}
 .player-tile-actions{display:flex;gap:6px;align-items:center;}
+.player-timezones{margin-top:7px;padding-top:7px;border-top:1px dashed #d6e3f6;font-size:.73rem;color:#46639d;line-height:1.4;}
+.player-timezones .pin{margin-right:5px;}
 
 .add-player-panel{
   background:
@@ -1020,11 +1024,28 @@ const I18N = {
     tabKnockout: 'Eliminatorias',
     tabMuseum: 'Museo',
     tabHistory: 'Historial',
+    seasonWord: 'Temporada',
     phaseSetup: 'configuración',
     phaseLeague: 'liguilla',
     phasePlayoff: 'play-off',
     phaseKnockout: 'eliminatorias',
     phaseFinished: 'finalizado',
+    matchStatusEmpty: 'sin jugar',
+    matchStatusPending: 'pendiente',
+    matchStatusConfirmed: 'confirmado',
+    matchStatusDispute: 'disputa',
+    roundFinal: 'Final',
+    roundSemifinals: 'Semifinales',
+    roundQuarterfinals: 'Cuartos de final',
+    roundRoundOf16: 'Octavos de final',
+    roundOfN: 'Ronda de {size}',
+    roundNumber: 'Ronda {n}',
+    firstLeg: 'Ida',
+    secondLeg: 'Vuelta',
+    aggregatePending: 'Global: por definir',
+    aggregateScore: 'Global: {a}-{b}',
+    penaltiesShort: 'Penaltis',
+    qualifiedLabel: 'Clasificado',
     playersHint: 'Registra tu equipo. Solo podrás añadir un segundo si aún no se llega al mínimo de 4 equipos.',
     noPlayersYet: 'Todavía no hay jugadores.',
     yourPlayer: 'Tu jugador',
@@ -1035,6 +1056,9 @@ const I18N = {
     insNew: '(nuevo)',
     newNamePlaceholder: 'Escribe un nombre nuevo',
     addNow: 'Añadir ahora',
+    preferredPlayTimeLabel: 'Hora ideal para jugar (tu hora local)',
+    preferredPlayTimeHint: 'Zona horaria detectada',
+    preferredPlayTimeRequired: 'Indica una hora para jugar antes de registrarte.',
     chooseLanguage: 'Idioma del juego en este dispositivo',
     syncStatusPrefix: 'Sync remoto',
     syncOk: 'OK',
@@ -1050,6 +1074,134 @@ const I18N = {
     langOptionEn: 'Inglés',
     langOptionLt: 'Lituano',
     langOptionCa: 'Catalán',
+    leagueNotStarted: 'La liguilla aún no ha empezado. Configúrala en la pestaña Configuración.',
+    standingsTitle: 'Clasificación',
+    standingsNoData: 'Sin datos de clasificación todavía.',
+    standingsQualifiedTop: 'Los {count} primeros (resaltados) pasan a la fase eliminatoria.',
+    standingsProvisional: 'Clasificación provisional: incluye {count} resultado(s) pendiente(s) de confirmar.',
+    tiePending: 'pendiente',
+    tieResolved: 'resuelto',
+    tieLoadShootout: 'Cargar tanda',
+    matchBtnFix: 'Corregir',
+    matchBtnConfirm: 'Confirmar',
+    matchBtnResult: 'Resultado',
+    betBtn: 'Apostar',
+    knockoutNoBracket: 'El cuadro de eliminatorias todavía no se ha generado.',
+    startAnimatedDraw: 'Iniciar sorteo animado',
+    nextPairAuto: 'El siguiente cruce aparecerá automáticamente.',
+    championOfSeason: 'Campeón de {season}',
+    startNewSeasonBtn: 'Empezar nueva temporada',
+    museumTitle: 'Museo de Jugadores',
+    museumIntro: 'Cada copa representa una temporada ganada. El museo se acumula con el paso de los años, como una vitrina histórica.',
+    museumNoPlayers: 'Aún no hay jugadores para mostrar en el museo.',
+    totalCups: 'Copas totales registradas: {count}',
+    noTitlesYet: 'Sin títulos todavía.',
+    wonSeasons: 'Temporadas ganadas',
+    historySeasonIntro: 'Empieza una nueva temporada cuando ya haya campeón.',
+    historyEnableAfterSeason: 'Este botón se habilita al finalizar la temporada actual.',
+    historyRestartSeasonBtn: 'Volver a empezar esta temporada',
+    pastChampionsTitle: 'Campeones anteriores',
+    activityLogTitle: 'Registro de actividad',
+    noActivityYet: 'Sin actividad todavía.',
+    errInvalidName: 'Nombre invalido.',
+    errDuplicatePlayer: 'Ese jugador ya existe. No se permiten nombres duplicados.',
+    errRemoteUnstable: 'Sin conexion estable al servidor compartido. Se guardo local y se intentara sincronizar solo.',
+    errConcurrentChanges: 'Hubo muchos cambios simultaneos en otros dispositivos. Vuelve a intentarlo.',
+    errInvalidPlayer: 'Jugador invalido.',
+    errDeleteOnlySetup: 'Solo puedes borrar jugadores antes de iniciar la liguilla.',
+    errPlayerNoLongerExists: 'Ese jugador ya no existe.',
+    errNoTieBreakerActive: 'No hay desempate activo.',
+    errTiePairNotFound: 'Cruce no encontrado.',
+    errInvalidPenalties: 'Indica penaltis validos.',
+    errShootoutNoDraw: 'La tanda no puede terminar empatada.',
+    errBettorNotFound: 'Apostador no encontrado.',
+    errBetOnlyLocal: 'Solo puedes apostar con tus equipos de este dispositivo.',
+    errBetOnlyLeagueOrKo: 'Las apuestas solo se permiten en liguilla o eliminatorias.',
+    errBetOnlyNonQualifiedKo: 'Solo pueden apostar los jugadores que no clasificaron a eliminatorias.',
+    errBetMatchUnavailable: 'Partido no disponible para apostar.',
+    errBetLeagueNonParticipantOnly: 'En liguilla, solo puede apostar un jugador que no participe en ese partido.',
+    errBetMatchClosed: 'Ese partido ya esta cerrado para apuestas.',
+    errInvalidBetPick: 'Seleccion de apuesta invalida.',
+    errInvalidBetAmount: 'Cantidad de apuesta invalida.',
+    errBetAlreadyOpen: 'Ya tienes una apuesta abierta en este partido.',
+    errBetInsufficientBalance: 'No tienes saldo suficiente.',
+    errBetMaxStake: 'Tu apuesta maxima en este momento es {amount}.',
+    errPlayerNotFound: 'Jugador no encontrado.',
+    errReportOnlyLocal: 'Solo puedes reportar con uno de tus equipos en este dispositivo.',
+    errNotParticipant: 'No formas parte de este partido.',
+    errMatchPendingDecision: 'Este resultado esta pendiente de aceptacion/rechazo del rival.',
+    errMustRereportByReporter: 'El jugador que reporto inicialmente debe volver a cargar el resultado.',
+    errDecisiveNeedsPenalties: 'En esta fase no puede haber empate: indica el resultado de la tanda de penaltis.',
+    errAcceptOnlyLocal: 'Solo puedes aceptar con uno de tus equipos en este dispositivo.',
+    errMatchNotPending: 'Este partido no esta pendiente.',
+    errReporterCannotSelfConfirm: 'Quien reporto no puede auto-confirmar: debe aceptar el rival.',
+    errRejectOnlyLocal: 'Solo puedes rechazar con uno de tus equipos en este dispositivo.',
+    errReporterCannotSelfReject: 'Quien reporto no puede rechazarse a si mismo.',
+    errNeedMinFourToStart: 'Se necesitan al menos 4 jugadores para iniciar la liguilla.',
+    errCouldNotGenerateLeague: 'No se pudo generar la liguilla con los jugadores actuales. Revisa los nombres bloqueados por la regla de no enfrentarse entre mismos nombres base.',
+    errUnresolvedCutoffTie: 'Hay un empate sin resolver entre los puestos que delimitan la clasificacion. Resuelvelo abajo antes de continuar.',
+    errCouldNotGeneratePlayoff: 'No se pudo generar play-off sin cruces entre jugadores del mismo nombre base (antes del "-").',
+    errTiePenaltiesRequiredAll: 'Debes indicar penaltis validos para todos los jugadores empatados.',
+    errTiePenaltiesMustBeUnique: 'No puede haber empate en la tanda: repite hasta que todos tengan valor distinto.',
+    errPlayoffNotAllDecided: 'Aun hay partidos de play-off sin confirmar o sin ganador decidido.',
+    errSeriesNotTwoLeg: 'Esta serie no es ida y vuelta.',
+    errBothPenaltiesRequired: 'Indica ambos marcadores de penaltis.',
+    errPenaltiesNoDraw: 'En penaltis no puede haber empate.',
+    errCannotDefineWinner: 'No se pudo definir ganador con esos datos.',
+    alertMatchNotBettable: 'Este partido no esta disponible para apuestas en este momento.',
+    alertNoEligibleBettors: 'No hay apostadores disponibles para este partido.',
+    confirmDeletePlayerSeason: '¿Borrar a {name} de la temporada?',
+    demoNoKnockoutData: 'Sin datos de eliminatorias para mostrar.',
+    demoBracketModeTitle: 'Eliminatorias en modo bracket (demo)',
+    drawStatusComplete: 'Sorteo completado',
+    drawStatusReady: 'Listo para iniciar',
+    drawStatusNextIn: 'Siguiente cruce en {seconds}s',
+    drawRevealEvery10s: 'Se revela un emparejamiento cada 10 segundos.',
+    drawWaitingExtraction: 'Esperando extraccion...',
+    tiePenaltyModalTitle: 'Desempate por penaltis',
+    tiePenaltyModalHint: 'Introduce el resultado de la tanda para cada jugador empatado. Deben quedar distintos.',
+    tiePenaltyScoredPlaceholder: 'Penaltis anotados',
+    tiePenaltySaveBtn: 'Guardar tanda y desempatar',
+    stepConfig: 'Config',
+    stepChampion: 'Campeon',
+    knockoutBetBoardTitle: 'Panel de apuestas de eliminatorias',
+    knockoutDrawTitle: 'Sorteo de eliminatorias',
+    demoSetupTitle: 'Configurar demo',
+    demoSetupHint: 'Primero elige cuantos jugadores quieres simular y luego se genera la temporada demo.',
+    demoStartBtn: 'Empezar demo',
+    demoSeasonTitle: 'Demo de temporada (no se guarda)',
+    demoSeasonHint: 'Simulacion explicativa aleatoria. No modifica la temporada real, no suma premios y no se sincroniza.',
+    demoPlayersLabel: 'Jugadores en esta demo (2-{max})',
+    demoPillPlayers: 'Jugadores: {count}',
+    demoPillLeagueMatches: 'Partidos liguilla: {count}',
+    demoPillQualifiers: 'Clasifican: {count}',
+    demoPillChampion: 'Campeon demo: {name}',
+    demoLeagueTableTitle: 'Tabla de liguilla (demo)',
+    demoPlayoffTitle: 'Play-off (clasificacion al cuadro final)',
+    demoRerollBtn: 'Generar otra demo',
+    drawPotLabel: 'Bombo {n}',
+    betBoardSharedView: 'Vista compartida de apuestas de todos los jugadores en esta temporada.',
+    betBoardEmptySeason: 'Todavía no hay apuestas registradas en esta temporada.',
+    tieCutoffLong: 'Hay un empate entre estos jugadores justo en la línea de clasificación: {names}. Ya se comprobaron puntos, diferencia de goles, goles a favor y resultado directo.',
+    invalidSeasonLong: 'Caso especial: 3 jugadores y todos los partidos terminaron en empate. Esta temporada se considera inválida y debe reiniciarse.',
+    restartInvalidSeasonBtn: 'Reiniciar temporada inválida',
+    restPlayerBetTitle: 'Apuesta del jugador que descansa (solo liguilla de 3)',
+    restPlayerBetHint: 'Para evitar botones duplicados, las apuestas ahora se hacen desde cada partido con el botón Apostar.',
+    leagueCalendarTitle: 'Calendario de la liguilla',
+    antiCheatBanner: 'Antitrampas: un resultado queda en pendiente hasta que el rival pulse Aceptar o Rechazar. Si rechaza, debe volver a reportarlo quien lo cargó primero.',
+    closeLeagueBtn: 'Cerrar liguilla y generar fase eliminatoria',
+    pendingMatchesConfirm: 'Faltan partidos por confirmar.',
+    leagueResultsTitle: 'Resultados de la liguilla',
+    playoffClassTitle: 'Play-off de clasificación',
+    playoffClassHint: 'Estos jugadores quedaron entre medias y se cruzan a partido único (mejor vs peor de ese grupo) para completar el cuadro de eliminatorias.',
+    closePlayoffBtn: 'Cerrar play-off y generar cuadro de eliminatorias',
+    reportOnlyLocalTeamWarn: 'Solo puedes reportar resultados de partidos donde participa uno de tus equipos de este dispositivo.',
+    confirmOnlyExpectedTeamWarn: 'Este resultado lo debe confirmar {name}. Solo puedes confirmar con ese equipo en este dispositivo.',
+    knockoutBetsTitle: 'Apuestas de eliminatorias (solo no clasificados)',
+    knockoutBetsHint: 'Ahora las apuestas se hacen desde cada emparejamiento con el botón Apostar.',
+    knockoutBetsCap: 'Tope global de dinero por apuestas: {ceiling} · Apuesta máxima por ticket: {pct}% de tu saldo actual.',
+    masterResetTitle: 'Reseteo maestro',
+    masterResetWarn: 'Pone todos los contadores a 0 (dinero, temporadas, cuadro, campeón actual) y borra el historial. Conserva solo la lista de jugadores.',
     guideButton: 'Cómo jugar',
     sharedDataNote: 'Datos compartidos por Supabase. Si dos personas editan a la vez, el sistema resuelve conflictos refrescando el estado más reciente.'
   },
@@ -1067,11 +1219,28 @@ const I18N = {
     tabKnockout: 'Knockout',
     tabMuseum: 'Museum',
     tabHistory: 'History',
+    seasonWord: 'Season',
     phaseSetup: 'setup',
     phaseLeague: 'league',
     phasePlayoff: 'play-off',
     phaseKnockout: 'knockout',
     phaseFinished: 'finished',
+    matchStatusEmpty: 'not played',
+    matchStatusPending: 'pending',
+    matchStatusConfirmed: 'confirmed',
+    matchStatusDispute: 'dispute',
+    roundFinal: 'Final',
+    roundSemifinals: 'Semifinals',
+    roundQuarterfinals: 'Quarter-finals',
+    roundRoundOf16: 'Round of 16',
+    roundOfN: 'Round of {size}',
+    roundNumber: 'Round {n}',
+    firstLeg: 'First leg',
+    secondLeg: 'Second leg',
+    aggregatePending: 'Aggregate: pending',
+    aggregateScore: 'Aggregate: {a}-{b}',
+    penaltiesShort: 'Penalties',
+    qualifiedLabel: 'Qualified',
     playersHint: 'Register your team. A second team is only allowed if the tournament still has fewer than 4 teams.',
     noPlayersYet: 'No players yet.',
     yourPlayer: 'Your player',
@@ -1082,6 +1251,9 @@ const I18N = {
     insNew: '(new)',
     newNamePlaceholder: 'Type a new name',
     addNow: 'Add now',
+    preferredPlayTimeLabel: 'Best time to play (your local time)',
+    preferredPlayTimeHint: 'Detected timezone',
+    preferredPlayTimeRequired: 'Choose a play time before registering.',
     chooseLanguage: 'Game language on this device',
     syncStatusPrefix: 'Remote sync',
     syncOk: 'OK',
@@ -1097,6 +1269,134 @@ const I18N = {
     langOptionEn: 'English',
     langOptionLt: 'Lithuanian',
     langOptionCa: 'Catalan',
+    leagueNotStarted: 'League has not started yet. Configure it in the Setup tab.',
+    standingsTitle: 'Standings',
+    standingsNoData: 'No standings data yet.',
+    standingsQualifiedTop: 'Top {count} teams (highlighted) advance to knockout stage.',
+    standingsProvisional: 'Provisional standings: includes {count} pending result(s) awaiting confirmation.',
+    tiePending: 'pending',
+    tieResolved: 'resolved',
+    tieLoadShootout: 'Load shootout',
+    matchBtnFix: 'Fix',
+    matchBtnConfirm: 'Confirm',
+    matchBtnResult: 'Result',
+    betBtn: 'Bet',
+    knockoutNoBracket: 'Knockout bracket has not been generated yet.',
+    startAnimatedDraw: 'Start animated draw',
+    nextPairAuto: 'Next pairing will appear automatically.',
+    championOfSeason: 'Champion of {season}',
+    startNewSeasonBtn: 'Start new season',
+    museumTitle: 'Players Museum',
+    museumIntro: 'Each cup represents a won season. The museum grows over time as a historical showcase.',
+    museumNoPlayers: 'No players to display in the museum yet.',
+    totalCups: 'Total cups recorded: {count}',
+    noTitlesYet: 'No titles yet.',
+    wonSeasons: 'Won seasons',
+    historySeasonIntro: 'Start a new season once a champion is decided.',
+    historyEnableAfterSeason: 'This button becomes enabled when the current season ends.',
+    historyRestartSeasonBtn: 'Restart this season',
+    pastChampionsTitle: 'Past champions',
+    activityLogTitle: 'Activity log',
+    noActivityYet: 'No activity yet.',
+    errInvalidName: 'Invalid name.',
+    errDuplicatePlayer: 'That player already exists. Duplicate names are not allowed.',
+    errRemoteUnstable: 'Unstable connection to shared server. Saved locally and will sync later.',
+    errConcurrentChanges: 'Too many simultaneous changes from other devices. Try again.',
+    errInvalidPlayer: 'Invalid player.',
+    errDeleteOnlySetup: 'You can only remove players before league starts.',
+    errPlayerNoLongerExists: 'That player no longer exists.',
+    errNoTieBreakerActive: 'There is no active tie-breaker.',
+    errTiePairNotFound: 'Pairing not found.',
+    errInvalidPenalties: 'Enter valid penalty values.',
+    errShootoutNoDraw: 'Penalty shootout cannot end in a draw.',
+    errBettorNotFound: 'Bettor not found.',
+    errBetOnlyLocal: 'You can only bet with your local teams on this device.',
+    errBetOnlyLeagueOrKo: 'Bets are only allowed in league or knockout stages.',
+    errBetOnlyNonQualifiedKo: 'Only non-qualified players can bet in knockout stages.',
+    errBetMatchUnavailable: 'Match not available for betting.',
+    errBetLeagueNonParticipantOnly: 'In league phase, only non-participating players may bet this match.',
+    errBetMatchClosed: 'That match is already closed for betting.',
+    errInvalidBetPick: 'Invalid bet selection.',
+    errInvalidBetAmount: 'Invalid bet amount.',
+    errBetAlreadyOpen: 'You already have an open bet on this match.',
+    errBetInsufficientBalance: 'Insufficient balance.',
+    errBetMaxStake: 'Your maximum stake right now is {amount}.',
+    errPlayerNotFound: 'Player not found.',
+    errReportOnlyLocal: 'You can only report with one of your teams on this device.',
+    errNotParticipant: 'You are not part of this match.',
+    errMatchPendingDecision: 'This result is pending rival acceptance/rejection.',
+    errMustRereportByReporter: 'The initial reporter must submit this result again.',
+    errDecisiveNeedsPenalties: 'A draw is not allowed in this phase: enter penalties.',
+    errAcceptOnlyLocal: 'You can only accept with one of your teams on this device.',
+    errMatchNotPending: 'This match is not pending.',
+    errReporterCannotSelfConfirm: 'Reporter cannot self-confirm: rival must accept.',
+    errRejectOnlyLocal: 'You can only reject with one of your teams on this device.',
+    errReporterCannotSelfReject: 'Reporter cannot reject their own submission.',
+    errNeedMinFourToStart: 'At least 4 players are required to start the league.',
+    errCouldNotGenerateLeague: 'Could not generate league with current players. Check blocked same-base-name conflicts.',
+    errUnresolvedCutoffTie: 'There is an unresolved tie at the qualification cutoff. Resolve it before continuing.',
+    errCouldNotGeneratePlayoff: 'Could not generate play-off without same-base-name conflicts.',
+    errTiePenaltiesRequiredAll: 'You must enter valid penalties for all tied players.',
+    errTiePenaltiesMustBeUnique: 'Shootout cannot end tied: all values must be different.',
+    errPlayoffNotAllDecided: 'There are still undecided or unconfirmed play-off matches.',
+    errSeriesNotTwoLeg: 'This tie is not two-legged.',
+    errBothPenaltiesRequired: 'Enter both penalty values.',
+    errPenaltiesNoDraw: 'Penalties cannot end in a draw.',
+    errCannotDefineWinner: 'Could not determine winner with those values.',
+    alertMatchNotBettable: 'This match is not currently available for betting.',
+    alertNoEligibleBettors: 'No eligible bettors available for this match.',
+    confirmDeletePlayerSeason: 'Delete {name} from this season?',
+    demoNoKnockoutData: 'No knockout data to display.',
+    demoBracketModeTitle: 'Knockout bracket mode (demo)',
+    drawStatusComplete: 'Draw completed',
+    drawStatusReady: 'Ready to start',
+    drawStatusNextIn: 'Next pairing in {seconds}s',
+    drawRevealEvery10s: 'One pairing is revealed every 10 seconds.',
+    drawWaitingExtraction: 'Waiting for extraction...',
+    tiePenaltyModalTitle: 'Penalty tie-breaker',
+    tiePenaltyModalHint: 'Enter shootout result for each tied player. Values must be unique.',
+    tiePenaltyScoredPlaceholder: 'Scored penalties',
+    tiePenaltySaveBtn: 'Save shootout and break tie',
+    stepConfig: 'Config',
+    stepChampion: 'Champion',
+    knockoutBetBoardTitle: 'Knockout betting board',
+    knockoutDrawTitle: 'Knockout draw',
+    demoSetupTitle: 'Configure demo',
+    demoSetupHint: 'First choose how many players to simulate, then generate the demo season.',
+    demoStartBtn: 'Start demo',
+    demoSeasonTitle: 'Season demo (not saved)',
+    demoSeasonHint: 'Random explanatory simulation. It does not modify the real season, add prizes, or sync.',
+    demoPlayersLabel: 'Players in this demo (2-{max})',
+    demoPillPlayers: 'Players: {count}',
+    demoPillLeagueMatches: 'League matches: {count}',
+    demoPillQualifiers: 'Qualify: {count}',
+    demoPillChampion: 'Demo champion: {name}',
+    demoLeagueTableTitle: 'League table (demo)',
+    demoPlayoffTitle: 'Play-off (qualification to final bracket)',
+    demoRerollBtn: 'Generate another demo',
+    drawPotLabel: 'Pot {n}',
+    betBoardSharedView: 'Shared betting view from all players in this season.',
+    betBoardEmptySeason: 'There are no bets registered in this season yet.',
+    tieCutoffLong: 'There is a tie between these players at the qualification cutoff: {names}. Points, goal difference, goals scored and head-to-head were already checked.',
+    invalidSeasonLong: 'Special case: 3 players and every match ended in a draw. This season is considered invalid and must be restarted.',
+    restartInvalidSeasonBtn: 'Restart invalid season',
+    restPlayerBetTitle: 'Resting player bet (league of 3 only)',
+    restPlayerBetHint: 'To avoid duplicated buttons, bets are now placed from each match using the Bet button.',
+    leagueCalendarTitle: 'League schedule',
+    antiCheatBanner: 'Anti-cheat: a result stays pending until the rival presses Accept or Reject. If rejected, the original reporter must submit again.',
+    closeLeagueBtn: 'Close league and generate knockout stage',
+    pendingMatchesConfirm: 'There are still matches pending confirmation.',
+    leagueResultsTitle: 'League results',
+    playoffClassTitle: 'Qualification play-off',
+    playoffClassHint: 'These mid-table players face each other in single matches (best vs worst) to complete the knockout bracket.',
+    closePlayoffBtn: 'Close play-off and generate knockout bracket',
+    reportOnlyLocalTeamWarn: 'You can only report results of matches where one of your local teams participates.',
+    confirmOnlyExpectedTeamWarn: 'This result must be confirmed by {name}. You can only confirm using that team on this device.',
+    knockoutBetsTitle: 'Knockout bets (non-qualified players only)',
+    knockoutBetsHint: 'Bets are now placed directly from each pairing with the Bet button.',
+    knockoutBetsCap: 'Global betting money cap: {ceiling} · Max stake per ticket: {pct}% of your current balance.',
+    masterResetTitle: 'Master reset',
+    masterResetWarn: 'Resets all counters to 0 (money, seasons, bracket, current champion) and clears history. Keeps only player list.',
     guideButton: 'How to play',
     sharedDataNote: 'Shared data via Supabase. If two people edit at the same time, the app resolves conflicts by refreshing the latest state.'
   },
@@ -1114,11 +1414,28 @@ const I18N = {
     tabKnockout: 'Atkrintamosios',
     tabMuseum: 'Muziejus',
     tabHistory: 'Istorija',
+    seasonWord: 'Sezonas',
     phaseSetup: 'nustatymai',
     phaseLeague: 'lyga',
     phasePlayoff: 'atkrint. etapas',
     phaseKnockout: 'atkrintamosios',
     phaseFinished: 'baigta',
+    matchStatusEmpty: 'nesuzaista',
+    matchStatusPending: 'laukiama',
+    matchStatusConfirmed: 'patvirtinta',
+    matchStatusDispute: 'gincas',
+    roundFinal: 'Finalas',
+    roundSemifinals: 'Pusfinalis',
+    roundQuarterfinals: 'Ketvirtfinalis',
+    roundRoundOf16: 'Astuntfinalis',
+    roundOfN: '{size} etapo ratas',
+    roundNumber: '{n} raundas',
+    firstLeg: 'Pirmos rungtynes',
+    secondLeg: 'Antros rungtynes',
+    aggregatePending: 'Bendras: neaisku',
+    aggregateScore: 'Bendras: {a}-{b}',
+    penaltiesShort: '11 m',
+    qualifiedLabel: 'Pateko',
     playersHint: 'Uzregistruok savo komanda. Antra komanda leidziama tik jei turnyre dar nera minimaliu 4 komandu.',
     noPlayersYet: 'Zaideju dar nera.',
     yourPlayer: 'Tavo zaidejas',
@@ -1129,6 +1446,9 @@ const I18N = {
     insNew: '(naujas)',
     newNamePlaceholder: 'Ivesk nauja varda',
     addNow: 'Prideti dabar',
+    preferredPlayTimeLabel: 'Patogiausias zaidimo laikas (vietinis)',
+    preferredPlayTimeHint: 'Aptikta laiko juosta',
+    preferredPlayTimeRequired: 'Pries registruodami nurodykite zaidimo laika.',
     chooseLanguage: 'Zaidimo kalba siame irenginyje',
     syncStatusPrefix: 'Nuotoline sinch.',
     syncOk: 'OK',
@@ -1144,6 +1464,134 @@ const I18N = {
     langOptionEn: 'Anglu',
     langOptionLt: 'Lietuviu',
     langOptionCa: 'Katalonu',
+    leagueNotStarted: 'Lyga dar neprasidejo. Nustatyk tai skiltyje Nustatymai.',
+    standingsTitle: 'Turnyro lentele',
+    standingsNoData: 'Lenteles duomenu dar nera.',
+    standingsQualifiedTop: 'Pirmi {count} (pazymeti) patenka i atkrintamasias.',
+    standingsProvisional: 'Laikina lentele: itraukti {count} dar nepatvirtinti rezultatai.',
+    tiePending: 'laukiama',
+    tieResolved: 'ispresta',
+    tieLoadShootout: 'Ivesti serija',
+    matchBtnFix: 'Taisyti',
+    matchBtnConfirm: 'Patvirtinti',
+    matchBtnResult: 'Rezultatas',
+    betBtn: 'Statyti',
+    knockoutNoBracket: 'Atkrintamuju lentele dar nesugeneruota.',
+    startAnimatedDraw: 'Pradeti animuota burtu traukima',
+    nextPairAuto: 'Kita pora bus parodyta automatiskai.',
+    championOfSeason: '{season} cempionas',
+    startNewSeasonBtn: 'Pradeti nauja sezona',
+    museumTitle: 'Zaideju muziejus',
+    museumIntro: 'Kiekviena taure reiskia laimeta sezona. Muziejus kaupiasi kaip istorine vitrina.',
+    museumNoPlayers: 'Dar nera zaideju muziejui rodyti.',
+    totalCups: 'Is viso tauriu: {count}',
+    noTitlesYet: 'Titulu dar nera.',
+    wonSeasons: 'Laimeti sezonai',
+    historySeasonIntro: 'Nauja sezona pradek tik kai jau yra cempionas.',
+    historyEnableAfterSeason: 'Sis mygtukas aktyvuosis pasibaigus dabartiniam sezonui.',
+    historyRestartSeasonBtn: 'Pradeti si sezona is naujo',
+    pastChampionsTitle: 'Ankstesni cempionai',
+    activityLogTitle: 'Veiklos zurnalas',
+    noActivityYet: 'Veiklos dar nera.',
+    errInvalidName: 'Neteisingas vardas.',
+    errDuplicatePlayer: 'Toks zaidejas jau yra. Dublikatai neleidziami.',
+    errRemoteUnstable: 'Nestabilus rysys su serveriu. Issaugota vietoje, sinchronizuos veliau.',
+    errConcurrentChanges: 'Per daug vienalaikiu pakeitimu is kitu irenginiu. Bandykite dar karta.',
+    errInvalidPlayer: 'Neteisingas zaidejas.',
+    errDeleteOnlySetup: 'Zaidejus galima salinti tik pries prasidedant lygai.',
+    errPlayerNoLongerExists: 'Sis zaidejas jau nebeegzistuoja.',
+    errNoTieBreakerActive: 'Aktyvaus desempate nera.',
+    errTiePairNotFound: 'Pora nerasta.',
+    errInvalidPenalties: 'Iveskite teisingus baudiniu rezultatus.',
+    errShootoutNoDraw: 'Baudiniai negali baigtis lygiosiomis.',
+    errBettorNotFound: 'Statytojas nerastas.',
+    errBetOnlyLocal: 'Statyti galima tik su sio irenginio komandomis.',
+    errBetOnlyLeagueOrKo: 'Statymai leidziami tik lygoje arba atkrintamosiose.',
+    errBetOnlyNonQualifiedKo: 'Atkrintamosiose statyti gali tik nepateke zaidejai.',
+    errBetMatchUnavailable: 'Rungtynes statymams nepasiekiamos.',
+    errBetLeagueNonParticipantOnly: 'Lygoje statyti gali tik nedalyvaujantis zaidejas.',
+    errBetMatchClosed: 'Sioms rungtynems statymai jau uzdaryti.',
+    errInvalidBetPick: 'Neteisingas statymo pasirinkimas.',
+    errInvalidBetAmount: 'Neteisinga statymo suma.',
+    errBetAlreadyOpen: 'Siam macui jau turite atvira statyma.',
+    errBetInsufficientBalance: 'Nepakanka lesu.',
+    errBetMaxStake: 'Didziausia galima statymo suma dabar yra {amount}.',
+    errPlayerNotFound: 'Zaidejas nerastas.',
+    errReportOnlyLocal: 'Rezultata gali pateikti tik sio irenginio komanda.',
+    errNotParticipant: 'Siame mace nedalyvaujate.',
+    errMatchPendingDecision: 'Sis rezultatas laukia varzovo patvirtinimo arba atmetimo.',
+    errMustRereportByReporter: 'Pirmas pateikes zaidejas turi vel suvesti rezultata.',
+    errDecisiveNeedsPenalties: 'Sioje fazeje lygiosios negalimos: iveskite baudinius.',
+    errAcceptOnlyLocal: 'Patvirtinti galite tik su sio irenginio komanda.',
+    errMatchNotPending: 'Sis macas nera laukiantis.',
+    errReporterCannotSelfConfirm: 'Pateikes zaidejas negali pats patvirtinti.',
+    errRejectOnlyLocal: 'Atmesti galite tik su sio irenginio komanda.',
+    errReporterCannotSelfReject: 'Pateikes zaidejas negali atmesti savo iraso.',
+    errNeedMinFourToStart: 'Lygai pradeti reikia bent 4 zaideju.',
+    errCouldNotGenerateLeague: 'Nepavyko sugeneruoti lygos su dabartiniais zaidejais.',
+    errUnresolvedCutoffTie: 'Yra neisprestas lygumas ties patekimo riba.',
+    errCouldNotGeneratePlayoff: 'Nepavyko sugeneruoti play-off del konfliktuojanciu poru.',
+    errTiePenaltiesRequiredAll: 'Visiems lygiems zaidejams reikia ivesti baudinius.',
+    errTiePenaltiesMustBeUnique: 'Baudiniai negali buti lygus: visi skaiciai turi skirtis.',
+    errPlayoffNotAllDecided: 'Dar yra nepatvirtintu arba neisprestu play-off rungtyniu.',
+    errSeriesNotTwoLeg: 'Si serija nera dvieju rungtyniu.',
+    errBothPenaltiesRequired: 'Iveskite abu baudiniu rezultatus.',
+    errPenaltiesNoDraw: 'Baudiniai negali baigtis lygiosiomis.',
+    errCannotDefineWinner: 'Pagal siuos duomenis nepavyko nustatyti nugaletojo.',
+    alertMatchNotBettable: 'Siuo metu sioms rungtynems statyti negalima.',
+    alertNoEligibleBettors: 'Siam macui nera tinkamu statytoju.',
+    confirmDeletePlayerSeason: 'Pasalinti {name} is sio sezono?',
+    demoNoKnockoutData: 'Atkrintamuju duomenu rodyti nera.',
+    demoBracketModeTitle: 'Atkrintamosios bracket rezime (demo)',
+    drawStatusComplete: 'Burtai uzbaigti',
+    drawStatusReady: 'Pasiruose pradeti',
+    drawStatusNextIn: 'Kita pora po {seconds}s',
+    drawRevealEvery10s: 'Kas 10 sekundziu atveriama viena pora.',
+    drawWaitingExtraction: 'Laukiama istraukimo...',
+    tiePenaltyModalTitle: 'Baudiniu desempatė',
+    tiePenaltyModalHint: 'Iveskite baudiniu rezultatus visiems lygiems zaidejams. Reiksmes turi skirtis.',
+    tiePenaltyScoredPlaceholder: 'Ivarciu baudiniai',
+    tiePenaltySaveBtn: 'Issaugoti baudinius ir isspresti',
+    stepConfig: 'Konfig',
+    stepChampion: 'Cempionas',
+    knockoutBetBoardTitle: 'Atkrintamuju statymu lenta',
+    knockoutDrawTitle: 'Atkrintamuju burtai',
+    demoSetupTitle: 'Sukonfiguruoti demo',
+    demoSetupHint: 'Pirmiausia pasirinkite kiek zaideju simuliuoti, tada sugeneruokite demo sezona.',
+    demoStartBtn: 'Pradeti demo',
+    demoSeasonTitle: 'Sezono demo (neissaugoma)',
+    demoSeasonHint: 'Atsitiktine paaiskinamoji simuliacija. Tikro sezono nekeicia, prizu neprideda ir nesinchronizuoja.',
+    demoPlayersLabel: 'Zaidejai sioje demo (2-{max})',
+    demoPillPlayers: 'Zaidejai: {count}',
+    demoPillLeagueMatches: 'Lygos rungtynes: {count}',
+    demoPillQualifiers: 'Patenka: {count}',
+    demoPillChampion: 'Demo cempionas: {name}',
+    demoLeagueTableTitle: 'Lygos lentele (demo)',
+    demoPlayoffTitle: 'Play-off (patekimas i galutini bracket)',
+    demoRerollBtn: 'Generuoti kita demo',
+    drawPotLabel: 'Krepselis {n}',
+    betBoardSharedView: 'Bendras visu zaideju statymu vaizdas siame sezone.',
+    betBoardEmptySeason: 'Siame sezone statymu dar nera.',
+    tieCutoffLong: 'Prie patekimo ribos yra lygiosios tarp siu zaideju: {names}. Taskai, ivarciu skirtumas, imusti ivarciai ir tarpusavio rezultatas jau patikrinti.',
+    invalidSeasonLong: 'Ypatingas atvejis: 3 zaidejai ir visos rungtynes baigesi lygiosiomis. Sis sezonas laikomas netinkamu ir turi buti paleistas is naujo.',
+    restartInvalidSeasonBtn: 'Paleisti netinkama sezona is naujo',
+    restPlayerBetTitle: 'Nedalyvaujancio zaidejo statymas (tik 3 zaideju lygoje)',
+    restPlayerBetHint: 'Kad nebutu pasikartojanciu mygtuku, statymai dabar daromi is kiekvienu rungtyniu su mygtuku Statyti.',
+    leagueCalendarTitle: 'Lygos tvarkarastis',
+    antiCheatBanner: 'Anticheat: rezultatas lieka laukiantis, kol varzovas paspaus Patvirtinti arba Atmesti. Jei atmeta, pirmas pateikejas turi suvesti dar karta.',
+    closeLeagueBtn: 'Uzbaigti lyga ir sugeneruoti atkrintamasias',
+    pendingMatchesConfirm: 'Dar yra nepatvirtintu rungtyniu.',
+    leagueResultsTitle: 'Lygos rezultatai',
+    playoffClassTitle: 'Atrankos play-off',
+    playoffClassHint: 'Sie zaidejai liko per viduri ir zaidzia vienerias rungtynes, kad uzpildytu atkrintamuju lentele.',
+    closePlayoffBtn: 'Uzbaigti play-off ir sugeneruoti atkrintamuju lentele',
+    reportOnlyLocalTeamWarn: 'Gali suvesti tik tas rungtynes, kur dalyvauja tavo komanda siame irenginyje.',
+    confirmOnlyExpectedTeamWarn: 'Si rezultata turi patvirtinti {name}. Patvirtinti gali tik su ta komanda siame irenginyje.',
+    knockoutBetsTitle: 'Atkrintamuju statymai (tik nepateke)',
+    knockoutBetsHint: 'Statymai dabar daromi tiesiai is kiekvienos poros su mygtuku Statyti.',
+    knockoutBetsCap: 'Bendras statymu limitas: {ceiling} · Maksimalus statymas: {pct}% nuo dabartinio balanso.',
+    masterResetTitle: 'Pilnas atstatymas',
+    masterResetWarn: 'Nustato visus skaicius i 0 ir isvalo istorija. Palieka tik zaideju sarasa.',
     guideButton: 'Kaip zaisti',
     sharedDataNote: 'Bendrinami duomenys per Supabase. Jei du zmones redaguoja vienu metu, sistema issprendzia konfliktus atnaujindama naujausia busena.'
   },
@@ -1161,11 +1609,28 @@ const I18N = {
     tabKnockout: 'Eliminatories',
     tabMuseum: 'Museu',
     tabHistory: 'Historial',
+    seasonWord: 'Temporada',
     phaseSetup: 'configuracio',
     phaseLeague: 'lligueta',
     phasePlayoff: 'play-off',
     phaseKnockout: 'eliminatories',
     phaseFinished: 'finalitzat',
+    matchStatusEmpty: 'sense jugar',
+    matchStatusPending: 'pendent',
+    matchStatusConfirmed: 'confirmat',
+    matchStatusDispute: 'disputa',
+    roundFinal: 'Final',
+    roundSemifinals: 'Semifinals',
+    roundQuarterfinals: 'Quarts de final',
+    roundRoundOf16: 'Vuitens de final',
+    roundOfN: 'Ronda de {size}',
+    roundNumber: 'Ronda {n}',
+    firstLeg: 'Anada',
+    secondLeg: 'Tornada',
+    aggregatePending: 'Global: per definir',
+    aggregateScore: 'Global: {a}-{b}',
+    penaltiesShort: 'Penals',
+    qualifiedLabel: 'Classificat',
     playersHint: 'Registra el teu equip. El segon equip només es permet si el torneig encara no arriba al mínim de 4 equips.',
     noPlayersYet: 'Encara no hi ha jugadors.',
     yourPlayer: 'El teu jugador',
@@ -1176,6 +1641,9 @@ const I18N = {
     insNew: '(nou)',
     newNamePlaceholder: 'Escriu un nom nou',
     addNow: 'Afegir ara',
+    preferredPlayTimeLabel: 'Hora ideal per jugar (hora local)',
+    preferredPlayTimeHint: 'Zona horaria detectada',
+    preferredPlayTimeRequired: 'Indica una hora de joc abans de registrar-te.',
     chooseLanguage: 'Idioma del joc en aquest dispositiu',
     syncStatusPrefix: 'Sync remot',
     syncOk: 'OK',
@@ -1191,6 +1659,134 @@ const I18N = {
     langOptionEn: 'Angles',
     langOptionLt: 'Lituà',
     langOptionCa: 'Català',
+    leagueNotStarted: 'La lligueta encara no ha comencat. Configura-la a la pestanya de configuracio.',
+    standingsTitle: 'Classificacio',
+    standingsNoData: 'Encara no hi ha dades de classificacio.',
+    standingsQualifiedTop: 'Els {count} primers (ressaltats) passen a eliminatories.',
+    standingsProvisional: 'Classificacio provisional: inclou {count} resultat(s) pendent(s) de confirmar.',
+    tiePending: 'pendent',
+    tieResolved: 'resolt',
+    tieLoadShootout: 'Carregar tanda',
+    matchBtnFix: 'Corregir',
+    matchBtnConfirm: 'Confirmar',
+    matchBtnResult: 'Resultat',
+    betBtn: 'Apostar',
+    knockoutNoBracket: 'El quadre d eliminatories encara no s ha generat.',
+    startAnimatedDraw: 'Iniciar sorteig animat',
+    nextPairAuto: 'El seguent encreuament apareixera automaticament.',
+    championOfSeason: 'Campio de {season}',
+    startNewSeasonBtn: 'Comencar nova temporada',
+    museumTitle: 'Museu de jugadors',
+    museumIntro: 'Cada copa representa una temporada guanyada. El museu s acumula amb el pas dels anys.',
+    museumNoPlayers: 'Encara no hi ha jugadors per mostrar al museu.',
+    totalCups: 'Copes totals registrades: {count}',
+    noTitlesYet: 'Encara sense titols.',
+    wonSeasons: 'Temporades guanyades',
+    historySeasonIntro: 'Comenca una nova temporada quan ja hi hagi campio.',
+    historyEnableAfterSeason: 'Aquest boto s habilita quan acabi la temporada actual.',
+    historyRestartSeasonBtn: 'Tornar a comencar aquesta temporada',
+    pastChampionsTitle: 'Campions anteriors',
+    activityLogTitle: 'Registre d activitat',
+    noActivityYet: 'Encara no hi ha activitat.',
+    errInvalidName: 'Nom invalid.',
+    errDuplicatePlayer: 'Aquest jugador ja existeix. No es permeten duplicats.',
+    errRemoteUnstable: 'Connexio inestable amb el servidor. S ha guardat en local i es sincronitzara despres.',
+    errConcurrentChanges: 'Hi ha hagut massa canvis simultanis d altres dispositius. Torna-ho a provar.',
+    errInvalidPlayer: 'Jugador invalid.',
+    errDeleteOnlySetup: 'Nomes pots esborrar jugadors abans d iniciar la lligueta.',
+    errPlayerNoLongerExists: 'Aquest jugador ja no existeix.',
+    errNoTieBreakerActive: 'No hi ha desempat actiu.',
+    errTiePairNotFound: 'Encreuament no trobat.',
+    errInvalidPenalties: 'Indica penals valids.',
+    errShootoutNoDraw: 'La tanda no pot acabar empatada.',
+    errBettorNotFound: 'Apostador no trobat.',
+    errBetOnlyLocal: 'Nomes pots apostar amb els teus equips d aquest dispositiu.',
+    errBetOnlyLeagueOrKo: 'Les apostes nomes es permeten a lligueta o eliminatories.',
+    errBetOnlyNonQualifiedKo: 'Nomes poden apostar els no classificats.',
+    errBetMatchUnavailable: 'Partit no disponible per apostar.',
+    errBetLeagueNonParticipantOnly: 'A la lligueta nomes pot apostar qui no participa en el partit.',
+    errBetMatchClosed: 'Aquest partit ja esta tancat per apostes.',
+    errInvalidBetPick: 'Seleccio d aposta invalida.',
+    errInvalidBetAmount: 'Quantitat d aposta invalida.',
+    errBetAlreadyOpen: 'Ja tens una aposta oberta en aquest partit.',
+    errBetInsufficientBalance: 'No tens prou saldo.',
+    errBetMaxStake: 'La teva aposta maxima ara es {amount}.',
+    errPlayerNotFound: 'Jugador no trobat.',
+    errReportOnlyLocal: 'Nomes pots reportar amb un dels teus equips d aquest dispositiu.',
+    errNotParticipant: 'No formes part d aquest partit.',
+    errMatchPendingDecision: 'Aquest resultat esta pendent d acceptacio/rebuig del rival.',
+    errMustRereportByReporter: 'Qui va reportar primer ha de tornar a carregar el resultat.',
+    errDecisiveNeedsPenalties: 'En aquesta fase no pot haver-hi empat: indica la tanda de penals.',
+    errAcceptOnlyLocal: 'Nomes pots acceptar amb un dels teus equips d aquest dispositiu.',
+    errMatchNotPending: 'Aquest partit no esta pendent.',
+    errReporterCannotSelfConfirm: 'Qui reporta no es pot auto-confirmar.',
+    errRejectOnlyLocal: 'Nomes pots rebutjar amb un dels teus equips d aquest dispositiu.',
+    errReporterCannotSelfReject: 'Qui reporta no es pot rebutjar a si mateix.',
+    errNeedMinFourToStart: 'Calen almenys 4 jugadors per iniciar la lligueta.',
+    errCouldNotGenerateLeague: 'No s ha pogut generar la lligueta amb els jugadors actuals.',
+    errUnresolvedCutoffTie: 'Hi ha un empat sense resoldre al tall de classificacio.',
+    errCouldNotGeneratePlayoff: 'No s ha pogut generar el play-off amb les restriccions actuals.',
+    errTiePenaltiesRequiredAll: 'Has d indicar penals valids per a tots els jugadors empatats.',
+    errTiePenaltiesMustBeUnique: 'No pot haver-hi empat en la tanda: tots els valors han de ser diferents.',
+    errPlayoffNotAllDecided: 'Encara hi ha partits de play-off sense confirmar o sense guanyador.',
+    errSeriesNotTwoLeg: 'Aquesta serie no es d anada i tornada.',
+    errBothPenaltiesRequired: 'Indica tots dos marcadors de penals.',
+    errPenaltiesNoDraw: 'Als penals no pot haver-hi empat.',
+    errCannotDefineWinner: 'No s ha pogut definir guanyador amb aquestes dades.',
+    alertMatchNotBettable: 'Aquest partit no esta disponible per apostar ara mateix.',
+    alertNoEligibleBettors: 'No hi ha apostadors disponibles per a aquest partit.',
+    confirmDeletePlayerSeason: 'Vols esborrar {name} d aquesta temporada?',
+    demoNoKnockoutData: 'No hi ha dades d eliminatories per mostrar.',
+    demoBracketModeTitle: 'Eliminatories en mode bracket (demo)',
+    drawStatusComplete: 'Sorteig completat',
+    drawStatusReady: 'Llest per iniciar',
+    drawStatusNextIn: 'Seguent encreuament en {seconds}s',
+    drawRevealEvery10s: 'Es revela un encreuament cada 10 segons.',
+    drawWaitingExtraction: 'Esperant extraccio...',
+    tiePenaltyModalTitle: 'Desempat per penals',
+    tiePenaltyModalHint: 'Introdueix la tanda per a cada jugador empatat. Han de quedar diferents.',
+    tiePenaltyScoredPlaceholder: 'Penals anotats',
+    tiePenaltySaveBtn: 'Desar tanda i desempatar',
+    stepConfig: 'Config',
+    stepChampion: 'Campio',
+    knockoutBetBoardTitle: 'Panell d apostes d eliminatories',
+    knockoutDrawTitle: 'Sorteig d eliminatories',
+    demoSetupTitle: 'Configurar demo',
+    demoSetupHint: 'Primer tria quants jugadors vols simular i despres es genera la temporada demo.',
+    demoStartBtn: 'Iniciar demo',
+    demoSeasonTitle: 'Demo de temporada (no es desa)',
+    demoSeasonHint: 'Simulacio explicativa aleatoria. No modifica la temporada real, no suma premis ni se sincronitza.',
+    demoPlayersLabel: 'Jugadors en aquesta demo (2-{max})',
+    demoPillPlayers: 'Jugadors: {count}',
+    demoPillLeagueMatches: 'Partits de lligueta: {count}',
+    demoPillQualifiers: 'Es classifiquen: {count}',
+    demoPillChampion: 'Campio demo: {name}',
+    demoLeagueTableTitle: 'Taula de lligueta (demo)',
+    demoPlayoffTitle: 'Play-off (classificacio al quadre final)',
+    demoRerollBtn: 'Generar una altra demo',
+    drawPotLabel: 'Bombo {n}',
+    betBoardSharedView: 'Vista compartida d apostes de tots els jugadors en aquesta temporada.',
+    betBoardEmptySeason: 'Encara no hi ha apostes registrades en aquesta temporada.',
+    tieCutoffLong: 'Hi ha un empat entre aquests jugadors a la linia de classificacio: {names}. Ja s han comprovat punts, diferencia de gols, gols a favor i resultat directe.',
+    invalidSeasonLong: 'Cas especial: 3 jugadors i tots els partits han acabat en empat. Aquesta temporada es considera invalida i s ha de reiniciar.',
+    restartInvalidSeasonBtn: 'Reiniciar temporada invalida',
+    restPlayerBetTitle: 'Aposta del jugador que descansa (nomes lligueta de 3)',
+    restPlayerBetHint: 'Per evitar botons duplicats, ara les apostes es fan des de cada partit amb el boto Apostar.',
+    leagueCalendarTitle: 'Calendari de la lligueta',
+    antiCheatBanner: 'Antitrampes: un resultat queda pendent fins que el rival premi Acceptar o Rebutjar. Si rebutja, ho ha de tornar a reportar qui ho va carregar primer.',
+    closeLeagueBtn: 'Tancar lligueta i generar fase eliminatoria',
+    pendingMatchesConfirm: 'Falten partits per confirmar.',
+    leagueResultsTitle: 'Resultats de la lligueta',
+    playoffClassTitle: 'Play-off de classificacio',
+    playoffClassHint: 'Aquests jugadors han quedat al mig i es creuen a partit unic per completar el quadre eliminatori.',
+    closePlayoffBtn: 'Tancar play-off i generar quadre eliminatori',
+    reportOnlyLocalTeamWarn: 'Nomes pots reportar resultats de partits on participa un dels teus equips d aquest dispositiu.',
+    confirmOnlyExpectedTeamWarn: 'Aquest resultat l ha de confirmar {name}. Nomes pots confirmar amb aquest equip en aquest dispositiu.',
+    knockoutBetsTitle: 'Apostes d eliminatories (nomes no classificats)',
+    knockoutBetsHint: 'Ara les apostes es fan des de cada encreuament amb el boto Apostar.',
+    knockoutBetsCap: 'Topall global de diners per apostes: {ceiling} · Aposta maxima per ticket: {pct}% del teu saldo actual.',
+    masterResetTitle: 'Reseteig mestre',
+    masterResetWarn: 'Posa tots els comptadors a 0 i esborra l historial. Conserva nomes la llista de jugadors.',
     guideButton: 'Com jugar',
     sharedDataNote: 'Dades compartides per Supabase. Si dues persones editen alhora, el sistema resol conflictes refrescant l\'estat mes recent.'
   }
@@ -1210,6 +1806,11 @@ let currentTheme = 'day';
 let themeAutoTimer = null;
 const bracketRevealSeen = new Set();
 const MIN_TEAMS_FOR_KNOCKOUT = 4;
+const SCHEDULE_CITIES = [
+  {label:'Barcelona', timeZone:'Europe/Madrid'},
+  {label:'Lima', timeZone:'America/Lima'},
+  {label:'Vilnius', timeZone:'Europe/Vilnius'}
+];
 
 function uid(){ return Math.random().toString(36).slice(2,10); }
 function normalizeUiLang(lang){
@@ -1422,6 +2023,84 @@ function startDemoDraw(sessionId){
 function nowStr(){ const d=new Date(); return d.toLocaleDateString(uiLocale())+' '+d.toLocaleTimeString(uiLocale(),{hour:'2-digit',minute:'2-digit'}); }
 function dayStr(){ return new Date().toLocaleDateString(uiLocale()); }
 function seasonDateText(dateValue){ return dateValue ? `${t('seasonStartLabel')}: ${dateValue}` : `${t('seasonStartLabel')}: —`; }
+function normalizeTimeZone(value){
+  const tz = String(value || '').trim();
+  if(!tz) return 'UTC';
+  try{
+    new Intl.DateTimeFormat('en-US', {timeZone: tz}).format(new Date());
+    return tz;
+  }catch(_err){
+    return 'UTC';
+  }
+}
+function detectDeviceTimeZone(){
+  try{ return normalizeTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'); }
+  catch(_err){ return 'UTC'; }
+}
+function normalizePreferredPlayTime(value){
+  const raw = String(value || '').trim();
+  const m = raw.match(/^(\d{1,2}):(\d{2})$/);
+  if(!m) return null;
+  const hh = Number(m[1]);
+  const mm = Number(m[2]);
+  if(!Number.isInteger(hh) || !Number.isInteger(mm) || hh<0 || hh>23 || mm<0 || mm>59) return null;
+  return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+}
+function suggestedPlayTime(){
+  const d = new Date();
+  d.setSeconds(0,0);
+  const rounded = Math.round(d.getMinutes()/15)*15;
+  if(rounded===60){ d.setHours((d.getHours()+1)%24,0,0,0); }
+  else d.setMinutes(rounded,0,0);
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function zonedDateParts(date, timeZone){
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit', second:'2-digit',
+    hourCycle:'h23'
+  }).formatToParts(date);
+  const map = {};
+  parts.forEach(p=>{ if(p.type!=='literal') map[p.type]=p.value; });
+  return {
+    year: Number(map.year),
+    month: Number(map.month),
+    day: Number(map.day),
+    hour: Number(map.hour),
+    minute: Number(map.minute),
+    second: Number(map.second)
+  };
+}
+function timeZoneOffsetMinutes(date, timeZone){
+  const p = zonedDateParts(date, timeZone);
+  const utcLike = Date.UTC(p.year, p.month-1, p.day, p.hour, p.minute, p.second || 0);
+  return (utcLike - date.getTime()) / 60000;
+}
+function zonedClockToUtcMs(year, month, day, hour, minute, timeZone){
+  let ms = Date.UTC(year, month-1, day, hour, minute, 0);
+  for(let i=0;i<3;i++){
+    const off = timeZoneOffsetMinutes(new Date(ms), timeZone);
+    ms = Date.UTC(year, month-1, day, hour, minute, 0) - (off * 60000);
+  }
+  return ms;
+}
+function convertClockTimeAcrossZones(localTime, fromTimeZone, toTimeZone){
+  const hhmm = normalizePreferredPlayTime(localTime);
+  if(!hhmm) return '--:--';
+  const srcTz = normalizeTimeZone(fromTimeZone || 'UTC');
+  const dstTz = normalizeTimeZone(toTimeZone || 'UTC');
+  const [hh, mm] = hhmm.split(':').map(Number);
+  const srcToday = zonedDateParts(new Date(), srcTz);
+  const utcMs = zonedClockToUtcMs(srcToday.year, srcToday.month, srcToday.day, hh, mm, srcTz);
+  return new Intl.DateTimeFormat('es-ES', {timeZone: dstTz, hour:'2-digit', minute:'2-digit', hourCycle:'h23'}).format(new Date(utcMs));
+}
+function playerScheduleSummary(player){
+  const pref = normalizePreferredPlayTime(player?.preferredPlayTime);
+  if(!pref) return '';
+  const srcTz = normalizeTimeZone(player?.preferredPlayTimeZone || 'UTC');
+  return SCHEDULE_CITIES.map(city=> `${city.label}: ${convertClockTimeAcrossZones(pref, srcTz, city.timeZone)}`).join(' · ');
+}
 function seasonTagLabel(){
   const raw = String(state?.season || '');
   const m = raw.match(/\bT\d+\b/i);
@@ -1770,6 +2449,8 @@ function loadState(){
   state.players.forEach(p=>{
     p.name = normalizePlayerName(p.name);
     if(typeof p.money!=='number') p.money=0;
+    p.preferredPlayTime = normalizePreferredPlayTime(p.preferredPlayTime) || '';
+    p.preferredPlayTimeZone = p.preferredPlayTime ? normalizeTimeZone(p.preferredPlayTimeZone || 'UTC') : '';
     if(typeof state.finance.lifetimeByPlayer[p.id] !== 'number'){
       // Migracion: si no habia acumulado historico, tomamos el saldo actual.
       state.finance.lifetimeByPlayer[p.id] = p.money;
@@ -1945,15 +2626,20 @@ function migrateStateShape(s){
     if(!p.id) p.id = uid();
     p.name = normalizePlayerName(p.name);
     if(typeof p.money!=='number') p.money = 0;
+    p.preferredPlayTime = normalizePreferredPlayTime(p.preferredPlayTime) || '';
+    p.preferredPlayTimeZone = p.preferredPlayTime ? normalizeTimeZone(p.preferredPlayTimeZone || 'UTC') : '';
     if(typeof s.finance.lifetimeByPlayer[p.id] !== 'number') s.finance.lifetimeByPlayer[p.id] = p.money;
   });
   return s;
 }
 
-async function addPlayerShared(name, preferredLang){
+async function addPlayerShared(name, preferredLang, preferredPlayTime, preferredPlayTimeZone){
   const clean = normalizePlayerName(name);
   const chosenLang = normalizeUiLang(preferredLang || state?.uiLang || persistedUiLang());
-  if(!clean) return 'Nombre inválido.';
+  const playTime = normalizePreferredPlayTime(preferredPlayTime);
+  const playTz = normalizeTimeZone(preferredPlayTimeZone || detectDeviceTimeZone());
+  if(!clean) return t('errInvalidName');
+  if(!playTime) return t('preferredPlayTimeRequired');
   if(state?.phase==='setup'){
     const upfrontReason = localTeamAddBlockReason(state?.players?.length || 0, getLocalPlayerIds().length);
     if(upfrontReason) return upfrontReason;
@@ -1981,10 +2667,10 @@ async function addPlayerShared(name, preferredLang){
       if(ruleReason) return ruleReason;
     }
     const exists = nextState.players.some(p=> normalizePlayerName(p.name)===normalizePlayerName(clean));
-    if(exists) return 'Ese jugador ya existe. No se permiten nombres duplicados.';
+    if(exists) return t('errDuplicatePlayer');
 
     const id = uid();
-    nextState.players.push({id, name:clean, money:0});
+    nextState.players.push({id, name:clean, money:0, preferredPlayTime: playTime, preferredPlayTimeZone: playTz});
     nextState.finance.lifetimeByPlayer[id] = 0;
     nextState.history = nextState.history || [];
     nextState.history.unshift({ts: nowStr(), actor:'Organizador', action:'añadió a '+clean+' al torneo.'});
@@ -2024,12 +2710,12 @@ async function addPlayerShared(name, preferredLang){
     pullRemoteState();
     return null;
   }
-  if(hadReadIssue) return 'Sin conexión estable al servidor compartido. Se guardó local y se intentará sincronizar solo.';
-  return 'Hubo muchos cambios simultáneos en otros dispositivos. Vuelve a intentarlo.';
+  if(hadReadIssue) return t('errRemoteUnstable');
+  return t('errConcurrentChanges');
 }
 
 async function removePlayerShared(playerId){
-  if(!playerId) return 'Jugador inválido.';
+  if(!playerId) return t('errInvalidPlayer');
   let hadReadIssue = false;
 
   for(let attempt=0; attempt<10; attempt++){
@@ -2048,10 +2734,10 @@ async function removePlayerShared(playerId){
     }
 
     const nextState = migrateStateShape(remoteState ? JSON.parse(JSON.stringify(remoteState)) : defaultState());
-    if(nextState.phase!=='setup') return 'Solo puedes borrar jugadores antes de iniciar la liguilla.';
+    if(nextState.phase!=='setup') return t('errDeleteOnlySetup');
 
     const idx = nextState.players.findIndex(p=> p.id===playerId);
-    if(idx<0) return 'Ese jugador ya no existe.';
+    if(idx<0) return t('errPlayerNoLongerExists');
     const removed = nextState.players[idx];
 
     nextState.players.splice(idx, 1);
@@ -2092,8 +2778,8 @@ async function removePlayerShared(playerId){
     return null;
   }
 
-  if(hadReadIssue) return 'Sin conexión estable al servidor compartido. Se guardó local y se intentará sincronizar solo.';
-  return 'Hubo muchos cambios simultáneos en otros dispositivos. Vuelve a intentarlo.';
+  if(hadReadIssue) return t('errRemoteUnstable');
+  return t('errConcurrentChanges');
 }
 
 /* ---------------- ROUND ROBIN ---------------- */
@@ -2235,15 +2921,15 @@ function demoMatchText(m){
 
 function demoRoundName(total, idx){
   const remaining = total - idx;
-  if(remaining===1) return 'Final';
-  if(remaining===2) return 'Semifinales';
-  if(remaining===3) return 'Cuartos de final';
-  if(remaining===4) return 'Octavos de final';
-  return `Ronda ${idx+1}`;
+  if(remaining===1) return t('roundFinal');
+  if(remaining===2) return t('roundSemifinals');
+  if(remaining===3) return t('roundQuarterfinals');
+  if(remaining===4) return t('roundRoundOf16');
+  return tf('roundNumber',{n: idx+1});
 }
 
 function renderDemoBracketHtml(demo){
-  if(!demo?.knockoutRounds?.length) return '<div class="muted">Sin datos de eliminatorias para mostrar.</div>';
+  if(!demo?.knockoutRounds?.length) return `<div class="muted">${t('demoNoKnockoutData')}</div>`;
   const championId = demo.champion?.id || null;
   const championPathKeys = new Set();
   if(championId){
@@ -2278,7 +2964,7 @@ function renderDemoBracketHtml(demo){
     return `<div class="bracket-col"><div class="bracket-col-head">${demoRoundName(demo.knockoutRounds.length, ri)}</div><div class="bracket-col-body ${depthClass}">${nodes}</div></div>`;
   }).join('');
 
-  return `<div class="demo-bracket-wrap"><h4>Eliminatorias en modo bracket (demo)</h4><div class="bracket-board">${cols}</div></div>`;
+  return `<div class="demo-bracket-wrap"><h4>${t('demoBracketModeTitle')}</h4><div class="bracket-board">${cols}</div></div>`;
 }
 
 function clampDemoPlayersCount(value){
@@ -2450,14 +3136,14 @@ function openDemoSeasonModal(){
   pendingModal = ()=>{
     const bg = el(`<div class="modal-bg"><div class="modal" style="max-width:520px;">
       <span class="close">✕</span>
-      <h3>Configurar demo</h3>
-      <div class="muted" style="margin-bottom:12px;">Primero elige cuántos jugadores quieres simular y luego se genera la temporada demo.</div>
+      <h3>${t('demoSetupTitle')}</h3>
+      <div class="muted" style="margin-bottom:12px;">${t('demoSetupHint')}</div>
       <div>
-        <label>Jugadores para la demo (2-${demoMax})</label>
+        <label>${tf('demoPlayersLabel',{max:demoMax})}</label>
         <input id="demo-count-picker" type="number" min="2" max="${demoMax}" step="1" value="${defaultCount}">
       </div>
       <div class="row" style="margin-top:12px;justify-content:flex-end;">
-        <button id="demo-start" class="gold" type="button">Empezar demo</button>
+        <button id="demo-start" class="gold" type="button">${t('demoStartBtn')}</button>
       </div>
     </div></div>`);
 
@@ -2502,16 +3188,16 @@ function openDemoSeasonModalWithCount(count){
       </tr>`).join('');
 
     const playoffHtml = demo.playoffMatches.length
-      ? `<div class="demo-box"><h4>Play-off (clasificación al cuadro final)</h4><div class="demo-list">${demo.playoffMatches.map(m=> `<div class="demo-line"><span>${escapeHtml(m.p1.name)} vs ${escapeHtml(m.p2.name)}</span><span>${escapeHtml(demoMatchText(m))}</span></div>`).join('')}</div></div>`
+      ? `<div class="demo-box"><h4>${t('demoPlayoffTitle')}</h4><div class="demo-list">${demo.playoffMatches.map(m=> `<div class="demo-line"><span>${escapeHtml(m.p1.name)} vs ${escapeHtml(m.p2.name)}</span><span>${escapeHtml(demoMatchText(m))}</span></div>`).join('')}</div></div>`
       : '';
 
     const roundsHtml = renderDemoBracketHtml(demo);
 
     const drawRows = demo.drawPairings.map((pair, idx)=>{
       if(idx < drawState.revealed){
-        return `<div class="demo-draw-item revealed"><span>Bombo ${idx+1}</span><span>${escapeHtml(pair[0].name)} vs ${escapeHtml(pair[1].name)}</span></div>`;
+        return `<div class="demo-draw-item revealed"><span>${tf('drawPotLabel',{n:idx+1})}</span><span>${escapeHtml(pair[0].name)} vs ${escapeHtml(pair[1].name)}</span></div>`;
       }
-      return `<div class="demo-draw-item pending"><span>Bombo ${idx+1}</span><span>Esperando extracción...</span></div>`;
+      return `<div class="demo-draw-item pending"><span>${tf('drawPotLabel',{n:idx+1})}</span><span>${t('drawWaitingExtraction')}</span></div>`;
     }).join('');
 
     const countdown = drawState.running && drawState.nextRevealAt
@@ -2520,26 +3206,26 @@ function openDemoSeasonModalWithCount(count){
 
     const bg = el(`<div class="modal-bg"><div class="modal demo-modal">
       <span class="close">✕</span>
-      <h3>Demo de temporada (no se guarda)</h3>
-      <div class="muted" style="margin-bottom:10px;">Simulación explicativa aleatoria. No modifica la temporada real, no suma premios y no se sincroniza.</div>
+      <h3>${t('demoSeasonTitle')}</h3>
+      <div class="muted" style="margin-bottom:10px;">${t('demoSeasonHint')}</div>
       <div class="row" style="margin-bottom:10px;">
         <div>
-          <label>Jugadores en esta demo (2-${demoMax})</label>
+          <label>${tf('demoPlayersLabel',{max:demoMax})}</label>
           <input id="demo-count" type="number" min="2" max="${demoMax}" step="1" value="${demoCount}">
         </div>
       </div>
       <div class="demo-summary">
-        <span class="demo-pill">Jugadores: ${demo.players.length}</span>
-        <span class="demo-pill">Partidos liguilla: ${demo.leagueMatchesCount}</span>
-        <span class="demo-pill">Clasifican: ${demo.qualifiersCount}</span>
-        <span class="demo-pill">Campeón demo: ${escapeHtml(demo.champion ? demo.champion.name : '—')}</span>
+        <span class="demo-pill">${tf('demoPillPlayers',{count:demo.players.length})}</span>
+        <span class="demo-pill">${tf('demoPillLeagueMatches',{count:demo.leagueMatchesCount})}</span>
+        <span class="demo-pill">${tf('demoPillQualifiers',{count:demo.qualifiersCount})}</span>
+        <span class="demo-pill">${tf('demoPillChampion',{name:escapeHtml(demo.champion ? demo.champion.name : '—')})}</span>
       </div>
       <div class="demo-draw-card" style="margin-bottom:12px;">
         <div class="demo-draw-head">
-          <div class="demo-draw-title">Sorteo de eliminatorias (demo)</div>
-          <div class="demo-draw-status">${drawState.complete ? 'Sorteo completado' : (drawState.running ? `Siguiente cruce en ${countdown ?? 10}s` : 'Listo para iniciar')}</div>
+          <div class="demo-draw-title">${t('knockoutDrawTitle')} (demo)</div>
+          <div class="demo-draw-status">${drawState.complete ? t('drawStatusComplete') : (drawState.running ? tf('drawStatusNextIn',{seconds: countdown ?? 10}) : t('drawStatusReady'))}</div>
         </div>
-        <div class="muted" style="margin-bottom:8px;">Se revela un emparejamiento cada 10 segundos para recrear el momento del bombo. Al completarse, verás el bracket final con conectores y animaciones.</div>
+        <div class="muted" style="margin-bottom:8px;">${t('drawRevealEvery10s')} ${t('nextPairAuto')}</div>
         <div class="demo-draw-list">${drawRows}</div>
         <div class="row" style="margin-top:8px;justify-content:flex-end;">
           <button id="demo-start-draw" class="gold" type="button" ${drawState.running || drawState.complete ? 'disabled' : ''}>Iniciar sorteo animado</button>
@@ -2547,7 +3233,7 @@ function openDemoSeasonModalWithCount(count){
       </div>
       <div class="demo-grid">
         <div class="demo-box">
-          <h4>Tabla de liguilla (demo)</h4>
+          <h4>${t('demoLeagueTableTitle')}</h4>
           <table>
             <tr><th>#</th><th>Jugador</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr>
             ${standingRows}
@@ -2559,7 +3245,7 @@ function openDemoSeasonModalWithCount(count){
         </div>
       </div>
       <div class="row" style="margin-top:12px;justify-content:flex-end;">
-        <button id="demo-reroll" class="secondary" type="button">Generar otra demo</button>
+        <button id="demo-reroll" class="secondary" type="button">${t('demoRerollBtn')}</button>
       </div>
     </div></div>`);
 
@@ -2654,11 +3340,11 @@ function finalizeLeagueTieBreaker(winnerId){
 }
 function submitLeagueTiePenalty(pairingId, pen1, pen2){
   const tb = state.leagueTieBreaker;
-  if(!tb) return 'No hay desempate activo.';
+  if(!tb) return t('errNoTieBreakerActive');
   const pair = tb.pairings.find(p=> p.id===pairingId);
-  if(!pair) return 'Cruce no encontrado.';
-  if(Number.isNaN(pen1)||Number.isNaN(pen2)||pen1<0||pen2<0) return 'Indica penaltis válidos.';
-  if(pen1===pen2) return 'La tanda no puede terminar empatada.';
+  if(!pair) return t('errTiePairNotFound');
+  if(Number.isNaN(pen1)||Number.isNaN(pen2)||pen1<0||pen2<0) return t('errInvalidPenalties');
+  if(pen1===pen2) return t('errShootoutNoDraw');
 
   pair.pen1 = pen1;
   pair.pen2 = pen2;
@@ -2783,7 +3469,7 @@ function buildKnockoutSkeleton(P){
 
 function startKnockoutDraw(entrants, P){
   const pairings = buildAllowedPairings(entrants);
-  if(!pairings) return 'No se pudo hacer el sorteo sin cruces entre jugadores del mismo nombre base (antes del "-").';
+  if(!pairings) return t('drawConflictError');
   state.bracket = buildKnockoutSkeleton(P);
   state.knockoutDraw = {
     pairings,
@@ -2940,14 +3626,14 @@ function findMatchForTicket(matchId){
   return null;
 }
 function renderBetActivityBoard(title){
-  const card = el(`<div class="card bet-arcade"><h3>${title}</h3><div class="muted" style="margin-bottom:8px;">Vista compartida de apuestas de todos los jugadores en esta temporada.</div><div class="bet-rail"></div></div>`);
+  const card = el(`<div class="card bet-arcade"><h3>${title}</h3><div class="muted" style="margin-bottom:8px;">${t('betBoardSharedView')}</div><div class="bet-rail"></div></div>`);
   const rail = card.querySelector('.bet-rail');
   const tickets = (state.bets?.tickets || [])
     .filter(t=> t.season===state.season)
     .slice()
     .reverse();
   if(!tickets.length){
-    rail.appendChild(el(`<div class="muted">Todavía no hay apuestas registradas en esta temporada.</div>`));
+    rail.appendChild(el(`<div class="muted">${t('betBoardEmptySeason')}</div>`));
     return card;
   }
   tickets.forEach(t=>{
@@ -3036,12 +3722,12 @@ function openBetForMatchModal(matchId){
   const match = getBettableMatches().find(m=> m.id===matchId) || state.leagueMatches.find(m=> m.id===matchId);
   if(!match) return;
   if(!canOpenBetForMatch(match)){
-    alert('Este partido no está disponible para apuestas en este momento.');
+    alert(t('alertMatchNotBettable'));
     return;
   }
   const bettors = getEligibleBettorsForMatch(match);
   if(!bettors.length){
-    alert('No hay apostadores disponibles para este partido.');
+    alert(t('alertNoEligibleBettors'));
     return;
   }
 
@@ -3117,26 +3803,26 @@ function openBetForMatchModal(matchId){
 }
 function placeBet(playerId, matchId, pick, stake){
   const bettor = findPlayer(playerId);
-  if(!bettor) return 'Apostador no encontrado.';
-  if(!isLocallyControlledPlayer(playerId)) return 'Solo puedes apostar con tus equipos de este dispositivo.';
+  if(!bettor) return t('errBettorNotFound');
+  if(!isLocallyControlledPlayer(playerId)) return t('errBetOnlyLocal');
   const isLeagueMode = state.phase==='league';
   const isKnockoutMode = state.phase==='knockout' || state.phase==='playoff';
-  if(!isLeagueMode && !isKnockoutMode) return 'Las apuestas solo se permiten en liguilla o eliminatorias.';
-  if(isKnockoutMode && getQualifiedIds().includes(playerId)) return 'Solo pueden apostar los jugadores que no clasificaron a eliminatorias.';
+  if(!isLeagueMode && !isKnockoutMode) return t('errBetOnlyLeagueOrKo');
+  if(isKnockoutMode && getQualifiedIds().includes(playerId)) return t('errBetOnlyNonQualifiedKo');
   const match = isLeagueMode
     ? state.leagueMatches.find(m=> m.id===matchId)
     : getBettableMatches().find(m=> m.id===matchId);
-  if(!match) return 'Partido no disponible para apostar.';
+  if(!match) return t('errBetMatchUnavailable');
   if(isLeagueMode && (match.p1===playerId || match.p2===playerId)){
-    return 'En liguilla, solo puede apostar un jugador que no participe en ese partido.';
+    return t('errBetLeagueNonParticipantOnly');
   }
-  if(match.status==='confirmed') return 'Ese partido ya está cerrado para apuestas.';
-  if(!['home','draw','away'].includes(pick)) return 'Selección de apuesta inválida.';
-  if(Number.isNaN(stake) || stake<=0) return 'Cantidad de apuesta inválida.';
-  if(getOpenBetTicket(playerId, matchId)) return 'Ya tienes una apuesta abierta en este partido.';
+  if(match.status==='confirmed') return t('errBetMatchClosed');
+  if(!['home','draw','away'].includes(pick)) return t('errInvalidBetPick');
+  if(Number.isNaN(stake) || stake<=0) return t('errInvalidBetAmount');
+  if(getOpenBetTicket(playerId, matchId)) return t('errBetAlreadyOpen');
   const maxStake = getMaxStakeForPlayer(playerId);
-  if(stake>maxStake) return `Tu apuesta máxima en este momento es ${fmtMoney(maxStake)}.`;
-  if(stake>(bettor.money||0)) return 'No tienes saldo suficiente.';
+  if(stake>maxStake) return tf('errBetMaxStake', { amount: fmtMoney(maxStake) });
+  if(stake>(bettor.money||0)) return t('errBetInsufficientBalance');
 
   bettor.money -= stake;
   state.bets.tickets.push({
@@ -3203,14 +3889,14 @@ function registerLeagueMoney(match){
 
 function reportResult(match, byId, score1, score2, peno1, peno2, decisive){
   const player = findPlayer(byId);
-  if(!player) return 'Jugador no encontrado.';
-  if(!isLocallyControlledPlayer(byId)) return 'Solo puedes reportar con uno de tus equipos en este dispositivo.';
-  if(match.p1!==byId && match.p2!==byId) return 'No formas parte de este partido.';
-  if(match.status==='pending') return 'Este resultado está pendiente de aceptación/rechazo del rival.';
-  if(match.mustReReportBy && byId!==match.mustReReportBy) return 'El jugador que reportó inicialmente debe volver a cargar el resultado.';
+  if(!player) return t('errPlayerNotFound');
+  if(!isLocallyControlledPlayer(byId)) return t('errReportOnlyLocal');
+  if(match.p1!==byId && match.p2!==byId) return t('errNotParticipant');
+  if(match.status==='pending') return t('errMatchPendingDecision');
+  if(match.mustReReportBy && byId!==match.mustReReportBy) return t('errMustRereportByReporter');
 
   if(decisive && score1===score2){
-    if(peno1===null||peno2===null||peno1===peno2) return 'En esta fase no puede haber empate: indica el resultado de la tanda de penaltis.';
+    if(peno1===null||peno2===null||peno1===peno2) return t('errDecisiveNeedsPenalties');
   }
 
   const proposed = { byId, score1, score2, peno1: decisive&&score1===score2?peno1:null, peno2: decisive&&score1===score2?peno2:null };
@@ -3233,11 +3919,11 @@ function reportResult(match, byId, score1, score2, peno1, peno2, decisive){
 
 function acceptReportedResult(match, byId, decisive){
   const player = findPlayer(byId);
-  if(!player) return 'Jugador no encontrado.';
-  if(!isLocallyControlledPlayer(byId)) return 'Solo puedes aceptar con uno de tus equipos en este dispositivo.';
-  if(match.status!=='pending') return 'Este partido no está pendiente.';
-  if(byId!==match.p1 && byId!==match.p2) return 'No formas parte de este partido.';
-  if(byId===match.reportedBy) return 'Quien reportó no puede auto-confirmar: debe aceptar el rival.';
+  if(!player) return t('errPlayerNotFound');
+  if(!isLocallyControlledPlayer(byId)) return t('errAcceptOnlyLocal');
+  if(match.status!=='pending') return t('errMatchNotPending');
+  if(byId!==match.p1 && byId!==match.p2) return t('errNotParticipant');
+  if(byId===match.reportedBy) return t('errReporterCannotSelfConfirm');
 
   match.status='confirmed';
   match.confirmedBy = byId;
@@ -3259,11 +3945,11 @@ function acceptReportedResult(match, byId, decisive){
 
 function rejectReportedResult(match, byId){
   const player = findPlayer(byId);
-  if(!player) return 'Jugador no encontrado.';
-  if(!isLocallyControlledPlayer(byId)) return 'Solo puedes rechazar con uno de tus equipos en este dispositivo.';
-  if(match.status!=='pending') return 'Este partido no está pendiente.';
-  if(byId!==match.p1 && byId!==match.p2) return 'No formas parte de este partido.';
-  if(byId===match.reportedBy) return 'Quien reportó no puede rechazarse a sí mismo.';
+  if(!player) return t('errPlayerNotFound');
+  if(!isLocallyControlledPlayer(byId)) return t('errRejectOnlyLocal');
+  if(match.status!=='pending') return t('errMatchNotPending');
+  if(byId!==match.p1 && byId!==match.p2) return t('errNotParticipant');
+  if(byId===match.reportedBy) return t('errReporterCannotSelfReject');
 
   const reporterId = match.reportedBy;
   const reporterName = playerName(reporterId);
@@ -3359,13 +4045,13 @@ function masterResetAll(){
 /* ---------------- PHASE TRANSITIONS ---------------- */
 function startLeague(){
   const ids = state.players.map(p=>p.id);
-  if(ids.length<4) return 'Se necesitan al menos 4 jugadores para iniciar la liguilla.';
+  if(ids.length<4) return t('errNeedMinFourToStart');
   if(!state.seasonKickoff) state.seasonKickoff = dayStr();
   state.players.forEach(p=> addMoney(p.id, state.finance.prizes.participation, `season:${state.season}:participation:${p.id}`, 'participación en Champions'));
   const targetRounds = autoMatchesPerPlayer(ids.length);
   let rounds = generateRoundRobinRounds(ids, targetRounds);
   rounds = rounds.map(round=> round.filter(([a,b])=> !cannotFaceEachOther(a,b))).filter(pairs=> pairs.length>0);
-  if(!rounds.length) return 'No se pudo generar la liguilla con los jugadores actuales. Revisa los nombres bloqueados por la regla de no enfrentarse entre mismos nombres base.';
+  if(!rounds.length) return t('errCouldNotGenerateLeague');
   const matches=[];
   rounds.forEach((pairs, rIdx)=>{
     pairs.forEach(([a,b])=> matches.push({id:uid(), round:rIdx+1, p1:a, p2:b, score1:null,score2:null,
@@ -3383,7 +4069,7 @@ function closeLeague(){
   state.config.numQualifiers = Q;
   const tied = tiedGroupsAtCutoff(standings, Q);
   if(tied.length){
-    return 'Hay un empate sin resolver entre los puestos que delimitan la clasificación. Resuélvelo abajo antes de continuar.';
+    return t('errUnresolvedCutoffTie');
   }
   const qualifiers = standings.slice(0,Q).map(s=>s.id);
   state.qualifiers = qualifiers;
@@ -3404,7 +4090,7 @@ function closeLeague(){
     log('Organizador','cerró la liguilla y generó el cuadro de eliminatorias directamente.');
   } else {
     const playoffPairs = buildAllowedPairings(playoffPool);
-    if(!playoffPairs) return 'No se pudo generar play-off sin cruces entre jugadores del mismo nombre base (antes del "-").';
+    if(!playoffPairs) return t('errCouldNotGeneratePlayoff');
     const pairs=[];
     for(let i=0;i<playoffPairs.length;i++){
       pairs.push({id:uid(), seedSlot: directCount+i+1, p1: playoffPairs[i][0], p2: playoffPairs[i][1],
@@ -3422,8 +4108,8 @@ function closeLeague(){
 
 function resolveTieByPenalties(ids, penaltiesById){
   const values = ids.map(id=> penaltiesById[id]);
-  if(values.some(v=> Number.isNaN(v) || v<0)) return 'Debes indicar penaltis validos para todos los jugadores empatados.';
-  if(new Set(values).size!==values.length) return 'No puede haber empate en la tanda: repite hasta que todos tengan valor distinto.';
+  if(values.some(v=> Number.isNaN(v) || v<0)) return t('errTiePenaltiesRequiredAll');
+  if(new Set(values).size!==values.length) return t('errTiePenaltiesMustBeUnique');
 
   const order = [...ids].sort((a,b)=> penaltiesById[b]-penaltiesById[a]);
   order.forEach((id,i)=> state.tieResolution[id]=i);
@@ -3436,15 +4122,15 @@ function resolveTieByPenalties(ids, penaltiesById){
 function openLeagueTiePenaltyModal(ids){
   pendingModal = ()=>{
     const inputs = ids.map(id=>`
-      <div><label>${playerName(id)}</label><input type="number" id="tp-${id}" min="0" placeholder="Penaltis anotados"></div>
+      <div><label>${playerName(id)}</label><input type="number" id="tp-${id}" min="0" placeholder="${t('tiePenaltyScoredPlaceholder')}"></div>
     `).join('');
     const bg = el(`<div class="modal-bg"><div class="modal">
       <span class="close">✕</span>
-      <h3>Desempate por penaltis</h3>
-      <div class="muted" style="margin-bottom:10px;">Introduce el resultado de la tanda para cada jugador empatado. Deben quedar distintos.</div>
+      <h3>${t('tiePenaltyModalTitle')}</h3>
+      <div class="muted" style="margin-bottom:10px;">${t('tiePenaltyModalHint')}</div>
       <div class="row">${inputs}</div>
       <div id="tp-err" class="muted" style="color:#ffb3ad;"></div>
-      <button id="tp-save" class="danger">Guardar tanda y desempatar</button>
+      <button id="tp-save" class="danger">${t('tiePenaltySaveBtn')}</button>
     </div></div>`);
     bg.querySelector('.close').onclick=()=>{pendingModal=null; render();};
     bg.querySelector('#tp-save').onclick=()=>{
@@ -3467,7 +4153,7 @@ function openLeagueTiePenaltyModal(ids){
 
 function closePlayoff(){
   const allDecided = state.playoffMatches.every(m=> m.status==='confirmed' && m.winner);
-  if(!allDecided) return 'Aún hay partidos de play-off sin confirmar o sin ganador decidido.';
+  if(!allDecided) return t('errPlayoffNotAllDecided');
   const seedMap={};
   state._directQualifiers.forEach((id,i)=> seedMap[i+1]=id);
   state.playoffMatches.forEach(m=> seedMap[m.seedSlot]=m.winner);
@@ -3655,7 +4341,7 @@ function getVisibleTabs(){
   return tabs;
 }
 function renderStepper(){
-  const steps=[['setup','Config'],['league','Liguilla'],['playoff','Play-off'],['knockout','Eliminatorias'],['finished','Campeón']];
+  const steps=[['setup',t('stepConfig')],['league',t('tabLeague')],['playoff',t('phasePlayoff')],['knockout',t('tabKnockout')],['finished',t('stepChampion')]];
   const order=['setup','league','playoff','knockout','finished'];
   const curIdx = order.indexOf(state.phase);
   const wrap = el(`<div class="stepper"></div>`);
@@ -3712,18 +4398,20 @@ function renderPlayersTab(){
     const totalMoney = state.finance?.lifetimeByPlayer?.[p.id] ?? p.money ?? 0;
     const isMine = localPlayerIds.includes(p.id);
     const myBadge = isMine ? localTeamSlotLabel(p.id) : '';
+    const scheduleTxt = playerScheduleSummary(p);
     const tile = el(`<div class="player-tile ${isMine?'is-me':''}">
       <div class="player-tile-name">${p.name}</div>
       <div class="player-tile-meta">
         <span>${fmtMoney(totalMoney)}</span>
         <span class="player-tile-actions">${isMine?`<span class="player-tile-badge">${myBadge}</span>`:''}${!locked?`<button class="small danger" type="button">${t('deletePlayer')}</button>`:''}</span>
       </div>
+      ${scheduleTxt?`<div class="player-timezones"><span class="pin">🕒</span>${scheduleTxt}</div>`:''}
     </div>`);
     if(!locked){
       const delBtn = tile.querySelector('button.danger');
       if(delBtn){
         delBtn.onclick = async ()=>{
-          const ok = confirm(`¿Borrar a ${p.name} de la temporada?`);
+          const ok = confirm(tf('confirmDeletePlayerSeason', { name: p.name }));
           if(!ok) return;
           const err = await removePlayerShared(p.id);
           if(err) alert(err);
@@ -3741,6 +4429,9 @@ function renderPlayersTab(){
       <div id="catalog" class="catalog-wrap"></div>
       <label>${t('chooseLanguage')}</label>
       <div id="lang-catalog" class="catalog-wrap"></div>
+      <label>${t('preferredPlayTimeLabel')}</label>
+      <input id="np-time" type="time" step="300" value="${suggestedPlayTime()}">
+      <div class="muted" style="margin-top:-6px;margin-bottom:8px;">${t('preferredPlayTimeHint')}: <b>${detectDeviceTimeZone()}</b></div>
       <div class="add-player-actions" style="margin-top:8px;">
         <input id="np-name" placeholder="${t('newNamePlaceholder')}" style="display:none;">
         <button id="np-add">${t('addNow')}</button>
@@ -3750,6 +4441,7 @@ function renderPlayersTab(){
     const catalog = addPanel.querySelector('#catalog');
     const langCatalog = addPanel.querySelector('#lang-catalog');
     const nameInput = addPanel.querySelector('#np-name');
+    const timeInput = addPanel.querySelector('#np-time');
     const addBtn = addPanel.querySelector('#np-add');
     let selectedName = getPlayerNameCatalog()[0] || 'INS';
     let selectedLang = uiLang();
@@ -3818,8 +4510,10 @@ function renderPlayersTab(){
     wrap.appendChild(syncInfo);
     addBtn.onclick=async ()=>{
       const name = selectedName==='INS' ? nameInput.value.trim() : selectedName;
+      const playTime = timeInput?.value || '';
+      const playTz = detectDeviceTimeZone();
       if(!name) return;
-      const err = await addPlayerShared(name, selectedLang);
+      const err = await addPlayerShared(name, selectedLang, playTime, playTz);
       if(err){ alert(err); return; }
       addNameToCatalog(name);
       if(selectedName==='INS'){
@@ -3868,7 +4562,7 @@ function renderPlayersTab(){
 function renderLeagueTab(){
   const wrap = document.createElement('div');
   if(state.phase==='setup'){
-    wrap.appendChild(el(`<div class="banner info">La liguilla aún no ha empezado. Configúrala en la pestaña Configuración.</div>`));
+    wrap.appendChild(el(`<div class="banner info">${t('leagueNotStarted')}</div>`));
     return wrap;
   }
 
@@ -3877,7 +4571,7 @@ function renderLeagueTab(){
   const Q = effectiveNumQualifiers();
   const pendingWithScore = state.leagueMatches.filter(m=> m.status==='pending' && m.score1!==null && m.score2!==null).length;
   state.config.numQualifiers = Q;
-  const card = el(`<div class="card"><h3>Clasificación</h3><table>
+  const card = el(`<div class="card"><h3>${t('standingsTitle')}</h3><table>
     <thead><tr><th>#</th><th class="name">Jugador</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>DG</th><th>Pts</th></tr></thead>
     <tbody id="league-standings-body"></tbody>
   </table></div>`);
@@ -3920,22 +4614,22 @@ function renderLeagueTab(){
     const td = document.createElement('td');
     td.colSpan = 8;
     td.className = 'muted';
-    td.textContent = 'Sin datos de clasificación todavía.';
+    td.textContent = t('standingsNoData');
     tr.appendChild(td);
     tableBody.appendChild(tr);
   }
-  card.appendChild(el(`<div class="muted" style="margin-top:8px;">Los ${Q} primeros (resaltados) pasan a la fase eliminatoria.</div>`));
+  card.appendChild(el(`<div class="muted" style="margin-top:8px;">${tf('standingsQualifiedTop',{count:Q})}</div>`));
   if(pendingWithScore>0){
-    card.appendChild(el(`<div class="muted" style="margin-top:6px;">Clasificación provisional: incluye ${pendingWithScore} resultado${pendingWithScore===1?'':'s'} pendiente${pendingWithScore===1?'':'s'} de confirmar.</div>`));
+    card.appendChild(el(`<div class="muted" style="margin-top:6px;">${tf('standingsProvisional',{count:pendingWithScore})}</div>`));
   }
   wrap.appendChild(card);
 
   if(tiedIds.length){
-    const tieCard = el(`<div class="card"><div class="banner warn">Hay un empate entre estos jugadores justo en la línea de clasificación: ${tiedIds.map(id=> playerDisplayName(id)).join(', ')}. Ya se comprobaron puntos, diferencia de goles, goles a favor y resultado directo.</div></div>`);
+    const tieCard = el(`<div class="card"><div class="banner warn">${tf('tieCutoffLong',{names:tiedIds.map(id=> playerDisplayName(id)).join(', ')})}</div></div>`);
 
     if(isThreePlayersThreeDrawsInvalid(tiedIds)){
-      tieCard.appendChild(el(`<div class="banner warn">Caso especial: 3 jugadores y todos los partidos terminaron en empate. Esta temporada se considera inválida y debe reiniciarse.</div>`));
-      const rb = el(`<button class="danger">Reiniciar temporada inválida</button>`);
+      tieCard.appendChild(el(`<div class="banner warn">${t('invalidSeasonLong')}</div>`));
+      const rb = el(`<button class="danger">${t('restartInvalidSeasonBtn')}</button>`);
       rb.onclick=()=> restartInvalidLeagueSeason();
       tieCard.appendChild(rb);
       wrap.appendChild(tieCard);
@@ -3953,10 +4647,10 @@ function renderLeagueTab(){
         tieCard.appendChild(el(`<div class="muted" style="margin-bottom:8px;">Desempate en curso · Ronda ${activeTb.round}${activeTb.bye?` · Descansa: ${playerDisplayName(activeTb.bye)}`:''}</div>`));
         const list = el(`<div class="matchlist"></div>`);
         activeTb.pairings.forEach(pair=>{
-          const scoreTxt = pair.pen1!==null ? `${pair.pen1}-${pair.pen2}` : 'pendiente';
-          const row = el(`<div class="match"><div class="vs"><span>${playerDisplayName(pair.p1)}</span><span>${scoreTxt}</span><span>${playerDisplayName(pair.p2)}</span></div><span class="tag ${pair.winner?'confirmed':'pending'}">${pair.winner?'resuelto':'pendiente'}</span></div>`);
+          const scoreTxt = pair.pen1!==null ? `${pair.pen1}-${pair.pen2}` : t('tiePending');
+          const row = el(`<div class="match"><div class="vs"><span>${playerDisplayName(pair.p1)}</span><span>${scoreTxt}</span><span>${playerDisplayName(pair.p2)}</span></div><span class="tag ${pair.winner?'confirmed':'pending'}">${pair.winner?t('tieResolved'):t('tiePending')}</span></div>`);
           if(!pair.winner){
-            const b = el(`<button class="small danger">Cargar tanda</button>`);
+            const b = el(`<button class="small danger">${t('tieLoadShootout')}</button>`);
             b.onclick=()=> openLeagueTiePairPenaltyModal(pair.id);
             row.appendChild(b);
           }
@@ -3970,13 +4664,13 @@ function renderLeagueTab(){
 
   if(state.phase==='league'){
     if(state.players.length===3){
-      const bettingCard = el(`<div class="card"><h3>Apuesta del jugador que descansa (solo liguilla de 3)</h3><div class="muted" style="margin-bottom:8px;">Para evitar botones duplicados, las apuestas ahora se hacen desde cada partido con el botón <b>Apostar</b>.</div></div>`);
+      const bettingCard = el(`<div class="card"><h3>${t('restPlayerBetTitle')}</h3><div class="muted" style="margin-bottom:8px;">${t('restPlayerBetHint')}</div></div>`);
       wrap.appendChild(bettingCard);
     }
     wrap.appendChild(renderBetActivityBoard('Panel de apuestas de la liguilla'));
 
-    const closeCard = el(`<div class="card"><h3>Calendario de la liguilla</h3></div>`);
-    closeCard.appendChild(el(`<div class="muted" style="margin-bottom:8px;">Antitrampas: un resultado queda en <b>pendiente</b> hasta que el rival pulse <b>Aceptar</b> o <b>Rechazar</b>. Si rechaza, debe volver a reportarlo quien lo cargó primero.</div>`));
+    const closeCard = el(`<div class="card"><h3>${t('leagueCalendarTitle')}</h3></div>`);
+    closeCard.appendChild(el(`<div class="muted" style="margin-bottom:8px;">${t('antiCheatBanner')}</div>`));
     const ml = el(`<div class="matchlist"></div>`);
     const byRound = {};
     state.leagueMatches.forEach(m=> (byRound[m.round]=byRound[m.round]||[]).push(m));
@@ -3988,27 +4682,27 @@ function renderLeagueTab(){
     wrap.appendChild(closeCard);
 
     const allConfirmed = state.leagueMatches.every(m=>m.status==='confirmed');
-    const closeBtn = el(`<button class="gold" ${(!allConfirmed||tiedIds.length)?'disabled':''}>Cerrar liguilla y generar fase eliminatoria</button>`);
+    const closeBtn = el(`<button class="gold" ${(!allConfirmed||tiedIds.length)?'disabled':''}>${t('closeLeagueBtn')}</button>`);
     closeBtn.onclick=()=>{
       const err = closeLeague();
       if(err) alert(err);
     };
     wrap.appendChild(closeBtn);
-    if(!allConfirmed) wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">Faltan partidos por confirmar.</div>`));
+    if(!allConfirmed) wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">${t('pendingMatchesConfirm')}</div>`));
   } else {
-    const ml = el(`<div class="card"><h3>Resultados de la liguilla</h3><div class="matchlist"></div></div>`);
+    const ml = el(`<div class="card"><h3>${t('leagueResultsTitle')}</h3><div class="matchlist"></div></div>`);
     const list = ml.querySelector('.matchlist');
     state.leagueMatches.forEach(m=> list.appendChild(renderMatchRow(m,false)));
     wrap.appendChild(ml);
   }
 
   if(state.phase==='playoff'){
-    const poCard = el(`<div class="card"><h3>Play-off de clasificación</h3><div class="muted" style="margin-bottom:8px;">Estos jugadores quedaron entre medias y se cruzan a partido único (mejor vs peor de ese grupo) para completar el cuadro de eliminatorias.</div><div class="matchlist"></div></div>`);
+    const poCard = el(`<div class="card"><h3>${t('playoffClassTitle')}</h3><div class="muted" style="margin-bottom:8px;">${t('playoffClassHint')}</div><div class="matchlist"></div></div>`);
     const list = poCard.querySelector('.matchlist');
     state.playoffMatches.forEach(m=> list.appendChild(renderMatchRow(m,true)));
     wrap.appendChild(poCard);
     const allDone = state.playoffMatches.every(m=>m.status==='confirmed'&&m.winner);
-    const btn = el(`<button class="gold" ${allDone?'':'disabled'}>Cerrar play-off y generar cuadro de eliminatorias</button>`);
+    const btn = el(`<button class="gold" ${allDone?'':'disabled'}>${t('closePlayoffBtn')}</button>`);
     btn.onclick=()=>{ const err = closePlayoff(); if(err) alert(err); };
     wrap.appendChild(btn);
   }
@@ -4021,18 +4715,18 @@ function renderMatchRow(m, decisive){
   const scoreTxt = m.score1!==null ? `${m.score1} - ${m.score2}` + (m.peno1!==null? ` (pen. ${m.peno1}-${m.peno2})`: '') : '— vs —';
   const row = el(`<div class="match">
     <div class="vs"><span>${p1}</span><span>${scoreTxt}</span><span>${p2}</span></div>
-    <span class="tag ${m.status}">${({empty:'sin jugar',pending:'pendiente',confirmed:'confirmado',dispute:'disputa'})[m.status]}</span>
+    <span class="tag ${m.status}">${({empty:t('matchStatusEmpty'),pending:t('matchStatusPending'),confirmed:t('matchStatusConfirmed'),dispute:t('matchStatusDispute')})[m.status]}</span>
   </div>`);
   const canAct = canActOnMatch(m);
 
   if(canAct){
-    const btnLabel = m.status==='confirmed' ? 'Corregir' : (m.status==='pending' ? 'Confirmar' : 'Resultado');
+    const btnLabel = m.status==='confirmed' ? t('matchBtnFix') : (m.status==='pending' ? t('matchBtnConfirm') : t('matchBtnResult'));
     const btn = el(`<button class="small secondary">${btnLabel}</button>`);
     btn.onclick=()=> openMatchModal(m, decisive, m.status==='confirmed');
     row.appendChild(btn);
   }
   if(canOpenBetForMatch(m)){
-    const betBtn = el(`<button class="small gold" type="button">Apostar</button>`);
+    const betBtn = el(`<button class="small gold" type="button">${t('betBtn')}</button>`);
     betBtn.onclick=()=> openBetForMatchModal(m.id);
     row.appendChild(betBtn);
   }
@@ -4103,13 +4797,13 @@ function updateTieWinner(tie){
 }
 
 function setAggregatePenaltyWinner(tie, p1, p2){
-  if(tie.legs!==2) return 'Esta serie no es ida y vuelta.';
-  if(isNaN(p1)||isNaN(p2)) return 'Indica ambos marcadores de penaltis.';
-  if(p1===p2) return 'En penaltis no puede haber empate.';
+  if(tie.legs!==2) return t('errSeriesNotTwoLeg');
+  if(isNaN(p1)||isNaN(p2)) return t('errBothPenaltiesRequired');
+  if(p1===p2) return t('errPenaltiesNoDraw');
   tie.aggPeno1 = p1;
   tie.aggPeno2 = p2;
   updateTieWinner(tie);
-  if(!tie.winner) return 'No se pudo definir ganador con esos datos.';
+  if(!tie.winner) return t('errCannotDefineWinner');
   log('Organizador', 'registró penaltis de desempate global: '+playerName(tie.p1)+' '+p1+'-'+p2+' '+playerName(tie.p2)+'.');
   saveAndRender();
   return null;
@@ -4184,14 +4878,14 @@ function renderKnockoutTieRow(tie){
   if(tie.legs===2){
     const leg1 = ensureTieLeg(tie, 1);
     const leg2 = ensureTieLeg(tie, 2);
-    box.appendChild(el(`<div class="muted" style="margin-bottom:6px;">Ida</div>`));
+    box.appendChild(el(`<div class="muted" style="margin-bottom:6px;">${t('firstLeg')}</div>`));
     box.appendChild(renderMatchRow(leg1, false));
-    box.appendChild(el(`<div class="muted" style="margin-top:8px;margin-bottom:6px;">Vuelta</div>`));
+    box.appendChild(el(`<div class="muted" style="margin-top:8px;margin-bottom:6px;">${t('secondLeg')}</div>`));
     box.appendChild(renderMatchRow(leg2, false));
     updateTieWinner(tie);
-    const aggTxt = (tie.agg1!==null&&tie.agg2!==null) ? `Global: ${tie.agg1}-${tie.agg2}` : 'Global: por definir';
-    const penTxt = tie.aggPeno1!==null && tie.aggPeno2!==null ? ` · Penaltis: ${tie.aggPeno1}-${tie.aggPeno2}` : '';
-    box.appendChild(el(`<div class="muted" style="margin-top:8px;">${aggTxt}${penTxt}${tie.winner?` · Clasificado: <b>${playerDisplayName(tie.winner)}</b>`:''}</div>`));
+    const aggTxt = (tie.agg1!==null&&tie.agg2!==null) ? tf('aggregateScore',{a:tie.agg1,b:tie.agg2}) : t('aggregatePending');
+    const penTxt = tie.aggPeno1!==null && tie.aggPeno2!==null ? ` · ${t('penaltiesShort')}: ${tie.aggPeno1}-${tie.aggPeno2}` : '';
+    box.appendChild(el(`<div class="muted" style="margin-top:8px;">${aggTxt}${penTxt}${tie.winner?` · ${t('qualifiedLabel')}: <b>${playerDisplayName(tie.winner)}</b>`:''}</div>`));
     if(tie.dispute?.aggregate){
       const rb = el(`<button class="small gold" style="margin-top:8px;">Registrar penaltis de desempate</button>`);
       rb.onclick=()=> openAggregatePenaltyModal(tie);
@@ -4200,7 +4894,7 @@ function renderKnockoutTieRow(tie){
   } else {
     box.appendChild(renderMatchRow(tie, true));
     if(tie.winner){
-      box.appendChild(el(`<div class="muted" style="margin-top:8px;">Clasificado: <b>${playerDisplayName(tie.winner)}</b></div>`));
+      box.appendChild(el(`<div class="muted" style="margin-top:8px;">${t('qualifiedLabel')}: <b>${playerDisplayName(tie.winner)}</b></div>`));
     }
   }
   return box;
@@ -4239,7 +4933,7 @@ function renderPlayerForm(match, decisive){
   const localIds = getLocalPlayerIds();
   const autoWho = localIds.find(id=> id===match.p1 || id===match.p2) || null;
   if(!autoWho){
-    return el(`<div class="banner warn">Solo puedes reportar resultados de partidos donde participa uno de tus equipos de este dispositivo.</div>`);
+    return el(`<div class="banner warn">${t('reportOnlyLocalTeamWarn')}</div>`);
   }
   const actorLabel = localTeamSlotLabel(autoWho);
   const p1Name = playerDisplayName(match.p1);
@@ -4379,7 +5073,7 @@ function renderPendingDecisionForm(match, decisive){
     ? expectedDecider
     : null;
   if(!autoDecider){
-    return el(`<div class="banner warn">Este resultado lo debe confirmar <b>${playerDisplayName(expectedDecider)}</b>. Solo puedes confirmar con ese equipo en este dispositivo.</div>`);
+    return el(`<div class="banner warn">${tf('confirmOnlyExpectedTeamWarn',{name:`<b>${playerDisplayName(expectedDecider)}</b>`})}</div>`);
   }
   const deciderLabel = localTeamSlotLabel(autoDecider);
   const scoreTxt = `${match.score1} - ${match.score2}` + (match.peno1!==null? ` (pen. ${match.peno1}-${match.peno2})` : '');
@@ -4442,39 +5136,39 @@ function renderAdminForm(match, decisive){
 function renderKnockoutTab(){
   const wrap = document.createElement('div');
   if(!state.bracket){
-    wrap.appendChild(el(`<div class="banner info">El cuadro de eliminatorias todavía no se ha generado.</div>`));
+    wrap.appendChild(el(`<div class="banner info">${t('knockoutNoBracket')}</div>`));
     return wrap;
   }
 
   const nonQualified = getNonQualifiedIds();
   if(state.phase==='knockout' && nonQualified.length){
     const ceiling = getBetMoneyCeiling();
-    const card = el(`<div class="card"><h3>Apuestas de eliminatorias (solo no clasificados)</h3><div class="muted" style="margin-bottom:8px;">Ahora las apuestas se hacen desde cada emparejamiento con el botón <b>Apostar</b>.</div></div>`);
-    card.appendChild(el(`<div class="muted" style="margin-bottom:8px;">Tope global de dinero por apuestas: <b>${fmtMoney(ceiling)}</b> · Apuesta máxima por ticket: <b>${Math.round(state.bets.maxStakePct*100)}%</b> de tu saldo actual.</div>`));
+    const card = el(`<div class="card"><h3>${t('knockoutBetsTitle')}</h3><div class="muted" style="margin-bottom:8px;">${t('knockoutBetsHint')}</div></div>`);
+    card.appendChild(el(`<div class="muted" style="margin-bottom:8px;">${tf('knockoutBetsCap',{ceiling:`<b>${fmtMoney(ceiling)}</b>`, pct:`<b>${Math.round(state.bets.maxStakePct*100)}</b>`})}</div>`));
 
     wrap.appendChild(card);
   }
   if(state.phase==='knockout'){
-    wrap.appendChild(renderBetActivityBoard('Panel de apuestas de eliminatorias'));
+    wrap.appendChild(renderBetActivityBoard(t('knockoutBetBoardTitle')));
   }
 
   if(state.knockoutDraw && !state.knockoutDraw.complete){
     const remaining = state.knockoutDraw.startedAt && state.knockoutDraw.nextRevealAt
       ? Math.max(0, Math.ceil((state.knockoutDraw.nextRevealAt - Date.now())/1000))
       : null;
-    const d = el(`<div class="card demo-draw-card"><div class="demo-draw-head"><h3 style="margin:0;">Sorteo de eliminatorias</h3><div class="demo-draw-status">${state.knockoutDraw.startedAt ? `Siguiente cruce en ${remaining ?? 10}s` : 'Listo para iniciar'}</div></div><div class="muted" style="margin-bottom:8px;">Se revela un emparejamiento cada 10 segundos.</div><div id="draw-list" class="demo-draw-list"></div></div>`);
+    const d = el(`<div class="card demo-draw-card"><div class="demo-draw-head"><h3 style="margin:0;">${t('knockoutDrawTitle')}</h3><div class="demo-draw-status">${state.knockoutDraw.startedAt ? tf('drawStatusNextIn',{seconds: remaining ?? 10}) : t('drawStatusReady')}</div></div><div class="muted" style="margin-bottom:8px;">${t('drawRevealEvery10s')}</div><div id="draw-list" class="demo-draw-list"></div></div>`);
     const list = d.querySelector('#draw-list');
     const total = state.knockoutDraw.pairings.length;
     for(let i=0;i<total;i++){
       if(i<state.knockoutDraw.revealed){
         const pair = state.knockoutDraw.pairings[i];
-        list.appendChild(el(`<div class="demo-draw-item revealed"><span>Bombo ${i+1}</span><span>${playerName(pair[0])} vs ${playerName(pair[1])}</span></div>`));
+        list.appendChild(el(`<div class="demo-draw-item revealed"><span>${tf('drawPotLabel',{n:i+1})}</span><span>${playerName(pair[0])} vs ${playerName(pair[1])}</span></div>`));
       } else {
-        list.appendChild(el(`<div class="demo-draw-item pending"><span>Bombo ${i+1}</span><span>Esperando extracción...</span></div>`));
+        list.appendChild(el(`<div class="demo-draw-item pending"><span>${tf('drawPotLabel',{n:i+1})}</span><span>${t('drawWaitingExtraction')}</span></div>`));
       }
     }
     if(!state.knockoutDraw.startedAt){
-      const btn = el(`<button class="gold">Iniciar sorteo animado</button>`);
+      const btn = el(`<button class="gold">${t('startAnimatedDraw')}</button>`);
       btn.onclick=()=>{
         state.knockoutDraw.startedAt = Date.now();
         state.knockoutDraw.nextRevealAt = Date.now();
@@ -4483,14 +5177,14 @@ function renderKnockoutTab(){
       };
       d.appendChild(btn);
     } else {
-      d.appendChild(el(`<div class="muted" style="margin-top:8px;">El siguiente cruce aparecerá automáticamente.</div>`));
+      d.appendChild(el(`<div class="muted" style="margin-top:8px;">${t('nextPairAuto')}</div>`));
     }
     wrap.appendChild(d);
   }
 
   if(state.champion){
-    wrap.appendChild(el(`<div class="champion-box"><div class="trophy">🏆</div><h2>${playerName(state.champion)}</h2><div class="muted">Campeón de ${state.season}</div></div>`));
-    const btn = el(`<button class="gold" style="margin-top:16px;">Empezar nueva temporada</button>`);
+    wrap.appendChild(el(`<div class="champion-box"><div class="trophy">🏆</div><h2>${playerName(state.champion)}</h2><div class="muted">${tf('championOfSeason',{season:state.season})}</div></div>`));
+    const btn = el(`<button class="gold" style="margin-top:16px;">${t('startNewSeasonBtn')}</button>`);
     btn.onclick=newSeason;
     wrap.appendChild(btn);
   }
@@ -4546,11 +5240,11 @@ function roundLabels(total){
   const names=[];
   let size = state.bracket.size;
   for(let i=0;i<total;i++){
-    if(size===2) names.push('Final');
-    else if(size===4) names.push('Semifinales');
-    else if(size===8) names.push('Cuartos de final');
-    else if(size===16) names.push('Octavos de final');
-    else names.push('Ronda de '+size);
+    if(size===2) names.push(t('roundFinal'));
+    else if(size===4) names.push(t('roundSemifinals'));
+    else if(size===8) names.push(t('roundQuarterfinals'));
+    else if(size===16) names.push(t('roundRoundOf16'));
+    else names.push(tf('roundOfN',{size}));
     size = size/2;
   }
   return names;
@@ -4659,14 +5353,14 @@ function renderMuseumTab(){
   const rows = getMuseumRows();
   const totalTitles = rows.reduce((sum,r)=> sum+r.titles, 0);
 
-  wrap.appendChild(el(`<div class="card"><h3>Museo de Jugadores</h3><div class="muted">Cada copa representa una temporada ganada. El museo se acumula con el paso de los años, como una vitrina histórica.</div></div>`));
+  wrap.appendChild(el(`<div class="card"><h3>${t('museumTitle')}</h3><div class="muted">${t('museumIntro')}</div></div>`));
 
   if(!rows.length){
-    wrap.appendChild(el(`<div class="banner info">Aún no hay jugadores para mostrar en el museo.</div>`));
+    wrap.appendChild(el(`<div class="banner info">${t('museumNoPlayers')}</div>`));
     return wrap;
   }
 
-  wrap.appendChild(el(`<div class="banner gold">Copas totales registradas: <b>${totalTitles}</b></div>`));
+  wrap.appendChild(el(`<div class="banner gold">${tf('totalCups',{count:`<b>${totalTitles}</b>`})}</div>`));
 
   const grid = el(`<div class="museum-grid"></div>`);
   rows.forEach((r,idx)=>{
@@ -4684,11 +5378,11 @@ function renderMuseumTab(){
     const seasons = card.querySelector('.museum-seasons');
 
     if(r.titles===0){
-      shelf.appendChild(el(`<span class="muted">Sin títulos todavía.</span>`));
-      seasons.textContent = 'Temporadas ganadas: —';
+      shelf.appendChild(el(`<span class="muted">${t('noTitlesYet')}</span>`));
+      seasons.textContent = `${t('wonSeasons')}: —`;
     } else {
       for(let i=0;i<r.titles;i++) shelf.appendChild(el(museumCupSvg()));
-      seasons.textContent = 'Temporadas ganadas: '+r.seasons.join(', ');
+      seasons.textContent = `${t('wonSeasons')}: `+r.seasons.join(', ');
     }
 
     grid.appendChild(card);
@@ -4700,17 +5394,17 @@ function renderMuseumTab(){
 /* ---- HISTORY TAB ---- */
 function renderHistoryTab(){
   const wrap = document.createElement('div');
-  const seasonCard = el(`<div class="card"><h3>Temporada ${seasonTagLabel()}</h3><div class="muted" style="margin-bottom:10px;">Empieza una nueva temporada cuando ya haya campeón.</div></div>`);
+  const seasonCard = el(`<div class="card"><h3>${t('seasonWord')} ${seasonTagLabel()}</h3><div class="muted" style="margin-bottom:10px;">${t('historySeasonIntro')}</div></div>`);
   const canStartNewSeason = state.phase==='finished' && !!state.champion;
-  const seasonBtn = el(`<button class="gold" ${canStartNewSeason?'':'disabled'}>Iniciar nueva temporada</button>`);
+  const seasonBtn = el(`<button class="gold" ${canStartNewSeason?'':'disabled'}>${t('startNewSeasonBtn')}</button>`);
   seasonBtn.onclick=()=> newSeason();
   seasonCard.appendChild(seasonBtn);
   if(!canStartNewSeason){
-    seasonCard.appendChild(el(`<div class="muted" style="margin-top:8px;">Este botón se habilita al finalizar la temporada actual.</div>`));
+    seasonCard.appendChild(el(`<div class="muted" style="margin-top:8px;">${t('historyEnableAfterSeason')}</div>`));
   }
   wrap.appendChild(seasonCard);
 
-  const restartSeasonBtn = el(`<button class="secondary" style="margin-top:10px;">Volver a empezar esta temporada</button>`);
+  const restartSeasonBtn = el(`<button class="secondary" style="margin-top:10px;">${t('historyRestartSeasonBtn')}</button>`);
   restartSeasonBtn.onclick=()=>{
     pendingModal = ()=>{
       const bg = el(`<div class="modal-bg"><div class="modal">
@@ -4740,7 +5434,7 @@ function renderHistoryTab(){
   };
   seasonCard.appendChild(restartSeasonBtn);
 
-  const resetCard = el(`<div class="card"><h3>Reseteo maestro</h3><div class="banner warn">Pone todos los contadores a 0 (dinero, temporadas, cuadro, campeón actual) y borra el historial. Conserva solo la lista de jugadores.</div></div>`);
+  const resetCard = el(`<div class="card"><h3>${t('masterResetTitle')}</h3><div class="banner warn">${t('masterResetWarn')}</div></div>`);
   const resetBtn = el(`<button class="danger">Reset maestro total</button>`);
   resetBtn.onclick=()=>{
     pendingModal = ()=>{
@@ -4780,12 +5474,12 @@ function renderHistoryTab(){
   wrap.appendChild(resetCard);
 
   if(state.pastChampions.length){
-    const c = el(`<div class="card"><h3>Campeones anteriores</h3></div>`);
+    const c = el(`<div class="card"><h3>${t('pastChampionsTitle')}</h3></div>`);
     state.pastChampions.forEach(pc=> c.appendChild(el(`<div class="audit"><b>${pc.champion}</b> — ${pc.season} <span style="opacity:.8">· ${seasonDateText(pc.kickoff)}</span> <span style="opacity:.55">(cerrada: ${pc.date})</span></div>`)));
     wrap.appendChild(c);
   }
-  const card = el(`<div class="card"><h3>Registro de actividad</h3></div>`);
-  if(!state.history.length) card.appendChild(el(`<div class="muted">Sin actividad todavía.</div>`));
+  const card = el(`<div class="card"><h3>${t('activityLogTitle')}</h3></div>`);
+  if(!state.history.length) card.appendChild(el(`<div class="muted">${t('noActivityYet')}</div>`));
   state.history.slice(0,200).forEach(h=> card.appendChild(el(`<div class="audit"><span style="opacity:.6">${h.ts}</span> · <b>${h.actor}</b> ${h.action}</div>`)));
   wrap.appendChild(card);
   return wrap;
