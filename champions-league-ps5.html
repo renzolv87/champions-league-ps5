@@ -492,7 +492,7 @@ const I18N = {
     alreadyRegisteredInfo: 'Ya registraste tu jugador en este dispositivo. El resto de jugadores debe añadirse de forma colaborativa desde sus propios dispositivos.',
     startLeague: 'Iniciar liguilla / torneo',
     setupLockedInfo: 'La temporada ya está en curso. Este botón se habilita cuando la fase vuelva a configuración.',
-    needTwoPlayers: 'Añade al menos 2 jugadores para iniciar la liguilla.',
+    needTwoPlayers: 'Añade al menos 4 jugadores para iniciar la liguilla.',
     langOptionEs: 'Español',
     langOptionEn: 'Inglés',
     langOptionLt: 'Lituano',
@@ -536,7 +536,7 @@ const I18N = {
     alreadyRegisteredInfo: 'You already registered your player on this device. The rest must be added collaboratively from their own devices.',
     startLeague: 'Start league / tournament',
     setupLockedInfo: 'Season is already in progress. This button is enabled again when the phase returns to setup.',
-    needTwoPlayers: 'Add at least 2 players to start the league.',
+    needTwoPlayers: 'Add at least 4 players to start the league.',
     langOptionEs: 'Spanish',
     langOptionEn: 'English',
     langOptionLt: 'Lithuanian',
@@ -580,7 +580,7 @@ const I18N = {
     alreadyRegisteredInfo: 'Siame irenginyje jau uzregistravai savo zaideja. Kitus zaidejus reikia prideti is ju irenginiu.',
     startLeague: 'Pradeti lyga / turnyra',
     setupLockedInfo: 'Sezonas jau vyksta. Mygtukas vel bus aktyvus, kai faze griz i nustatymus.',
-    needTwoPlayers: 'Pridek bent 2 zaidejus, kad paleistum lyga.',
+    needTwoPlayers: 'Pridek bent 4 zaidejus, kad paleistum lyga.',
     langOptionEs: 'Ispanu',
     langOptionEn: 'Anglu',
     langOptionLt: 'Lietuviu',
@@ -624,7 +624,7 @@ const I18N = {
     alreadyRegisteredInfo: 'Ja has registrat el teu jugador en aquest dispositiu. La resta de jugadors s\'han d\'afegir de manera colaborativa des dels seus dispositius.',
     startLeague: 'Iniciar lligueta / torneig',
     setupLockedInfo: 'La temporada ja esta en curs. Aquest boto s\'habilita quan la fase torni a configuracio.',
-    needTwoPlayers: 'Afegeix almenys 2 jugadors per iniciar la lligueta.',
+    needTwoPlayers: 'Afegeix almenys 4 jugadors per iniciar la lligueta.',
     langOptionEs: 'Espanyol',
     langOptionEn: 'Angles',
     langOptionLt: 'Lituà',
@@ -650,8 +650,21 @@ function normalizeUiLang(lang){
   const v = String(lang || '').trim().toLowerCase();
   return SUPPORTED_UI_LANGS.includes(v) ? v : 'es';
 }
+function devicePreferredUiLang(){
+  try{
+    const raw = (navigator.language || navigator.userLanguage || 'es').toLowerCase();
+    const base = raw.split('-')[0];
+    return normalizeUiLang(base);
+  }catch(_err){
+    return 'es';
+  }
+}
 function persistedUiLang(){
-  return 'es';
+  try{
+    const stored = localStorage.getItem(UI_LANG_KEY);
+    if(stored) return normalizeUiLang(stored);
+  }catch(_err){}
+  return devicePreferredUiLang();
 }
 function uiLang(){ return normalizeUiLang(state?.uiLang || persistedUiLang()); }
 function uiLocale(){ return ({es:'es-ES', en:'en-GB', lt:'lt-LT', ca:'ca-ES'})[uiLang()] || 'es-ES'; }
@@ -1110,8 +1123,8 @@ function loadState(){
   if(!state.finance.lifetimeByPlayer) state.finance.lifetimeByPlayer = {};
   if(!state.sync) state.sync = defaultState().sync;
   if(!state.seasonKickoff) state.seasonKickoff = null;
-  state.uiLang = 'es';
-  setUiLang('es');
+  state.uiLang = normalizeUiLang(state.uiLang || persistedUiLang());
+  setUiLang(state.uiLang);
   if(!state.season || state.season==='Champions PS5') state.season = GAME_NAME+' - T1';
   state.players.forEach(p=>{
     p.name = normalizePlayerName(p.name);
@@ -1981,8 +1994,14 @@ function autoMatchesPerPlayer(n){
   return Math.max(1, 2*(n-1));
 }
 function autoQualifiers(n){
-  // Proporción tipo Champions: pasan ~2/3, pero con 3+ jugadores nunca pasan todos.
+  // Formato forzado para experiencia uniforme:
+  // - Con plantillas pequenas (<=6) evitamos clasificados potencia de 2 para forzar play-off.
   if(n<=2) return Math.min(n,2);
+  if(n<=6){
+    let q = n-1;
+    if((q & (q-1))===0) q = Math.max(2, q-1);
+    return Math.min(n-1, q);
+  }
   let q = Math.floor(n*24/36);
   q = Math.max(2, q);
   q = Math.min(n-1, q);
@@ -1995,8 +2014,7 @@ function effectiveNumQualifiers(){
   if(n===2) return 2; // Con 2 jugadores tambien hay liguilla y ambos pasan a eliminatoria.
 
   const auto = autoQualifiers(n);
-  const raw = Number.isFinite(state?.config?.numQualifiers) ? Math.floor(state.config.numQualifiers) : auto;
-  let q = raw>0 ? raw : auto;
+  let q = auto;
   q = Math.max(2, q);
   q = Math.min(n-1, q);
   return q;
@@ -2617,6 +2635,7 @@ function masterResetAll(){
 /* ---------------- PHASE TRANSITIONS ---------------- */
 function startLeague(){
   const ids = state.players.map(p=>p.id);
+  if(ids.length<4) return 'Se necesitan al menos 4 jugadores para iniciar la liguilla.';
   if(!state.seasonKickoff) state.seasonKickoff = dayStr();
   state.players.forEach(p=> addMoney(p.id, state.finance.prizes.participation, `season:${state.season}:participation:${p.id}`, 'participación en Champions'));
   const firstLegRoundCount = ids.length % 2 === 0 ? Math.max(1, ids.length-1) : ids.length;
@@ -3030,7 +3049,7 @@ function renderPlayersTab(){
     wrap.appendChild(el(`<div class="card"><div class="banner info" style="margin-bottom:0;">${t('alreadyRegisteredInfo')}</div></div>`));
   }
 
-  const canStartLeague = !locked && state.players.length>=2;
+  const canStartLeague = !locked && state.players.length>=4;
   const startBtn = el(`<button class="gold" style="margin-left:8px;" ${canStartLeague?'':'disabled'}>${t('startLeague')}</button>`);
   startBtn.onclick=()=>{
     const n = state.players.length;
@@ -3043,7 +3062,7 @@ function renderPlayersTab(){
 
   if(locked){
     wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">${t('setupLockedInfo')}</div>`));
-  } else if(state.players.length<2){
+  } else if(state.players.length<4){
     wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">${t('needTwoPlayers')}</div>`));
   }
 
