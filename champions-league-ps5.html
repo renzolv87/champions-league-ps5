@@ -651,8 +651,7 @@ function normalizeUiLang(lang){
   return SUPPORTED_UI_LANGS.includes(v) ? v : 'es';
 }
 function persistedUiLang(){
-  try{ return normalizeUiLang(localStorage.getItem(UI_LANG_KEY) || 'es'); }
-  catch(_err){ return 'es'; }
+  return 'es';
 }
 function uiLang(){ return normalizeUiLang(state?.uiLang || persistedUiLang()); }
 function uiLocale(){ return ({es:'es-ES', en:'en-GB', lt:'lt-LT', ca:'ca-ES'})[uiLang()] || 'es-ES'; }
@@ -1564,22 +1563,14 @@ function clampDemoPlayersCount(value){
 }
 
 function getDemoPlayersDynamicMax(){
-  const hw = (typeof navigator!=='undefined' && Number.isFinite(navigator.hardwareConcurrency))
-    ? navigator.hardwareConcurrency
-    : 4;
-  const mem = (typeof navigator!=='undefined' && Number.isFinite(navigator.deviceMemory))
-    ? navigator.deviceMemory
-    : 4;
-  // Presupuesto aproximado de partidos de liguilla para no bloquear el navegador.
-  const matchBudget = Math.max(500, Math.floor(hw * mem * 180));
-  const maxPlayers = Math.floor((1 + Math.sqrt(1 + 4*matchBudget)) / 2);
-  return Math.max(8, maxPlayers);
+  // Formato real de Champions League (fase liga): 36 participantes.
+  return 36;
 }
 
-function demoLowercaseFirst(name){
+function demoUppercaseFirst(name){
   const clean = String(name || '').trim();
   if(!clean) return '';
-  return clean.charAt(0).toLocaleLowerCase('es-ES') + clean.slice(1);
+  return clean.charAt(0).toLocaleUpperCase('es-ES') + clean.slice(1);
 }
 
 const DEMO_FALLBACK_NAMES = [
@@ -1591,13 +1582,13 @@ const DEMO_FALLBACK_NAMES = [
 function generateDemoSeason(requestedCount){
   const targetCount = clampDemoPlayersCount(requestedCount);
   const sourceNames = state.players.length>=3
-    ? state.players.map(p=> demoLowercaseFirst(p?.name))
+    ? state.players.map(p=> demoUppercaseFirst(p?.name))
     : DEMO_FALLBACK_NAMES;
 
   const uniqueNames = [];
   const seen = new Set();
   sourceNames.forEach(raw=>{
-    const display = demoLowercaseFirst(raw);
+    const display = demoUppercaseFirst(raw);
     if(!display) return;
     const key = normalizePlayerName(display);
     if(!key || seen.has(key)) return;
@@ -1609,7 +1600,8 @@ function generateDemoSeason(requestedCount){
   while(pool.length < targetCount){
     const base = DEMO_FALLBACK_NAMES[pool.length % DEMO_FALLBACK_NAMES.length];
     const repeat = Math.floor(pool.length / DEMO_FALLBACK_NAMES.length) + 1;
-    const candidate = repeat===1 ? base : `${base} ${repeat}`;
+    const candidateRaw = repeat===1 ? base : `${base} ${repeat}`;
+    const candidate = demoUppercaseFirst(candidateRaw);
     const key = normalizePlayerName(candidate);
     if(seen.has(key)) continue;
     seen.add(key);
