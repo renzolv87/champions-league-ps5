@@ -201,6 +201,7 @@ body.theme-night .player-tile-meta,
 body.theme-night .player-chip .pin,
 body.theme-night .player-timezones{color:#c2d4ff;}
 body.theme-night .player-timezones{border-top-color:#35579d;}
+body.theme-night .player-association-summary{border-color:#35579d;background:linear-gradient(180deg,#13295d,#11234f);color:#d7e6ff;}
 body.theme-night .tab.active,
 body.theme-night .step.active,
 body.theme-night button,
@@ -395,6 +396,316 @@ button.gold{background:linear-gradient(145deg,#00a3e0,#69b4ff);border-color:#00a
 button.danger{background:linear-gradient(145deg,#d9424f,#cf2f3f);border-color:#cf2f3f;}
 button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;transform:none;}
 button.small{padding:5px 10px;font-size:.75rem;border-radius:9px;}
+
+body.platform-macos button{
+  border-radius:12px;
+  background:linear-gradient(180deg,#1f79ff,#0a64e8);
+  border-color:#0357d6;
+  box-shadow:0 1px 0 rgba(255,255,255,.55) inset, 0 10px 18px rgba(3,87,214,.2);
+}
+body.platform-macos button.secondary{
+  background:linear-gradient(180deg,#ffffff,#edf3ff);
+  border-color:#b9cbee;
+  color:#123f89;
+  box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 6px 14px rgba(44,80,143,.12);
+}
+body.platform-macos button.danger{background:linear-gradient(180deg,#ff6661,#e74d46);border-color:#d9433c;}
+
+body.platform-macos .tab,
+body.platform-macos .step{
+  background:linear-gradient(180deg,#ffffff,#eef4ff);
+  border-color:#c8d7f1;
+  box-shadow:0 1px 0 rgba(255,255,255,.95) inset, 0 8px 14px rgba(44,80,143,.08);
+}
+body.platform-macos .tab.active,
+body.platform-macos .step.active{box-shadow:0 10px 20px rgba(3,87,214,.24);}
+body.platform-macos .card{
+  border-radius:18px;
+  border-color:#d3def2;
+  box-shadow:0 14px 28px rgba(32,69,130,.14);
+  background:linear-gradient(180deg,rgba(255,255,255,.97),rgba(239,246,255,.95));
+}
+body.platform-macos input,
+body.platform-macos select{
+  border-radius:11px;
+  border-color:#c8d7ef;
+  background:linear-gradient(180deg,#ffffff,#f5f9ff);
+  box-shadow:0 1px 0 rgba(255,255,255,.95) inset;
+}
+body.platform-macos .modal{border-radius:22px;}
+
+body.platform-iphone button,
+body.platform-ipad button{font-weight:700;letter-spacing:.1px;border-width:1px;}
+body.platform-iphone button{
+  border-radius:14px;
+  min-height:44px;
+  background:#007aff;
+  border-color:#0063d1;
+  box-shadow:0 8px 18px rgba(0,122,255,.22);
+  transition:transform .12s ease, box-shadow .16s ease, filter .16s ease;
+}
+body.platform-iphone button:active{transform:scale(.97);box-shadow:0 4px 10px rgba(0,122,255,.18);}
+body.platform-iphone button.secondary{background:#f2f2f7;color:#1c1c1e;border-color:#d1d1d6;box-shadow:none;}
+body.platform-iphone button.gold{background:#0a84ff;border-color:#006edc;}
+body.platform-iphone button.danger{background:#ff3b30;border-color:#e03127;}
+body.platform-iphone .hero{border-radius:22px;}
+body.platform-iphone .tabs{gap:8px;}
+body.platform-iphone .tab,
+body.platform-iphone .step{
+  border-radius:14px;
+  border-color:#d5dde9;
+  background:#f2f4f8;
+  color:#1f2f46;
+  box-shadow:none;
+}
+body.platform-iphone .tab.active,
+body.platform-iphone .step.active{
+  background:linear-gradient(180deg,#0a84ff,#0072ea);
+  border-color:#0069dc;
+  color:#ffffff;
+  box-shadow:0 10px 22px rgba(0,122,255,.24);
+}
+body.platform-iphone .card{
+  border-radius:22px;
+  border-color:#d9e0eb;
+  box-shadow:0 14px 26px rgba(16,48,97,.12);
+  background:linear-gradient(180deg,#ffffff,#f5f8ff);
+}
+body.platform-iphone input,
+body.platform-iphone select{
+  border-radius:14px;
+  min-height:46px;
+  border-color:#d7dfe9;
+  background:#f7f8fa;
+}
+body.platform-iphone input:focus,
+body.platform-iphone select:focus{box-shadow:0 0 0 3px rgba(10,132,255,.2);border-color:#0a84ff;}
+body.platform-iphone .modal{border-radius:24px;}
+body.platform-iphone .card,
+body.platform-iphone .modal,
+body.platform-iphone .tab{animation:iosPopIn .24s ease;}
+body.platform-iphone{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Helvetica Neue',system-ui,sans-serif;
+}
+body.platform-iphone .app{padding:12px 12px 88px;max-width:100vw;}
+body.platform-iphone .hero h1{font-size:clamp(1.32rem,5.5vw,1.72rem);}
+body.platform-iphone .hero .sub{font-size:.82rem;line-height:1.45;}
+body.platform-iphone .brand-badge{font-size:.68rem;padding:5px 9px;}
+body.platform-iphone .card{padding:14px 14px 15px;}
+body.platform-iphone .card h3{font-size:1rem;letter-spacing:.35px;}
+body.platform-iphone .tab{font-size:.88rem;padding:10px 12px;}
+body.platform-iphone .step{font-size:.74rem;padding:8px 7px;}
+body.platform-iphone .matchlist{gap:10px;}
+body.platform-iphone .match{padding:11px 11px;border-radius:14px;gap:8px;}
+body.platform-iphone .match .vs{font-size:.86rem;line-height:1.35;}
+body.platform-iphone .tag{font-size:.6rem;padding:4px 8px;}
+body.platform-iphone .player-grid{gap:11px;}
+body.platform-iphone .player-tile{border-radius:14px;padding:11px;}
+body.platform-iphone .player-tile-name{font-size:.98rem;}
+body.platform-iphone .player-tile-meta{font-size:.83rem;}
+body.platform-iphone .player-timezones{font-size:.76rem;}
+body.platform-iphone input,
+body.platform-iphone select{font-size:1rem;padding:11px 12px;}
+body.platform-iphone .modal{padding:16px;max-width:min(97vw,520px);max-height:91vh;overflow:auto;}
+body.platform-iphone .modal h3{font-size:1.14rem;}
+body.platform-iphone .result-team-box{border-radius:14px;padding:11px;}
+body.platform-iphone .result-team-name{font-size:.84rem;}
+body.platform-iphone .result-goal-input{width:66px;}
+body.platform-iphone .result-step-btn{width:34px;height:34px;border-radius:11px;}
+body.platform-iphone .result-quick{gap:8px;}
+body.platform-iphone .result-quick button{padding:7px 10px;font-size:.8rem;}
+body.platform-iphone .demo-grid{max-height:58vh;}
+body.platform-iphone.orientation-portrait .tabs{overflow-x:auto;}
+body.platform-iphone.orientation-portrait .player-grid{grid-template-columns:1fr;}
+body.platform-iphone.orientation-portrait .modal{max-width:min(97vw,520px);}
+body.platform-iphone.orientation-landscape .app{padding:10px 14px 76px;}
+body.platform-iphone.orientation-landscape .hero{padding:12px 14px;gap:9px;}
+body.platform-iphone.orientation-landscape .hero h1{font-size:clamp(1.2rem,3.4vw,1.5rem);}
+body.platform-iphone.orientation-landscape .brand-strip{gap:5px;margin-top:7px;}
+body.platform-iphone.orientation-landscape .tabs{gap:6px;padding-bottom:2px;}
+body.platform-iphone.orientation-landscape .tab{padding:9px 10px;font-size:.82rem;}
+body.platform-iphone.orientation-landscape .player-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+body.platform-iphone.orientation-landscape .match{padding:9px 10px;}
+body.platform-iphone.orientation-landscape .match .vs{font-size:.8rem;}
+body.platform-iphone.orientation-landscape .modal{max-width:min(94vw,760px);max-height:88vh;}
+body.platform-iphone.orientation-landscape .demo-grid{max-height:50vh;}
+
+body.platform-ipad button{
+  border-radius:16px;
+  min-height:46px;
+  background:linear-gradient(180deg,#2b8cff,#0a72ee);
+  border-color:#0a66d7;
+  box-shadow:0 10px 20px rgba(10,114,238,.2);
+  transition:transform .14s ease, box-shadow .2s ease;
+}
+body.platform-ipad button:active{transform:translateY(1px) scale(.985);}
+body.platform-ipad button.secondary{background:linear-gradient(180deg,#ffffff,#eef3fb);color:#143f87;border-color:#bfd0ee;box-shadow:0 6px 14px rgba(39,77,141,.12);}
+body.platform-ipad button.gold{background:linear-gradient(180deg,#2fb8ff,#0a8fe8);border-color:#0a82d0;}
+body.platform-ipad button.danger{background:linear-gradient(180deg,#ff655f,#ef4f47);border-color:#de4941;}
+body.platform-ipad .hero{border-radius:24px;}
+body.platform-ipad .tab,
+body.platform-ipad .step{
+  border-radius:16px;
+  border-color:#c5d5ef;
+  background:linear-gradient(180deg,#ffffff,#eff4ff);
+  box-shadow:0 8px 14px rgba(39,77,141,.08);
+}
+body.platform-ipad .tab.active,
+body.platform-ipad .step.active{box-shadow:0 14px 26px rgba(10,114,238,.24);}
+body.platform-ipad .card{
+  border-radius:22px;
+  border-color:#cfdbf0;
+  box-shadow:0 16px 30px rgba(25,66,128,.14);
+  background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(238,246,255,.94));
+}
+body.platform-ipad input,
+body.platform-ipad select{
+  border-radius:13px;
+  min-height:46px;
+  border-color:#c6d7f0;
+  background:linear-gradient(180deg,#ffffff,#f3f7ff);
+}
+body.platform-ipad input:focus,
+body.platform-ipad select:focus{box-shadow:0 0 0 3px rgba(43,140,255,.2);border-color:#2b8cff;}
+body.platform-ipad .modal{border-radius:24px;}
+body.platform-ipad{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Helvetica Neue',system-ui,sans-serif;
+}
+body.platform-ipad .app{max-width:min(1200px,95vw);padding:18px 18px 96px;}
+body.platform-ipad .hero h1{font-size:clamp(1.45rem,3vw,2.02rem);}
+body.platform-ipad .hero .sub{font-size:.89rem;}
+body.platform-ipad .brand-badge{font-size:.71rem;}
+body.platform-ipad .card{padding:16px 17px 18px;}
+body.platform-ipad .card h3{font-size:1.08rem;}
+body.platform-ipad .tabs{gap:8px;}
+body.platform-ipad .tab{font-size:.91rem;padding:11px 14px;}
+body.platform-ipad .step{font-size:.78rem;padding:9px 8px;}
+body.platform-ipad .matchlist{gap:11px;}
+body.platform-ipad .match{padding:12px 13px;border-radius:14px;}
+body.platform-ipad .match .vs{font-size:.92rem;}
+body.platform-ipad .tag{font-size:.63rem;padding:4px 8px;}
+body.platform-ipad .player-grid{gap:12px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));}
+body.platform-ipad .player-tile{border-radius:14px;padding:12px 13px;}
+body.platform-ipad .player-tile-name{font-size:1rem;}
+body.platform-ipad .player-tile-meta{font-size:.84rem;}
+body.platform-ipad .player-timezones{font-size:.77rem;}
+body.platform-ipad input,
+body.platform-ipad select{font-size:.99rem;padding:11px 12px;}
+body.platform-ipad .modal{padding:18px;max-width:min(90vw,640px);}
+body.platform-ipad .result-team-box{border-radius:14px;padding:11px;}
+body.platform-ipad .result-step-btn{width:34px;height:34px;border-radius:11px;}
+body.platform-ipad .result-goal-input{width:70px;}
+body.platform-ipad .result-quick button{padding:7px 11px;font-size:.8rem;}
+body.platform-ipad .demo-grid{max-height:62vh;}
+body.platform-ipad.orientation-portrait .player-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+body.platform-ipad.orientation-portrait .modal{max-width:min(92vw,700px);}
+body.platform-ipad.orientation-landscape .app{max-width:min(1320px,96vw);padding:14px 20px 84px;}
+body.platform-ipad.orientation-landscape .hero{padding:14px 16px 12px;}
+body.platform-ipad.orientation-landscape .tabs{gap:10px;}
+body.platform-ipad.orientation-landscape .tab{padding:10px 14px;font-size:.88rem;}
+body.platform-ipad.orientation-landscape .step{font-size:.76rem;padding:8px 7px;}
+body.platform-ipad.orientation-landscape .player-grid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));}
+body.platform-ipad.orientation-landscape .modal{max-width:min(94vw,900px);}
+body.platform-ipad.orientation-landscape .demo-grid{grid-template-columns:1.2fr .8fr;max-height:56vh;}
+
+/* Orientation-tuned motion for a more native feel */
+body.platform-iphone .card,
+body.platform-iphone .tab,
+body.platform-iphone .step,
+body.platform-iphone .match,
+body.platform-iphone .player-tile,
+body.platform-iphone .modal,
+body.platform-iphone input,
+body.platform-iphone select,
+body.platform-iphone button,
+body.platform-ipad .card,
+body.platform-ipad .tab,
+body.platform-ipad .step,
+body.platform-ipad .match,
+body.platform-ipad .player-tile,
+body.platform-ipad .modal,
+body.platform-ipad input,
+body.platform-ipad select,
+body.platform-ipad button{
+  transition-property:transform, box-shadow, border-color, background-color, background, color, opacity;
+}
+
+body.platform-iphone.orientation-portrait .card,
+body.platform-iphone.orientation-portrait .tab,
+body.platform-iphone.orientation-portrait .step,
+body.platform-iphone.orientation-portrait .match,
+body.platform-iphone.orientation-portrait .player-tile,
+body.platform-iphone.orientation-portrait .modal,
+body.platform-iphone.orientation-portrait button,
+body.platform-ipad.orientation-portrait .card,
+body.platform-ipad.orientation-portrait .tab,
+body.platform-ipad.orientation-portrait .step,
+body.platform-ipad.orientation-portrait .match,
+body.platform-ipad.orientation-portrait .player-tile,
+body.platform-ipad.orientation-portrait .modal,
+body.platform-ipad.orientation-portrait button{
+  transition-duration:.28s;
+  transition-timing-function:cubic-bezier(.22,.8,.2,1);
+}
+
+body.platform-iphone.orientation-landscape .card,
+body.platform-iphone.orientation-landscape .tab,
+body.platform-iphone.orientation-landscape .step,
+body.platform-iphone.orientation-landscape .match,
+body.platform-iphone.orientation-landscape .player-tile,
+body.platform-iphone.orientation-landscape .modal,
+body.platform-iphone.orientation-landscape button,
+body.platform-ipad.orientation-landscape .card,
+body.platform-ipad.orientation-landscape .tab,
+body.platform-ipad.orientation-landscape .step,
+body.platform-ipad.orientation-landscape .match,
+body.platform-ipad.orientation-landscape .player-tile,
+body.platform-ipad.orientation-landscape .modal,
+body.platform-ipad.orientation-landscape button{
+  transition-duration:.16s;
+  transition-timing-function:cubic-bezier(.2,.7,.2,1);
+}
+
+body.platform-iphone.orientation-portrait .card,
+body.platform-ipad.orientation-portrait .card,
+body.platform-iphone.orientation-portrait .modal,
+body.platform-ipad.orientation-portrait .modal{
+  animation:iosCardSettle .28s cubic-bezier(.22,.8,.2,1);
+}
+
+@keyframes iosCardSettle{
+  from{opacity:.7;transform:translateY(3px) scale(.995);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+
+@media (prefers-reduced-motion: reduce){
+  body.platform-iphone .card,
+  body.platform-iphone .tab,
+  body.platform-iphone .step,
+  body.platform-iphone .match,
+  body.platform-iphone .player-tile,
+  body.platform-iphone .modal,
+  body.platform-iphone input,
+  body.platform-iphone select,
+  body.platform-iphone button,
+  body.platform-ipad .card,
+  body.platform-ipad .tab,
+  body.platform-ipad .step,
+  body.platform-ipad .match,
+  body.platform-ipad .player-tile,
+  body.platform-ipad .modal,
+  body.platform-ipad input,
+  body.platform-ipad select,
+  body.platform-ipad button{
+    transition:none !important;
+    animation:none !important;
+  }
+}
+
+@keyframes iosPopIn{
+  from{opacity:.5;transform:translateY(4px) scale(.99);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
 
 .bet-presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;}
 .bet-presets button{background:#fff;color:#1e3e7c;border:1px solid #cad8f1;padding:6px 10px;}
@@ -678,6 +989,18 @@ tbody tr:hover td{background:rgba(0,61,165,.045);}
 .player-tile-actions{display:flex;gap:6px;align-items:center;}
 .player-timezones{margin-top:7px;padding-top:7px;border-top:1px dashed #d6e3f6;font-size:.73rem;color:#46639d;line-height:1.4;}
 .player-timezones .pin{margin-right:5px;}
+.player-association-summary{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  border:1px solid #b7cef2;
+  background:linear-gradient(180deg,#f4f8ff,#edf4ff);
+  border-radius:999px;
+  padding:5px 10px;
+  font-size:.76rem;
+  color:#123f89;
+  font-weight:800;
+}
 
 .add-player-panel{
   background:
@@ -1066,6 +1389,9 @@ const I18N = {
     lastSync: 'Última',
     alreadyRegisteredInfo: 'En este dispositivo ya registraste 2 equipos. El resto debe añadirse desde otros dispositivos.',
     secondTeamOnlyWhenNeeded: 'Tu segundo equipo solo se permite cuando aún faltan equipos para llegar al mínimo de 4.',
+    associateAddLockedUntilStart: 'Primero pulsa Iniciar liguilla. Si faltan equipos, se habilitara anadir un equipo asociado.',
+    associateModeEnabled: 'Faltan {count} equipos. Ya puedes anadir un equipo asociado a tu cuenta en este dispositivo.',
+    associatedTeamsCounter: 'Equipos asociados en este dispositivo: {count}/{max}',
     startLeague: 'Iniciar liguilla / torneo',
     setupLockedInfo: 'La temporada ya está en curso. Este botón se habilita cuando la fase vuelva a configuración.',
     needTwoPlayers: 'Se necesitan al menos 4 equipos para iniciar. Si sois 2 jugadores reales, cada uno debe registrar 2 equipos distintos.',
@@ -1261,6 +1587,9 @@ const I18N = {
     lastSync: 'Last',
     alreadyRegisteredInfo: 'You already registered 2 teams on this device. The rest must be added from other devices.',
     secondTeamOnlyWhenNeeded: 'Your second team is only allowed when the tournament still needs teams to reach the minimum of 4.',
+    associateAddLockedUntilStart: 'Press Start league first. If teams are missing, adding an associated team will be enabled.',
+    associateModeEnabled: '{count} teams are still missing. You can now add an associated team on this device.',
+    associatedTeamsCounter: 'Associated teams on this device: {count}/{max}',
     startLeague: 'Start league / tournament',
     setupLockedInfo: 'Season is already in progress. This button is enabled again when the phase returns to setup.',
     needTwoPlayers: 'At least 4 teams are required to start. If there are 2 real players, each should register 2 different teams.',
@@ -1456,6 +1785,9 @@ const I18N = {
     lastSync: 'Paskutinis',
     alreadyRegisteredInfo: 'Siame irenginyje jau uzregistravai 2 komandas. Likusias reikia prideti is kitu irenginiu.',
     secondTeamOnlyWhenNeeded: 'Antra komanda leidziama tik tada, kai iki minimaliu 4 komandu dar truksta.',
+    associateAddLockedUntilStart: 'Pirmiausia spauskite Pradeti lyga. Jei komandu truks, bus leista prideti susieta komanda.',
+    associateModeEnabled: 'Dar truksta {count} komandu. Dabar siame irenginyje galite prideti susieta komanda.',
+    associatedTeamsCounter: 'Susietos komandos siame irenginyje: {count}/{max}',
     startLeague: 'Pradeti lyga / turnyra',
     setupLockedInfo: 'Sezonas jau vyksta. Mygtukas vel bus aktyvus, kai faze griz i nustatymus.',
     needTwoPlayers: 'Pradziai reikia bent 4 komandu. Jei yra 2 tikri zaidejai, kiekvienas turi prideti po 2 skirtingas komandas.',
@@ -1651,6 +1983,9 @@ const I18N = {
     lastSync: 'Ultima',
     alreadyRegisteredInfo: 'En aquest dispositiu ja has registrat 2 equips. La resta s\'han d\'afegir des d\'altres dispositius.',
     secondTeamOnlyWhenNeeded: 'El segon equip només es permet quan encara falten equips per arribar al mínim de 4.',
+    associateAddLockedUntilStart: 'Primer prem Iniciar lligueta. Si falten equips, s habilitara afegir un equip associat.',
+    associateModeEnabled: 'Encara falten {count} equips. Ara pots afegir un equip associat en aquest dispositiu.',
+    associatedTeamsCounter: 'Equips associats en aquest dispositiu: {count}/{max}',
     startLeague: 'Iniciar lligueta / torneig',
     setupLockedInfo: 'La temporada ja esta en curs. Aquest boto s\'habilita quan la fase torni a configuracio.',
     needTwoPlayers: 'Calen almenys 4 equips per iniciar. Si sou 2 jugadors reals, cadascu ha de registrar 2 equips diferents.',
@@ -1811,6 +2146,15 @@ const SCHEDULE_CITIES = [
   {label:'Lima', timeZone:'America/Lima'},
   {label:'Vilnius', timeZone:'Europe/Vilnius'}
 ];
+const TIME_ZONE_ALIAS_TO_CANONICAL = {
+  'Europe/Barcelona': 'Europe/Madrid',
+  'South America/Lima': 'America/Lima'
+};
+const TIME_ZONE_CANONICAL_TO_ALIAS = {
+  'Europe/Madrid': 'Europe/Barcelona',
+  'America/Lima': 'South America/Lima',
+  'Europe/Vilnius': 'Europe/Vilnius'
+};
 
 function uid(){ return Math.random().toString(36).slice(2,10); }
 function normalizeUiLang(lang){
@@ -2024,14 +2368,19 @@ function nowStr(){ const d=new Date(); return d.toLocaleDateString(uiLocale())+'
 function dayStr(){ return new Date().toLocaleDateString(uiLocale()); }
 function seasonDateText(dateValue){ return dateValue ? `${t('seasonStartLabel')}: ${dateValue}` : `${t('seasonStartLabel')}: —`; }
 function normalizeTimeZone(value){
-  const tz = String(value || '').trim();
-  if(!tz) return 'UTC';
+  const raw = String(value || '').trim();
+  if(!raw) return 'UTC';
+  const tz = TIME_ZONE_ALIAS_TO_CANONICAL[raw] || raw;
   try{
     new Intl.DateTimeFormat('en-US', {timeZone: tz}).format(new Date());
     return tz;
   }catch(_err){
     return 'UTC';
   }
+}
+function displayTimeZone(value){
+  const canonical = normalizeTimeZone(value || 'UTC');
+  return TIME_ZONE_CANONICAL_TO_ALIAS[canonical] || canonical;
 }
 function detectDeviceTimeZone(){
   try{ return normalizeTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'); }
@@ -2251,6 +2600,7 @@ function stateForRemote(s){
   delete clone.myPlayerId;
   delete clone.myPlayerIds;
   delete clone.uiLang;
+  delete clone.setupNeedsAssociates;
   return clone;
 }
 
@@ -2263,6 +2613,7 @@ function preserveLocalMyPlayer(prevState, nextState){
   nextState.myPlayerIds = [...new Set(localIds)].slice(0, 2);
   nextState.myPlayerId = nextState.myPlayerIds[0] || null;
   nextState.uiLang = localLang;
+  nextState.setupNeedsAssociates = !!prevState?.setupNeedsAssociates;
   return nextState;
 }
 
@@ -2284,12 +2635,13 @@ function isLocallyControlledPlayer(playerId){
 
 function canRegisterAnotherLocalTeam(totalTeams, localCount){
   if(localCount<=0) return true;
-  if(localCount===1) return totalTeams < MIN_TEAMS_FOR_KNOCKOUT;
+  if(localCount===1) return totalTeams < MIN_TEAMS_FOR_KNOCKOUT && !!state?.setupNeedsAssociates;
   return false;
 }
 
 function localTeamAddBlockReason(totalTeams, localCount){
   if(localCount>=2) return t('alreadyRegisteredInfo');
+  if(localCount===1 && totalTeams<MIN_TEAMS_FOR_KNOCKOUT && !state?.setupNeedsAssociates) return t('associateAddLockedUntilStart');
   if(localCount===1 && totalTeams>=MIN_TEAMS_FOR_KNOCKOUT) return t('secondTeamOnlyWhenNeeded');
   return null;
 }
@@ -2400,6 +2752,7 @@ function defaultState(){
     champion: null,
     myPlayerId: null,
     myPlayerIds: [],
+    setupNeedsAssociates: false,
     uiLang: persistedUiLang(),
     finance: {
       applied: {},
@@ -2617,6 +2970,8 @@ function migrateStateShape(s){
   if(!s.myPlayerId && s.myPlayerIds.length) s.myPlayerId = s.myPlayerIds[0];
   if(typeof s.uiLang==='undefined') s.uiLang = persistedUiLang();
   s.uiLang = normalizeUiLang(s.uiLang);
+  if(typeof s.setupNeedsAssociates==='undefined') s.setupNeedsAssociates = false;
+  s.setupNeedsAssociates = !!s.setupNeedsAssociates;
   if(typeof s.champion==='undefined') s.champion = null;
   if(typeof s.qualifiers==='undefined') s.qualifiers = null;
   if(typeof s.leagueTieBreaker==='undefined') s.leagueTieBreaker = null;
@@ -4045,7 +4400,12 @@ function masterResetAll(){
 /* ---------------- PHASE TRANSITIONS ---------------- */
 function startLeague(){
   const ids = state.players.map(p=>p.id);
-  if(ids.length<4) return t('errNeedMinFourToStart');
+  if(ids.length<4){
+    state.setupNeedsAssociates = true;
+    render();
+    return tf('associateModeEnabled', { count: MIN_TEAMS_FOR_KNOCKOUT - ids.length });
+  }
+  state.setupNeedsAssociates = false;
   if(!state.seasonKickoff) state.seasonKickoff = dayStr();
   state.players.forEach(p=> addMoney(p.id, state.finance.prizes.participation, `season:${state.season}:participation:${p.id}`, 'participación en Champions'));
   const targetRounds = autoMatchesPerPlayer(ids.length);
@@ -4274,6 +4634,7 @@ function attachMobileSwipeToClose(modalRoot){
 function render(){
   document.documentElement.lang = uiLang();
   applyTheme(currentTheme);
+  applyDeviceProfile();
   const app = document.getElementById('app');
   const allowedTabs = getVisibleTabs();
   if(!allowedTabs.some(t=> t[0]===currentTab)) currentTab = allowedTabs[0][0];
@@ -4385,10 +4746,14 @@ function renderPlayersTab(){
   const setupHint = !locked && remainingSlots>0
     ? `${t('playersHint')} (${remainingSlots} cupo${remainingSlots===1?'':'s'} disponible${remainingSlots===1?'':'s'} en este dispositivo)`
     : t('playersHint');
+  const associatedSummary = tf('associatedTeamsCounter', { count: localPlayerIds.length, max: 2 });
   const card = el(`<div class="card">
     <div class="players-panel-head">
       <h3>Temporada ${seasonTagLabel()}</h3>
-      <div class="muted">${setupHint}</div>
+      <div>
+        <div class="player-association-summary">${associatedSummary}</div>
+        <div class="muted" style="margin-top:6px;">${setupHint}</div>
+      </div>
     </div>
     <div id="plist" class="player-grid"></div>
   </div>`);
@@ -4431,7 +4796,7 @@ function renderPlayersTab(){
       <div id="lang-catalog" class="catalog-wrap"></div>
       <label>${t('preferredPlayTimeLabel')}</label>
       <input id="np-time" type="time" step="300" value="${suggestedPlayTime()}">
-      <div class="muted" style="margin-top:-6px;margin-bottom:8px;">${t('preferredPlayTimeHint')}: <b>${detectDeviceTimeZone()}</b></div>
+      <div class="muted" style="margin-top:-6px;margin-bottom:8px;">${t('preferredPlayTimeHint')}: <b>${displayTimeZone(detectDeviceTimeZone())}</b></div>
       <div class="add-player-actions" style="margin-top:8px;">
         <input id="np-name" placeholder="${t('newNamePlaceholder')}" style="display:none;">
         <button id="np-add">${t('addNow')}</button>
@@ -4527,7 +4892,7 @@ function renderPlayersTab(){
     wrap.appendChild(el(`<div class="card"><div class="banner info" style="margin-bottom:0;">${blockReason}</div></div>`));
   }
 
-  const canStartLeague = !locked && state.players.length>=4;
+  const canStartLeague = !locked;
   const missingTeams = Math.max(0, MIN_TEAMS_FOR_KNOCKOUT - state.players.length);
   const startBtn = el(`<button class="gold" style="margin-left:8px;" ${canStartLeague?'':'disabled'}>${t('startLeague')}</button>`);
   startBtn.onclick=()=>{
@@ -4552,7 +4917,9 @@ function renderPlayersTab(){
   if(locked){
     wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">${t('setupLockedInfo')}</div>`));
   } else if(state.players.length<4){
-    wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">${t('needTwoPlayers')}</div>`));
+    const missing = Math.max(0, MIN_TEAMS_FOR_KNOCKOUT - state.players.length);
+    const msg = state.setupNeedsAssociates ? tf('associateModeEnabled', { count: missing }) : t('needTwoPlayers');
+    wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">${msg}</div>`));
   }
 
   return wrap;
@@ -5485,6 +5852,27 @@ function renderHistoryTab(){
   return wrap;
 }
 
+function detectDeviceProfile(){
+  const ua = (navigator.userAgent || '').toLowerCase();
+  const touchPoints = Number(navigator.maxTouchPoints || 0);
+  const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  const isIPhone = /iphone/.test(ua);
+  const isIPad = /ipad/.test(ua) || (navigator.platform==='MacIntel' && touchPoints>1);
+  if(isIPhone) return 'iphone';
+  if(isIPad) return 'ipad';
+  if(coarse && window.innerWidth<=760) return 'iphone';
+  if(coarse && window.innerWidth>760) return 'ipad';
+  return 'macos';
+}
+
+function applyDeviceProfile(){
+  const profile = detectDeviceProfile();
+  const orientation = (window.matchMedia && window.matchMedia('(orientation: landscape)').matches) ? 'landscape' : 'portrait';
+  document.body.classList.remove('platform-macos','platform-iphone','platform-ipad','orientation-portrait','orientation-landscape');
+  document.body.classList.add(`platform-${profile}`);
+  document.body.classList.add(`orientation-${orientation}`);
+}
+
 /* ---------------- BOOT ---------------- */
 document.addEventListener('keydown', (ev)=>{
   if(ev.key!=='Escape' || !pendingModal) return;
@@ -5493,6 +5881,8 @@ document.addEventListener('keydown', (ev)=>{
 });
 
 loadState();
+window.addEventListener('resize', ()=>{ applyDeviceProfile(); });
+window.addEventListener('orientationchange', ()=>{ applyDeviceProfile(); });
 </script>
 </body>
 </html>
