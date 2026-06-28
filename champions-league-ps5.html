@@ -453,7 +453,7 @@ function loadState(){
     if(pendingModal || isEditingField()) return;
     pullRemoteState();
     processKnockoutDrawClock();
-  }, 4000);
+  }, 1200);
 }
 function saveState(){
   try{ localStorage.setItem(STATE_KEY, JSON.stringify(state)); }
@@ -1095,7 +1095,7 @@ function renderBetActivityBoard(title){
   }
   tickets.forEach(t=>{
     const m = findMatchForTicket(t.matchId);
-    const pickTxt = t.pick==='home' ? 'gana local' : (t.pick==='away' ? 'gana visitante' : 'empate');
+    const pickTxt = m ? getPickLabelForMatch(m, t.pick) : (t.pick==='home' ? 'local' : (t.pick==='away' ? 'visitante' : 'empate'));
     const matchTxt = m ? `${playerName(m.p1)} vs ${playerName(m.p2)}` : 'partido no disponible';
     const statusTag = t.status==='open'
       ? '<span class="tag pending">abierta</span>'
@@ -1111,6 +1111,19 @@ function renderBetActivityBoard(title){
     rail.appendChild(el(`<div class="bet-ticket ${tone}"><div class="bet-ticket-head"><span class="bet-ticket-player">${playerName(t.playerId)}</span>${statusTag}</div><div class="meta"><b>${fmtMoney(t.stake||0)}</b> · ${pickTxt}</div><div class="meta">${matchTxt}</div><div class="meta" style="margin-top:4px;">${payoutTxt}</div></div>`));
   });
   return card;
+}
+function getPickLabelForMatch(match, pick){
+  if(!match) return pick==='draw' ? 'Empate' : 'Ganador';
+  if(pick==='home') return playerName(match.p1);
+  if(pick==='away') return playerName(match.p2);
+  return 'Empate';
+}
+function fillPickOptions(selectEl, match){
+  if(!selectEl) return;
+  selectEl.innerHTML = '';
+  selectEl.appendChild(el(`<option value="home">Gana ${playerName(match.p1)}</option>`));
+  selectEl.appendChild(el(`<option value="draw">Empate</option>`));
+  selectEl.appendChild(el(`<option value="away">Gana ${playerName(match.p2)}</option>`));
 }
 function getBettableMatches(){
   if(state.phase==='league'){
@@ -1171,11 +1184,7 @@ function openBetForMatchModal(matchId){
         ? `<label>Apostador</label><input id="bm-bettor" type="text" disabled>`
         : `<label>Apostador</label><select id="bm-bettor"></select>`}
       <label>Pronóstico</label>
-      <select id="bm-pick">
-        <option value="home">Gana local</option>
-        <option value="draw">Empate</option>
-        <option value="away">Gana visitante</option>
-      </select>
+      <select id="bm-pick"></select>
       <label>Monto</label>
       <input type="number" id="bm-stake" min="1" step="1" readonly>
       <div id="bm-max" class="muted" style="margin-bottom:8px;"></div>
@@ -1203,6 +1212,7 @@ function openBetForMatchModal(matchId){
       });
       if(state.myPlayerId && bettors.some(p=> p.id===state.myPlayerId)) bettorEl.value = state.myPlayerId;
     }
+    fillPickOptions(pickEl, match);
 
     function selectedBettorId(){
       return singleBettor ? bettorEl.dataset.playerId : bettorEl.value;
@@ -1280,7 +1290,7 @@ function placeBet(playerId, matchId, pick, stake){
     payout:0,
     won:false
   });
-  log(playerName(playerId), `apostó ${fmtMoney(stake)} en ${playerName(match.p1)} vs ${playerName(match.p2)} (${pick==='home'?'gana local':pick==='away'?'gana visitante':'empate'}).`);
+  log(playerName(playerId), `apostó ${fmtMoney(stake)} en ${playerName(match.p1)} vs ${playerName(match.p2)} (${getPickLabelForMatch(match, pick)}).`);
   saveAndRender();
   return null;
 }
@@ -1439,6 +1449,9 @@ function saveAndRender(){
   if(state.phase==='knockout') propagateBracket();
   saveState();
   render();
+  if(state.phase==='league' || state.phase==='playoff' || state.phase==='knockout'){
+    setTimeout(()=>{ pullRemoteState(); }, 120);
+  }
 }
 
 function masterResetAll(){
@@ -1691,6 +1704,8 @@ function renderHero(){
         <span class="brand-badge"><span class="icon">🏆</span>Mundial</span>
         <span class="brand-badge"><span class="icon">🎮</span>EA FC26</span>
         <span class="brand-badge"><span class="icon">🎮</span>PlayStation</span>
+        <span class="brand-badge"><span class="icon">🟢</span>Xbox</span>
+        <span class="brand-badge"><span class="icon">💻</span>PC</span>
       </div>
     </div>
   </div>`);
