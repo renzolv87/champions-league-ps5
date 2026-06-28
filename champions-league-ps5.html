@@ -2132,6 +2132,15 @@ function renderLeagueTab(){
   </table></div>`);
   const tableBody = card.querySelector('#league-standings-body');
   const tiedIds = state.phase==='league'? tiedGroupsAtCutoff(standings,Q) : [];
+
+  function appendCell(row, value, cls){
+    const td = document.createElement('td');
+    if(cls) td.className = cls;
+    td.textContent = String(value);
+    row.appendChild(td);
+    return td;
+  }
+
   standings.forEach((s,i)=>{
     const name = (s?.name || '').trim() || 'Jugador';
     const pj = Number.isFinite(Number(s?.pj)) ? Number(s.pj) : 0;
@@ -2140,11 +2149,28 @@ function renderLeagueTab(){
     const p = Number.isFinite(Number(s?.p)) ? Number(s.p) : 0;
     const dg = Number.isFinite(Number(s?.dg)) ? Number(s.dg) : 0;
     const pts = Number.isFinite(Number(s?.pts)) ? Number(s.pts) : 0;
-    const tr = el(`<tr class="${i<Q?'qual':''} ${tiedIds.includes(s.id)?'tied':''}"><td>${i+1}</td><td class="name">${name}</td><td>${pj}</td><td>${g}</td><td>${e}</td><td>${p}</td><td>${dg>0?'+':''}${dg}</td><td><b>${pts}</b></td></tr>`);
+    const tr = document.createElement('tr');
+    if(i<Q) tr.classList.add('qual');
+    if(tiedIds.includes(s.id)) tr.classList.add('tied');
+    appendCell(tr, i+1);
+    appendCell(tr, name, 'name');
+    appendCell(tr, pj);
+    appendCell(tr, g);
+    appendCell(tr, e);
+    appendCell(tr, p);
+    appendCell(tr, `${dg>0?'+':''}${dg}`);
+    const ptsCell = appendCell(tr, pts);
+    ptsCell.style.fontWeight = '700';
     tableBody.appendChild(tr);
   });
   if(!standings.length){
-    tableBody.appendChild(el(`<tr><td colspan="8" class="muted">Sin datos de clasificación todavía.</td></tr>`));
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 8;
+    td.className = 'muted';
+    td.textContent = 'Sin datos de clasificación todavía.';
+    tr.appendChild(td);
+    tableBody.appendChild(tr);
   }
   card.appendChild(el(`<div class="muted" style="margin-top:8px;">Los ${Q} primeros (resaltados) pasan a la fase eliminatoria.</div>`));
   if(pendingWithScore>0){
