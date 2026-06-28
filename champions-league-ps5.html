@@ -480,8 +480,8 @@ const I18N = {
     yourPlayer: 'Tu jugador',
     deletePlayer: 'Borrar',
     addPlayerTitle: 'Añadir jugador',
-    addPlayerHint: 'Toca un nombre sugerido o usa INS para crear uno nuevo.',
-    insNew: 'INS (nuevo)',
+    addPlayerHint: 'Toca un nombre sugerido o usa (nuevo) para crear uno nuevo.',
+    insNew: '(nuevo)',
     newNamePlaceholder: 'Escribe un nombre nuevo',
     addNow: 'Añadir ahora',
     chooseLanguage: 'Idioma del juego en este dispositivo',
@@ -524,8 +524,8 @@ const I18N = {
     yourPlayer: 'Your player',
     deletePlayer: 'Delete',
     addPlayerTitle: 'Add player',
-    addPlayerHint: 'Tap a suggested name or use INS to create a new one.',
-    insNew: 'INS (new)',
+    addPlayerHint: 'Tap a suggested name or use (new) to create a new one.',
+    insNew: '(new)',
     newNamePlaceholder: 'Type a new name',
     addNow: 'Add now',
     chooseLanguage: 'Game language on this device',
@@ -568,8 +568,8 @@ const I18N = {
     yourPlayer: 'Tavo zaidejas',
     deletePlayer: 'Trinti',
     addPlayerTitle: 'Prideti zaideja',
-    addPlayerHint: 'Spausk siuloma varda arba rinkis INS naujam vardui.',
-    insNew: 'INS (naujas)',
+    addPlayerHint: 'Spausk siuloma varda arba rinkis (naujas) naujam vardui.',
+    insNew: '(naujas)',
     newNamePlaceholder: 'Ivesk nauja varda',
     addNow: 'Prideti dabar',
     chooseLanguage: 'Zaidimo kalba siame irenginyje',
@@ -612,8 +612,8 @@ const I18N = {
     yourPlayer: 'El teu jugador',
     deletePlayer: 'Esborrar',
     addPlayerTitle: 'Afegir jugador',
-    addPlayerHint: 'Toca un nom suggerit o fes servir INS per crear-ne un de nou.',
-    insNew: 'INS (nou)',
+    addPlayerHint: 'Toca un nom suggerit o fes servir (nou) per crear-ne un de nou.',
+    insNew: '(nou)',
     newNamePlaceholder: 'Escriu un nom nou',
     addNow: 'Afegir ara',
     chooseLanguage: 'Idioma del joc en aquest dispositiu',
@@ -1576,15 +1576,44 @@ function getDemoPlayersDynamicMax(){
   return Math.max(8, maxPlayers);
 }
 
+function demoLowercaseFirst(name){
+  const clean = String(name || '').trim();
+  if(!clean) return '';
+  return clean.charAt(0).toLocaleLowerCase('es-ES') + clean.slice(1);
+}
+
+const DEMO_FALLBACK_NAMES = [
+  'alex','bruno','carla','diego','elena','fabio','gabriela','hugo','irene','joel',
+  'kiara','leo','marina','nico','olga','paula','quim','raquel','samir','tamara',
+  'ulises','valeria','wanda','xavi','yasmin','zoe','adrian','bianca','ciro','diana'
+];
+
 function generateDemoSeason(requestedCount){
   const targetCount = clampDemoPlayersCount(requestedCount);
   const sourceNames = state.players.length>=3
-    ? state.players.map(p=> p.name)
-    : ['alex','bruno','carla','diego','elena','fabio'];
-  const uniqueNames = [...new Set(sourceNames.map(n=> normalizePlayerName(n) || 'jugador'))];
+    ? state.players.map(p=> demoLowercaseFirst(p?.name))
+    : DEMO_FALLBACK_NAMES;
+
+  const uniqueNames = [];
+  const seen = new Set();
+  sourceNames.forEach(raw=>{
+    const display = demoLowercaseFirst(raw);
+    if(!display) return;
+    const key = normalizePlayerName(display);
+    if(!key || seen.has(key)) return;
+    seen.add(key);
+    uniqueNames.push(display);
+  });
+
   const pool = shuffle(uniqueNames);
   while(pool.length < targetCount){
-    pool.push(`jugador ${pool.length+1}`);
+    const base = DEMO_FALLBACK_NAMES[pool.length % DEMO_FALLBACK_NAMES.length];
+    const repeat = Math.floor(pool.length / DEMO_FALLBACK_NAMES.length) + 1;
+    const candidate = repeat===1 ? base : `${base} ${repeat}`;
+    const key = normalizePlayerName(candidate);
+    if(seen.has(key)) continue;
+    seen.add(key);
+    pool.push(candidate);
   }
   const picks = pool.slice(0, targetCount);
   const players = picks.map((name, idx)=>({id:`d${idx+1}`, name}));
@@ -3915,6 +3944,13 @@ function renderHistoryTab(){
 }
 
 /* ---------------- BOOT ---------------- */
+document.addEventListener('keydown', (ev)=>{
+  if(ev.key!=='Escape' || !pendingModal) return;
+  if(demoDrawState) resetDemoDrawState();
+  pendingModal = null;
+  render();
+});
+
 loadState();
 </script>
 </body>
