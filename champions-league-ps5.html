@@ -200,6 +200,9 @@ body.theme-night .audit,
 body.theme-night .player-tile-meta,
 body.theme-night .player-chip .pin,
 body.theme-night .player-timezones{color:#c2d4ff;}
+body.theme-night .tab:not(.active),
+body.theme-night .step:not(.active){color:#dbe9ff;}
+body.theme-night .player-chip{color:#ecf4ff;}
 body.theme-night .player-timezones{border-top-color:#35579d;}
 body.theme-night .player-association-summary{border-color:#35579d;background:linear-gradient(180deg,#13295d,#11234f);color:#d7e6ff;}
 body.theme-night .tab.active,
@@ -217,9 +220,9 @@ body.theme-night .bet-presets button,
 body.theme-night .result-step-btn,
 body.theme-night .catalog-chip,
 body.theme-night .hero-theme-btn{
-  background:#1a3270;
-  color:#e6efff;
-  border-color:#3558a5;
+  background:#1b3d7f;
+  color:#f2f7ff;
+  border-color:#4a73bc;
 }
 body.theme-night button.gold,
 body.theme-night .result-quick button.active,
@@ -261,7 +264,8 @@ body.theme-night select::placeholder{
   border-radius:999px;
   padding:5px 10px;
   font-size:.78rem;
-  color:#173b71;
+  color:#12325f;
+  font-weight:800;
 }
 .name-chip button{
   padding:2px 6px;
@@ -310,7 +314,7 @@ body.theme-night select::placeholder{
   padding:10px 14px;
   font-size:clamp(.8rem,1.2vw,.94rem);
   font-weight:800;
-  color:#163a7a;
+  color:#0f3265;
   cursor:pointer;
   white-space:nowrap;
   border:1px solid #d2dfdc;
@@ -530,8 +534,11 @@ body.platform-iphone.orientation-landscape .hero{padding:12px 14px;gap:9px;}
 body.platform-iphone.orientation-landscape .hero h1{font-size:clamp(1.2rem,3.4vw,1.5rem);}
 body.platform-iphone.orientation-landscape .brand-strip{gap:5px;margin-top:7px;}
 body.platform-iphone.orientation-landscape .tabs{gap:6px;padding-bottom:2px;}
-body.platform-iphone.orientation-landscape .tab{padding:9px 10px;font-size:.82rem;}
+body.platform-iphone.orientation-landscape .tab{padding:9px 10px;font-size:.84rem;}
+body.platform-iphone.orientation-landscape .tab:not(.active){color:#0e2f5b;}
 body.platform-iphone.orientation-landscape .player-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+body.platform-iphone.orientation-landscape .player-tile-name{font-size:.95rem;color:#0f315e;}
+body.platform-iphone.orientation-landscape .player-tile-meta{font-size:.8rem;color:#2b4f87;}
 body.platform-iphone.orientation-landscape .match{padding:9px 10px;}
 body.platform-iphone.orientation-landscape .match .vs{font-size:.8rem;}
 body.platform-iphone.orientation-landscape .modal{max-width:min(94vw,760px);max-height:88vh;}
@@ -633,9 +640,12 @@ body.platform-ipad.orientation-portrait .modal{max-width:min(92vw,700px);}
 body.platform-ipad.orientation-landscape .app{max-width:min(1320px,96vw);padding:14px 20px 84px;}
 body.platform-ipad.orientation-landscape .hero{padding:14px 16px 12px;}
 body.platform-ipad.orientation-landscape .tabs{gap:10px;}
-body.platform-ipad.orientation-landscape .tab{padding:10px 14px;font-size:.88rem;}
+body.platform-ipad.orientation-landscape .tab{padding:10px 14px;font-size:.9rem;}
+body.platform-ipad.orientation-landscape .tab:not(.active){color:#123763;}
 body.platform-ipad.orientation-landscape .step{font-size:.76rem;padding:8px 7px;}
 body.platform-ipad.orientation-landscape .player-grid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));}
+body.platform-ipad.orientation-landscape .player-tile-name{color:#113863;}
+body.platform-ipad.orientation-landscape .player-tile-meta{color:#2b4f85;}
 body.platform-ipad.orientation-landscape .modal{max-width:min(94vw,900px);}
 body.platform-ipad.orientation-landscape .demo-grid{grid-template-columns:1.2fr .8fr;max-height:56vh;}
 
@@ -996,6 +1006,8 @@ tbody tr:hover td{background:rgba(0,61,165,.045);}
   padding:5px 10px 5px 6px;
   margin:3px;
   font-size:.82rem;
+  color:#0d2e59;
+  font-weight:800;
 }
 .player-chip .pin{color:#4e69a0;font-size:.72rem;}
 
@@ -1026,8 +1038,8 @@ tbody tr:hover td{background:rgba(0,61,165,.045);}
 }
 .player-tile:hover{transform:translateY(-1px);box-shadow:0 8px 16px rgba(14,54,56,.09);}
 .player-tile.is-me{border-color:#00a3e0;box-shadow:0 0 0 2px rgba(0,163,224,.2) inset;}
-.player-tile-name{font-weight:800;font-size:.92rem;text-transform:capitalize;}
-.player-tile-meta{margin-top:4px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.78rem;color:#45649f;}
+.player-tile-name{font-weight:800;font-size:.92rem;text-transform:capitalize;color:#123764;}
+.player-tile-meta{margin-top:4px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.78rem;color:#2f5289;}
 .player-tile-badge{font-size:.68rem;font-weight:900;color:#eff7ff;background:linear-gradient(145deg,#003b9c,#0078c2);border-radius:999px;padding:2px 7px;}
 .player-tile-actions{display:flex;gap:6px;align-items:center;}
 .player-timezones{margin-top:7px;padding-top:7px;border-top:1px dashed #d6e3f6;font-size:.73rem;color:#46639d;line-height:1.4;}
@@ -1053,9 +1065,9 @@ tbody tr:hover td{background:rgba(0,61,165,.045);}
 }
 .catalog-wrap{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 6px;}
 .catalog-chip{
-  border:1px solid #cfe0dd;
-  background:#fff;
-  color:#1a416f;
+  border:1px solid #b9cdee;
+  background:#f7fbff;
+  color:#0b2d57;
   border-radius:999px;
   padding:6px 11px;
   font-size:.8rem;
@@ -1571,6 +1583,56 @@ const I18N = {
     knockoutBetsCap: 'Tope global de dinero por apuestas: {ceiling} · Apuesta máxima por ticket: {pct}% de tu saldo actual.',
     masterResetTitle: 'Reseteo maestro',
     masterResetWarn: 'Pone todos los contadores a 0 (dinero, temporadas, cuadro, campeón actual) y borra el historial. Conserva solo la lista de jugadores.',
+    guideTitle: 'Como se juega',
+    guideObjTitle: 'Objetivo final',
+    guideObjBody: 'El ganador historico se ve en Museo. El orden historico se decide por copas, dinero historico y diferencia de goles.',
+    guideSetupTitle: 'Antes de empezar',
+    guideSetup1: 'Cada persona registra su equipo en la pestana Jugadores.',
+    guideSetup2: 'Por dispositivo puedes tener hasta 2 equipos locales cuando faltan equipos para el minimo.',
+    guideSetup3: 'No se permiten nombres duplicados exactos.',
+    guideFlowTitle: 'Flujo de temporada',
+    guideFlow1: 'Con menos de {threshold} equipos se juega una liguilla unica (fase liga limitada).',
+    guideFlow2: 'Con {threshold} o mas equipos se activa fase de grupos y solo se juega dentro de cada grupo.',
+    guideFlow3: 'Los cupos a eliminatorias se reparten por grupo segun tamano y cupo total de clasificados.',
+    guideFlow4: 'Si los clasificados no completan una potencia de 2, se juega play-off para completar el cuadro.',
+    guideFlow5: 'Despues se juegan eliminatorias hasta definir campeon.',
+    guideFlow6: 'Los emparejamientos se generan de forma automatica y evitan cruces entre equipos con el mismo nombre base.',
+    guidePairingsTitle: 'Numero de jugadores y emparejamientos',
+    guidePairings1: 'Con 4 a {maxSimple} equipos: liga unica, una sola vuelta (no ida/vuelta).',
+    guidePairings2: 'Con {threshold} o mas: fase de grupos. Numero de grupos aproximado = ceil(equipos/{groupSize}).',
+    guidePairings3: 'Dentro de cada grupo se juega una sola vuelta y luego se ordena por puntos y desempates.',
+    guidePairings4: 'El play-off y el sorteo final completan el cuadro eliminatorio cuando hace falta.',
+    guideResultsTitle: 'Resultados y antitrampas',
+    guideResultsBody: 'Un jugador reporta marcador y el rival confirma o rechaza. Si rechaza, el mismo reportero inicial debe volver a cargar el resultado.',
+    guideBetsTitle: 'Apuestas',
+    guideBets1: 'Solo apuestas con tus equipos locales del dispositivo.',
+    guideBets2: 'En liguilla o grupos solo apuesta quien no juega ese partido.',
+    guideBets3: 'En play-off/eliminatorias apuestan solo no clasificados.',
+    guideBets4: 'Maximo una apuesta abierta por jugador y partido.',
+    guideBets5: 'Apuesta maxima por ticket: {pct}% del saldo actual.',
+    guideBets6: 'Cuota fija ganadora x2 y tope global de dinero apostable: {ceiling}.',
+    guideBets7: 'Las apuestas se liquidan cuando el resultado queda confirmado.',
+    guideTiesTitle: 'Desempates',
+    guideTies1: 'En liga/grupos: puntos, diferencia de goles, goles a favor y cara a cara.',
+    guideTies2: 'Si el empate sigue justo en corte de clasificacion, se resuelve con cruces aleatorios a penaltis.',
+    guideTies3: 'En play-off y eliminatorias no puede haber empate final: hay penaltis obligatorios.',
+    guideEconomyTitle: 'Premios economicos',
+    guideEconomy1: 'Participacion: {participation}.',
+    guideEconomy2: 'Victoria en liga/grupo: {leagueWin}. Empate: {leagueDraw}.',
+    guideEconomy3: 'Bonos por ronda: octavos {round16}, cuartos {quarter}, semifinal {semi}.',
+    guideEconomy4: 'Final: subcampeon {runnerUp}, campeon {champion}.',
+    guideOpsTitle: 'Gestion de temporada',
+    guideOps1: 'Nueva temporada guarda campeon e historial y reinicia la competicion.',
+    guideOps2: 'El reseteo maestro pone contadores a 0 y limpia historial.',
+    guideOps3: 'Los datos se comparten por Supabase y sincronizan entre dispositivos.',
+    guideParamsTitle: 'Parametros automaticos actuales',
+    guideParams1: 'Equipos registrados: {teams}.',
+    guideParams2: 'Formato actual: {format}.',
+    guideParams3: 'Partidos por equipo en su grupo/liga: {matches}.',
+    guideParams4: 'Clasifican a eliminatorias: {qualifiers}.',
+    guideParams5: 'Grupos actuales: {groups}. Regla de emparejamiento: {pairing}.',
+    guidePairingModeSingle: 'liga unica a una vuelta',
+    guidePairingModeGroups: 'grupos de tamano aprox. {size}, una vuelta por grupo',
     guideButton: 'Cómo jugar',
     sharedDataNote: 'Datos compartidos por Supabase. Si dos personas editan a la vez, el sistema resuelve conflictos refrescando el estado más reciente.'
   },
@@ -1769,6 +1831,56 @@ const I18N = {
     knockoutBetsCap: 'Global betting money cap: {ceiling} · Max stake per ticket: {pct}% of your current balance.',
     masterResetTitle: 'Master reset',
     masterResetWarn: 'Resets all counters to 0 (money, seasons, bracket, current champion) and clears history. Keeps only player list.',
+    guideTitle: 'How to play',
+    guideObjTitle: 'Final objective',
+    guideObjBody: 'The historical winner ranking is shown in Museum. Ranking order uses titles, lifetime money, and goal difference.',
+    guideSetupTitle: 'Before starting',
+    guideSetup1: 'Each person registers a team in the Players tab.',
+    guideSetup2: 'Per device you can have up to 2 local teams only when minimum teams are still missing.',
+    guideSetup3: 'Exact duplicate names are not allowed.',
+    guideFlowTitle: 'Season flow',
+    guideFlow1: 'With fewer than {threshold} teams, the app runs a single league phase (limited schedule).',
+    guideFlow2: 'With {threshold} or more teams, group stage is enabled and matches are played only inside each group.',
+    guideFlow3: 'Knockout slots are distributed by group size and total qualifier quota.',
+    guideFlow4: 'If qualifiers are not a power of 2, a play-off round is generated to complete the bracket.',
+    guideFlow5: 'Then knockout rounds are played until a champion is decided.',
+    guideFlow6: 'Pairings are generated automatically and avoid clashes between teams sharing the same base name.',
+    guidePairingsTitle: 'Player count and pairings',
+    guidePairings1: 'With 4 to {maxSimple} teams: one single league, one leg only (no home/away).',
+    guidePairings2: 'With {threshold}+ teams: group stage. Approx group count = ceil(teams/{groupSize}).',
+    guidePairings3: 'Inside each group, teams play one leg and standings are ranked with tie-break rules.',
+    guidePairings4: 'Play-off and final draw complete the knockout bracket when needed.',
+    guideResultsTitle: 'Results and anti-cheat',
+    guideResultsBody: 'One player reports a score and the rival confirms or rejects it. If rejected, the original reporter must submit it again.',
+    guideBetsTitle: 'Betting',
+    guideBets1: 'You can only bet using your local teams on this device.',
+    guideBets2: 'In league/groups, only players not involved in that match can bet.',
+    guideBets3: 'In play-off/knockout, only non-qualified players can bet.',
+    guideBets4: 'Maximum one open bet per player and match.',
+    guideBets5: 'Max stake per ticket: {pct}% of current balance.',
+    guideBets6: 'Fixed winning odds x2 with a global betting cap of {ceiling}.',
+    guideBets7: 'Bets settle when the result becomes confirmed.',
+    guideTiesTitle: 'Tie-breakers',
+    guideTies1: 'In league/groups: points, goal difference, goals scored, and head-to-head.',
+    guideTies2: 'If tie remains at qualification cutoff, random penalty pairings are used until resolved.',
+    guideTies3: 'In play-off and knockout, final draws are not allowed: penalties are mandatory.',
+    guideEconomyTitle: 'Prize economy',
+    guideEconomy1: 'Participation: {participation}.',
+    guideEconomy2: 'League/group win: {leagueWin}. Draw: {leagueDraw}.',
+    guideEconomy3: 'Round bonuses: round of 16 {round16}, quarter-finals {quarter}, semi-finals {semi}.',
+    guideEconomy4: 'Final: runner-up {runnerUp}, champion {champion}.',
+    guideOpsTitle: 'Season management',
+    guideOps1: 'New season saves champion/history and resets competition state.',
+    guideOps2: 'Master reset clears history and resets counters to zero.',
+    guideOps3: 'Data is shared via Supabase and synced across devices.',
+    guideParamsTitle: 'Current automatic parameters',
+    guideParams1: 'Registered teams: {teams}.',
+    guideParams2: 'Current format: {format}.',
+    guideParams3: 'Matches per team in its group/league: {matches}.',
+    guideParams4: 'Knockout qualifiers: {qualifiers}.',
+    guideParams5: 'Current groups: {groups}. Pairing rule: {pairing}.',
+    guidePairingModeSingle: 'single league, one leg',
+    guidePairingModeGroups: 'groups of about {size} teams, one leg per group',
     guideButton: 'How to play',
     sharedDataNote: 'Shared data via Supabase. If two people edit at the same time, the app resolves conflicts by refreshing the latest state.'
   },
@@ -1967,6 +2079,56 @@ const I18N = {
     knockoutBetsCap: 'Bendras statymu limitas: {ceiling} · Maksimalus statymas: {pct}% nuo dabartinio balanso.',
     masterResetTitle: 'Pilnas atstatymas',
     masterResetWarn: 'Nustato visus skaicius i 0 ir isvalo istorija. Palieka tik zaideju sarasa.',
+    guideTitle: 'Kaip zaisti',
+    guideObjTitle: 'Galutinis tikslas',
+    guideObjBody: 'Istorinis laimetoju reitingas rodomas Muziejuje. Tvarka: taures, istoriniai pinigai, ivarciu skirtumas.',
+    guideSetupTitle: 'Pries starta',
+    guideSetup1: 'Kiekvienas asmuo registruoja komanda skiltyje Zaidejai.',
+    guideSetup2: 'Viename irenginyje leidziamos iki 2 vietines komandos, kai dar truksta minimalaus skaiciaus.',
+    guideSetup3: 'Tiksliai vienodi vardai neleidziami.',
+    guideFlowTitle: 'Sezono eiga',
+    guideFlow1: 'Jei maziau nei {threshold} komandu, zaidziama viena lyga su ribotu tvarkarasciu.',
+    guideFlow2: 'Jei {threshold} ar daugiau, ijungiama grupiu faze ir zaidziama tik grupes viduje.',
+    guideFlow3: 'Patekimo vietos i atkrintamasias skirstomos pagal grupiu dydi ir bendra kvota.',
+    guideFlow4: 'Jei patekusiu skaicius ne 2 laipsnis, sugeneruojamas play-off etapas.',
+    guideFlow5: 'Toliau zaidziamos atkrintamosios iki cempiono.',
+    guideFlow6: 'Poros generuojamos automatiskai ir vengiama komandu su tuo paciu baziniu vardu susidurimu.',
+    guidePairingsTitle: 'Zaideju skaicius ir poravimas',
+    guidePairings1: 'Kai 4-{maxSimple} komandos: viena lyga, vienas ratas (be namu/sveciu).',
+    guidePairings2: 'Kai {threshold}+ komandu: grupiu etapas. Grupiu skaicius ~ ceil(komandos/{groupSize}).',
+    guidePairings3: 'Grupese zaidziamas vienas ratas, tada rikiuojama pagal taskus ir desempate taisykles.',
+    guidePairings4: 'Play-off ir galutinis burtu traukimas uzbaigia atkrintamuju lentele, kai reikia.',
+    guideResultsTitle: 'Rezultatai ir anticheat',
+    guideResultsBody: 'Vienas zaidejas pateikia rezultata, varzovas patvirtina arba atmeta. Atmetus, pradinis pateikejas turi suvesti is naujo.',
+    guideBetsTitle: 'Statymai',
+    guideBets1: 'Statyti galima tik su vietinemis sio irenginio komandomis.',
+    guideBets2: 'Lygoje/grupese stato tik nedalyvaujantis tame mace.',
+    guideBets3: 'Play-off/atkrintamosiose stato tik nepateke zaidejai.',
+    guideBets4: 'Daugiausia vienas atviras statymas vienam zaidejui vienam macui.',
+    guideBets5: 'Maksimalus statymas: {pct}% nuo dabartinio balanso.',
+    guideBets6: 'Fiksuotas laimejimas x2, bendras statymu limitas: {ceiling}.',
+    guideBets7: 'Statymai uzdaromi, kai rezultatas tampa patvirtintas.',
+    guideTiesTitle: 'Desempate taisykles',
+    guideTies1: 'Lygoje/grupese: taskai, ivarciu skirtumas, imusti ivarciai, tarpusavio rezultatas.',
+    guideTies2: 'Jei ties patekimo riba islieka lygu, sprendziama atsitiktinemis baudiniu poromis.',
+    guideTies3: 'Play-off ir atkrintamosiose galutinis lygus rezultatas negalimas: privalomi baudiniai.',
+    guideEconomyTitle: 'Prizai',
+    guideEconomy1: 'Dalyvavimas: {participation}.',
+    guideEconomy2: 'Pergale lygoje/grupeje: {leagueWin}. Lygiosios: {leagueDraw}.',
+    guideEconomy3: 'Etapu premijos: astuntfinalis {round16}, ketvirtfinalis {quarter}, pusfinalis {semi}.',
+    guideEconomy4: 'Finalas: vicecempionas {runnerUp}, cempionas {champion}.',
+    guideOpsTitle: 'Sezono valdymas',
+    guideOps1: 'Naujas sezonas issaugo cempiona/istorija ir perkrauna varzybas.',
+    guideOps2: 'Pilnas atstatymas isvalo istorija ir nustato skaicius i nuli.',
+    guideOps3: 'Duomenys bendrinami per Supabase ir sinchronizuojami tarp irenginiu.',
+    guideParamsTitle: 'Dabartiniai automatiniai parametrai',
+    guideParams1: 'Uzsiregistrave komandos: {teams}.',
+    guideParams2: 'Dabartinis formatas: {format}.',
+    guideParams3: 'Rungtyniu vienai komandai grupeje/lygoje: {matches}.',
+    guideParams4: 'I atkrintamasias patenka: {qualifiers}.',
+    guideParams5: 'Dabartines grupes: {groups}. Poravimo taisykle: {pairing}.',
+    guidePairingModeSingle: 'viena lyga, vienas ratas',
+    guidePairingModeGroups: 'grupes po mazdaug {size} komandas, vienas ratas grupeje',
     guideButton: 'Kaip zaisti',
     sharedDataNote: 'Bendrinami duomenys per Supabase. Jei du zmones redaguoja vienu metu, sistema issprendzia konfliktus atnaujindama naujausia busena.'
   },
@@ -2165,6 +2327,56 @@ const I18N = {
     knockoutBetsCap: 'Topall global de diners per apostes: {ceiling} · Aposta maxima per ticket: {pct}% del teu saldo actual.',
     masterResetTitle: 'Reseteig mestre',
     masterResetWarn: 'Posa tots els comptadors a 0 i esborra l historial. Conserva nomes la llista de jugadors.',
+    guideTitle: 'Com es juga',
+    guideObjTitle: 'Objectiu final',
+    guideObjBody: 'El rànquing historic es veu al Museu. L ordre es decideix per copes, diners historics i diferencia de gols.',
+    guideSetupTitle: 'Abans de comencar',
+    guideSetup1: 'Cada persona registra el seu equip a la pestanya Jugadors.',
+    guideSetup2: 'Per dispositiu es permeten fins a 2 equips locals quan encara falten equips pel minim.',
+    guideSetup3: 'No es permeten noms duplicats exactes.',
+    guideFlowTitle: 'Flux de temporada',
+    guideFlow1: 'Amb menys de {threshold} equips es juga una sola lligueta amb calendari limitat.',
+    guideFlow2: 'Amb {threshold} o mes equips s activa fase de grups i nomes es juga dins de cada grup.',
+    guideFlow3: 'Les places cap a eliminatories es reparteixen per grup segons mida i quota total.',
+    guideFlow4: 'Si els classificats no formen potencia de 2, es genera play-off per completar quadre.',
+    guideFlow5: 'Despres es juguen eliminatories fins decidir campio.',
+    guideFlow6: 'Els encreuaments es generen automaticament i eviten xocs entre equips amb el mateix nom base.',
+    guidePairingsTitle: 'Nombre de jugadors i encreuaments',
+    guidePairings1: 'Amb 4 a {maxSimple} equips: una sola lliga, una volta (sense anada/tornada).',
+    guidePairings2: 'Amb {threshold} o mes equips: fase de grups. Nombre aprox. de grups = ceil(equips/{groupSize}).',
+    guidePairings3: 'Dins de cada grup es juga una volta i es classifica per punts i desempats.',
+    guidePairings4: 'El play-off i el sorteig final completen el quadre eliminatori quan cal.',
+    guideResultsTitle: 'Resultats i antitrampes',
+    guideResultsBody: 'Un jugador reporta el marcador i el rival confirma o rebutja. Si rebutja, el reportador inicial ho ha de tornar a carregar.',
+    guideBetsTitle: 'Apostes',
+    guideBets1: 'Nomes pots apostar amb equips locals d aquest dispositiu.',
+    guideBets2: 'En lliga/grups nomes aposta qui no juga aquell partit.',
+    guideBets3: 'En play-off/eliminatories aposten nomes els no classificats.',
+    guideBets4: 'Maxim una aposta oberta per jugador i partit.',
+    guideBets5: 'Aposta maxima per ticket: {pct}% del saldo actual.',
+    guideBets6: 'Quota fixa guanyadora x2 i topall global d apostes: {ceiling}.',
+    guideBets7: 'Les apostes es liquiden quan el resultat queda confirmat.',
+    guideTiesTitle: 'Desempats',
+    guideTies1: 'En lliga/grups: punts, diferencia de gols, gols a favor i cara a cara.',
+    guideTies2: 'Si continua l empat al tall de classificacio, es resol amb encreuaments aleatoris a penals.',
+    guideTies3: 'En play-off i eliminatories no pot quedar empat final: penals obligatoris.',
+    guideEconomyTitle: 'Premis economics',
+    guideEconomy1: 'Participacio: {participation}.',
+    guideEconomy2: 'Victoria en lliga/grup: {leagueWin}. Empat: {leagueDraw}.',
+    guideEconomy3: 'Bonus per ronda: vuitens {round16}, quarts {quarter}, semifinals {semi}.',
+    guideEconomy4: 'Final: subcampio {runnerUp}, campio {champion}.',
+    guideOpsTitle: 'Gestio de temporada',
+    guideOps1: 'Nova temporada desa campio/historial i reinicia la competicio.',
+    guideOps2: 'El reseteig mestre neteja historial i posa comptadors a zero.',
+    guideOps3: 'Les dades es comparteixen per Supabase i se sincronitzen entre dispositius.',
+    guideParamsTitle: 'Parametres automatics actuals',
+    guideParams1: 'Equips registrats: {teams}.',
+    guideParams2: 'Format actual: {format}.',
+    guideParams3: 'Partits per equip en el seu grup/lliga: {matches}.',
+    guideParams4: 'Classificats a eliminatories: {qualifiers}.',
+    guideParams5: 'Grups actuals: {groups}. Regla d encreuament: {pairing}.',
+    guidePairingModeSingle: 'lliga unica a una volta',
+    guidePairingModeGroups: 'grups d aprox. {size} equips, una volta per grup',
     guideButton: 'Com jugar',
     sharedDataNote: 'Dades compartides per Supabase. Si dues persones editen alhora, el sistema resol conflictes refrescant l\'estat mes recent.'
   }
@@ -2269,56 +2481,88 @@ function openGuideModal(){
     const maxMatches = Math.max(1, n-1);
     const q = effectiveNumQualifiers();
     const prize = state.finance.prizes;
+    const groupMode = shouldUseLeagueGroups(n);
+    const groupCount = groupMode ? Math.max(2, Math.ceil(n / TARGET_GROUP_SIZE)) : 1;
+    const simpleMax = Math.max(4, GROUP_STAGE_MIN_PLAYERS - 1);
+    const pairingMode = groupMode
+      ? tf('guidePairingModeGroups', {size: TARGET_GROUP_SIZE})
+      : t('guidePairingModeSingle');
+    const formatLabel = groupMode
+      ? tf('guideFlow2', {threshold: GROUP_STAGE_MIN_PLAYERS})
+      : tf('guideFlow1', {threshold: GROUP_STAGE_MIN_PLAYERS});
     const bg = el(`<div class="modal-bg"><div class="modal guide-modal">
       <span class="close">✕</span>
-      <h3>Cómo se juega</h3>
+      <h3>${t('guideTitle')}</h3>
       <div class="muted" style="line-height:1.6;max-height:72vh;overflow:auto;padding-right:4px;">
-        <p><b>Objetivo final</b><br>El ganador histórico se ve en <b>Museo</b>. El orden se define así: <b>1) más copas</b>, <b>2) más dinero histórico</b>, <b>3) mejor diferencia de goles</b>.</p>
+        <p><b>${t('guideObjTitle')}</b><br>${t('guideObjBody')}</p>
 
-        <p><b>Flujo de temporada</b></p>
+        <p><b>${t('guideSetupTitle')}</b></p>
+        <ul style="padding-left:18px;margin:0 0 10px;">
+          <li>${t('guideSetup1')}</li>
+          <li>${t('guideSetup2')}</li>
+          <li>${t('guideSetup3')}</li>
+        </ul>
+
+        <p><b>${t('guideFlowTitle')}</b></p>
         <ol style="padding-left:18px;margin:0 0 10px;">
-          <li>En <b>Jugadores</b> cada persona registra su jugador desde su propio dispositivo.</li>
-          <li>Arranca la liguilla en formato Champions: fase liga limitada (sin ida y vuelta completa).</li>
-          <li>Clasifican aprox. 2 de cada 3 jugadores. Si el número no es potencia de 2, hay <b>play-off</b> para completar el cuadro.</li>
-          <li>Luego se juegan eliminatorias hasta coronar al campeón de la temporada.</li>
+          <li>${tf('guideFlow1', {threshold: GROUP_STAGE_MIN_PLAYERS})}</li>
+          <li>${tf('guideFlow2', {threshold: GROUP_STAGE_MIN_PLAYERS})}</li>
+          <li>${t('guideFlow3')}</li>
+          <li>${t('guideFlow4')}</li>
+          <li>${t('guideFlow5')}</li>
+          <li>${t('guideFlow6')}</li>
         </ol>
 
-        <p><b>Reporte y confirmación de resultados</b><br>Un jugador reporta marcador y el rival lo <b>confirma</b> o <b>rechaza</b>. Si se rechaza, el reporte debe cargarse de nuevo.</p>
-
-        <p><b>Apuestas</b></p>
+        <p><b>${t('guidePairingsTitle')}</b></p>
         <ul style="padding-left:18px;margin:0 0 10px;">
-          <li>Solo apuestas con tu <b>jugador activo</b>.</li>
-          <li>En liguilla solo puede apostar quien <b>no juega</b> ese partido.</li>
-          <li>En eliminatorias/play-off solo apuestan los <b>no clasificados</b>.</li>
-          <li>Máximo una apuesta abierta por partido y jugador.</li>
-          <li>Apuesta máxima por ticket: <b>${Math.round(state.bets.maxStakePct*100)}%</b> de tu saldo actual.</li>
-          <li>Cuota fija ganadora: <b>x2</b>, con tope global de apuestas en <b>${fmtMoney(betCeiling)}</b>.</li>
-          <li>Las apuestas se liquidan cuando el resultado queda confirmado.</li>
+          <li>${tf('guidePairings1', {maxSimple: simpleMax})}</li>
+          <li>${tf('guidePairings2', {threshold: GROUP_STAGE_MIN_PLAYERS, groupSize: TARGET_GROUP_SIZE})}</li>
+          <li>${t('guidePairings3')}</li>
+          <li>${t('guidePairings4')}</li>
         </ul>
 
-        <p><b>Desempates</b></p>
+        <p><b>${t('guideResultsTitle')}</b><br>${t('guideResultsBody')}</p>
+
+        <p><b>${t('guideBetsTitle')}</b></p>
+        <ul style="padding-left:18px;margin:0 0 10px;">
+          <li>${t('guideBets1')}</li>
+          <li>${t('guideBets2')}</li>
+          <li>${t('guideBets3')}</li>
+          <li>${t('guideBets4')}</li>
+          <li>${tf('guideBets5', {pct: Math.round(state.bets.maxStakePct*100)})}</li>
+          <li>${tf('guideBets6', {ceiling: fmtMoney(betCeiling)})}</li>
+          <li>${t('guideBets7')}</li>
+        </ul>
+
+        <p><b>${t('guideTiesTitle')}</b></p>
         <ul style="padding-left:18px;margin:0;">
-          <li>En liguilla: puntos, diferencia de goles, goles a favor, partido directo.</li>
-          <li>Si el empate sigue justo en el corte: cruces aleatorios a penaltis hasta desempatar.</li>
-          <li>En play-off/eliminatorias no puede quedar empate: si empatan en goles, se registra tanda de penaltis obligatoriamente.</li>
+          <li>${t('guideTies1')}</li>
+          <li>${t('guideTies2')}</li>
+          <li>${t('guideTies3')}</li>
         </ul>
 
-        <p style="margin-top:12px;"><b>Parámetros automáticos de esta temporada</b></p>
+        <p style="margin-top:12px;"><b>${t('guideEconomyTitle')}</b></p>
         <ul style="padding-left:18px;margin:0 0 10px;">
-          <li>Partidos por jugador en liguilla: <b>${n ? `${autoMatchesPerPlayer(n)} de ${maxMatches}` : '—'}</b>.</li>
-          <li>Clasifican a eliminatorias: <b>${n ? `${q} de ${n}` : '—'}</b> (aprox. 2 de cada 3).</li>
+          <li>${tf('guideEconomy1', {participation: fmtMoney(prize.participation)})}</li>
+          <li>${tf('guideEconomy2', {leagueWin: fmtMoney(prize.leagueWin), leagueDraw: fmtMoney(prize.leagueDraw)})}</li>
+          <li>${tf('guideEconomy3', {round16: fmtMoney(prize.round16), quarter: fmtMoney(prize.quarter), semi: fmtMoney(prize.semi)})}</li>
+          <li>${tf('guideEconomy4', {runnerUp: fmtMoney(prize.runnerUp), champion: fmtMoney(prize.champion)})}</li>
         </ul>
 
-        <p><b>Premios económicos (referencia Champions 2025/26)</b></p>
+        <p><b>${t('guideOpsTitle')}</b></p>
         <ul style="padding-left:18px;margin:0 0 10px;">
-          <li>Participación: <b>${fmtMoney(prize.participation)}</b>.</li>
-          <li>Victoria en liguilla: <b>${fmtMoney(prize.leagueWin)}</b>.</li>
-          <li>Empate en liguilla: <b>${fmtMoney(prize.leagueDraw)}</b>.</li>
-          <li>Clasificarse a octavos: <b>${fmtMoney(prize.round16)}</b>.</li>
-          <li>Clasificarse a cuartos: <b>${fmtMoney(prize.quarter)}</b>.</li>
-          <li>Clasificarse a semifinales: <b>${fmtMoney(prize.semi)}</b>.</li>
-          <li>Subcampeón: <b>${fmtMoney(prize.runnerUp)}</b>.</li>
-          <li>Campeón: <b>${fmtMoney(prize.champion)}</b>.</li>
+          <li>${t('guideOps1')}</li>
+          <li>${t('guideOps2')}</li>
+          <li>${t('guideOps3')}</li>
+        </ul>
+
+        <p><b>${t('guideParamsTitle')}</b></p>
+        <ul style="padding-left:18px;margin:0 0 10px;">
+          <li>${tf('guideParams1', {teams: n})}</li>
+          <li>${tf('guideParams2', {format: formatLabel})}</li>
+          <li>${tf('guideParams3', {matches: n ? `${autoMatchesPerPlayer(n)} / ${maxMatches}` : '—'})}</li>
+          <li>${tf('guideParams4', {qualifiers: n ? `${q} / ${n}` : '—'})}</li>
+          <li>${tf('guideParams5', {groups: groupCount, pairing: pairingMode})}</li>
         </ul>
 
       </div>
