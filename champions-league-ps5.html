@@ -206,7 +206,7 @@ body.theme-night .tab.active,
 body.theme-night .step.active,
 body.theme-night button,
 body.theme-night .catalog-chip.active{
-  background:linear-gradient(145deg,#003da5,#00a3e0);
+  background:linear-gradient(145deg,#003b9c,#0078c2);
   border-color:#003da5;
   color:#eff7ff;
 }
@@ -226,7 +226,7 @@ body.theme-night .result-quick button.active,
 body.theme-night .bet-presets button.active,
 body.theme-night .player-tile-badge,
 body.theme-night .museum-count{
-  background:linear-gradient(145deg,#003da5,#00a3e0);
+  background:linear-gradient(145deg,#003b9c,#0078c2);
   border-color:#003da5;
   color:#eff7ff;
 }
@@ -289,7 +289,7 @@ body.theme-night select::placeholder{
   letter-spacing:.45px;
 }
 .step.active{
-  background:linear-gradient(135deg,#003da5,#00a3e0);
+  background:linear-gradient(135deg,#003b9c,#0078c2);
   color:#fff;
   border-color:#003da5;
   box-shadow:var(--shadow-pop);
@@ -321,7 +321,7 @@ body.theme-night select::placeholder{
 .tab.active{
   color:#fff;
   border-color:#003da5;
-  background:linear-gradient(135deg,#003da5,#00a3e0);
+  background:linear-gradient(135deg,#003b9c,#0078c2);
   box-shadow:0 6px 18px rgba(0,61,165,.3);
 }
 
@@ -392,14 +392,14 @@ button{
 }
 button:hover{transform:translateY(-1px);box-shadow:0 8px 16px rgba(0,61,165,.24);}
 button.secondary{background:#fff;color:#003da5;border:1px solid #a8c2f2;}
-button.gold{background:linear-gradient(145deg,#00a3e0,#69b4ff);border-color:#00a3e0;color:#eff7ff;}
+button.gold{background:linear-gradient(145deg,#007fcf,#0064b6);border-color:#0059a8;color:#eff7ff;}
 button.danger{background:linear-gradient(145deg,#d9424f,#cf2f3f);border-color:#cf2f3f;}
 button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;transform:none;}
 button.small{padding:5px 10px;font-size:.75rem;border-radius:9px;}
 
 body.platform-macos button{
   border-radius:12px;
-  background:linear-gradient(180deg,#1f79ff,#0a64e8);
+  background:linear-gradient(180deg,#0d6dde,#0757bf);
   border-color:#0357d6;
   box-shadow:0 1px 0 rgba(255,255,255,.55) inset, 0 10px 18px rgba(3,87,214,.2);
 }
@@ -418,7 +418,12 @@ body.platform-macos .step{
   box-shadow:0 1px 0 rgba(255,255,255,.95) inset, 0 8px 14px rgba(44,80,143,.08);
 }
 body.platform-macos .tab.active,
-body.platform-macos .step.active{box-shadow:0 10px 20px rgba(3,87,214,.24);}
+body.platform-macos .step.active{
+  background:linear-gradient(180deg,#0d76ea,#005ecf);
+  border-color:#0554b4;
+  color:#f7fbff;
+  box-shadow:0 10px 20px rgba(3,87,214,.24);
+}
 body.platform-macos .card{
   border-radius:18px;
   border-color:#d3def2;
@@ -439,14 +444,14 @@ body.platform-ipad button{font-weight:700;letter-spacing:.1px;border-width:1px;}
 body.platform-iphone button{
   border-radius:14px;
   min-height:44px;
-  background:#007aff;
-  border-color:#0063d1;
+  background:#005fcb;
+  border-color:#004ea8;
   box-shadow:0 8px 18px rgba(0,122,255,.22);
   transition:transform .12s ease, box-shadow .16s ease, filter .16s ease;
 }
 body.platform-iphone button:active{transform:scale(.97);box-shadow:0 4px 10px rgba(0,122,255,.18);}
 body.platform-iphone button.secondary{background:#f2f2f7;color:#1c1c1e;border-color:#d1d1d6;box-shadow:none;}
-body.platform-iphone button.gold{background:#0a84ff;border-color:#006edc;}
+body.platform-iphone button.gold{background:#006ed0;border-color:#005ab0;}
 body.platform-iphone button.danger{background:#ff3b30;border-color:#e03127;}
 body.platform-iphone .hero{border-radius:22px;}
 body.platform-iphone .tabs{gap:8px;}
@@ -460,8 +465,8 @@ body.platform-iphone .step{
 }
 body.platform-iphone .tab.active,
 body.platform-iphone .step.active{
-  background:linear-gradient(180deg,#0a84ff,#0072ea);
-  border-color:#0069dc;
+  background:linear-gradient(180deg,#0b71de,#005cc3);
+  border-color:#0550ad;
   color:#ffffff;
   box-shadow:0 10px 22px rgba(0,122,255,.24);
 }
@@ -533,14 +538,14 @@ body.platform-iphone.orientation-landscape .demo-grid{max-height:50vh;}
 body.platform-ipad button{
   border-radius:16px;
   min-height:46px;
-  background:linear-gradient(180deg,#2b8cff,#0a72ee);
-  border-color:#0a66d7;
+  background:linear-gradient(180deg,#0f75de,#075ec3);
+  border-color:#0752ad;
   box-shadow:0 10px 20px rgba(10,114,238,.2);
   transition:transform .14s ease, box-shadow .2s ease;
 }
 body.platform-ipad button:active{transform:translateY(1px) scale(.985);}
 body.platform-ipad button.secondary{background:linear-gradient(180deg,#ffffff,#eef3fb);color:#143f87;border-color:#bfd0ee;box-shadow:0 6px 14px rgba(39,77,141,.12);}
-body.platform-ipad button.gold{background:linear-gradient(180deg,#2fb8ff,#0a8fe8);border-color:#0a82d0;}
+body.platform-ipad button.gold{background:linear-gradient(180deg,#1697eb,#0a74d9);border-color:#095fb7;}
 body.platform-ipad button.danger{background:linear-gradient(180deg,#ff655f,#ef4f47);border-color:#de4941;}
 body.platform-ipad .hero{border-radius:24px;}
 body.platform-ipad .tab,
@@ -551,7 +556,30 @@ body.platform-ipad .step{
   box-shadow:0 8px 14px rgba(39,77,141,.08);
 }
 body.platform-ipad .tab.active,
-body.platform-ipad .step.active{box-shadow:0 14px 26px rgba(10,114,238,.24);}
+body.platform-ipad .step.active{
+  background:linear-gradient(180deg,#0d76ea,#005ecf);
+  border-color:#0554b4;
+  color:#f7fbff;
+  box-shadow:0 14px 26px rgba(10,114,238,.24);
+}
+/* Keep contrast stable when platform skins and night theme overlap. */
+body.theme-night.platform-macos .tab,
+body.theme-night.platform-macos .step,
+body.theme-night.platform-ipad .tab,
+body.theme-night.platform-ipad .step{
+  background:linear-gradient(180deg,#162d63,#12254f);
+  border-color:#35579d;
+  color:#dbe8ff;
+  box-shadow:0 8px 14px rgba(0,0,0,.24);
+}
+body.theme-night.platform-macos .tab.active,
+body.theme-night.platform-macos .step.active,
+body.theme-night.platform-ipad .tab.active,
+body.theme-night.platform-ipad .step.active{
+  background:linear-gradient(180deg,#126fdd,#0a56bc);
+  border-color:#3f80d7;
+  color:#f7fbff;
+}
 body.platform-ipad .card{
   border-radius:22px;
   border-color:#cfdbf0;
@@ -607,6 +635,18 @@ body.platform-ipad.orientation-landscape .step{font-size:.76rem;padding:8px 7px;
 body.platform-ipad.orientation-landscape .player-grid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));}
 body.platform-ipad.orientation-landscape .modal{max-width:min(94vw,900px);}
 body.platform-ipad.orientation-landscape .demo-grid{grid-template-columns:1.2fr .8fr;max-height:56vh;}
+
+/* Shared readable active labels, regardless of downstream overrides. */
+.tab.active,
+.step.active,
+.catalog-chip.active,
+.bet-presets button.active,
+.result-quick button.active,
+button.gold,
+.player-tile-badge,
+.museum-count{
+  color:#f7fbff;
+}
 
 /* Orientation-tuned motion for a more native feel */
 body.platform-iphone .card,
@@ -709,7 +749,7 @@ body.platform-ipad.orientation-portrait .modal{
 
 .bet-presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;}
 .bet-presets button{background:#fff;color:#1e3e7c;border:1px solid #cad8f1;padding:6px 10px;}
-.bet-presets button.active{background:linear-gradient(145deg,#00a3e0,#69b4ff);color:#eff7ff;border-color:#00a3e0;}
+.bet-presets button.active{background:linear-gradient(145deg,#007fcf,#0064b6);color:#eff7ff;border-color:#0059a8;}
 .bet-arcade{
   background:
     radial-gradient(700px 180px at 0% -10%, rgba(0,61,165,.18), transparent 65%),
@@ -985,7 +1025,7 @@ tbody tr:hover td{background:rgba(0,61,165,.045);}
 .player-tile.is-me{border-color:#00a3e0;box-shadow:0 0 0 2px rgba(0,163,224,.2) inset;}
 .player-tile-name{font-weight:800;font-size:.92rem;text-transform:capitalize;}
 .player-tile-meta{margin-top:4px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.78rem;color:#45649f;}
-.player-tile-badge{font-size:.68rem;font-weight:900;color:#eff7ff;background:linear-gradient(145deg,#003da5,#00a3e0);border-radius:999px;padding:2px 7px;}
+.player-tile-badge{font-size:.68rem;font-weight:900;color:#eff7ff;background:linear-gradient(145deg,#003b9c,#0078c2);border-radius:999px;padding:2px 7px;}
 .player-tile-actions{display:flex;gap:6px;align-items:center;}
 .player-timezones{margin-top:7px;padding-top:7px;border-top:1px dashed #d6e3f6;font-size:.73rem;color:#46639d;line-height:1.4;}
 .player-timezones .pin{margin-right:5px;}
@@ -1019,7 +1059,7 @@ tbody tr:hover td{background:rgba(0,61,165,.045);}
   font-weight:800;
   text-transform:capitalize;
 }
-.catalog-chip.active{background:linear-gradient(145deg,#003da5,#00a3e0);color:#eff7ff;border-color:#003da5;}
+.catalog-chip.active{background:linear-gradient(145deg,#003b9c,#0078c2);color:#eff7ff;border-color:#003da5;}
 .catalog-chip-row{display:inline-flex;align-items:center;gap:6px;}
 .catalog-chip-remove{
   border:1px solid #f1b5bd;
@@ -1066,7 +1106,7 @@ tbody tr:hover td{background:rgba(0,61,165,.045);}
 }
 .museum-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;}
 .museum-name{font-weight:800;font-size:.95rem;}
-.museum-count{font-size:.74rem;font-weight:900;color:#eff7ff;background:linear-gradient(145deg,#003da5,#00a3e0);border-radius:999px;padding:3px 8px;}
+.museum-count{font-size:.74rem;font-weight:900;color:#eff7ff;background:linear-gradient(145deg,#003b9c,#0078c2);border-radius:999px;padding:3px 8px;}
 .cup-shelf{display:flex;flex-wrap:wrap;gap:6px;min-height:34px;align-items:flex-end;}
 .ucl-cup{width:28px;height:34px;display:block;}
 .museum-seasons{margin-top:8px;font-size:.74rem;color:#4a679e;line-height:1.4;}
@@ -1174,7 +1214,7 @@ tbody tr:hover td{background:rgba(0,61,165,.045);}
 .result-step-btn{width:30px;height:30px;border-radius:10px;padding:0;font-size:.9rem;line-height:1;background:#fff;border:1px solid #c9d7f0;color:#1f3f80;}
 .result-quick{display:flex;flex-wrap:wrap;gap:7px;}
 .result-quick button{background:#fff;border:1px solid #d0dcf3;color:#274785;padding:6px 10px;font-size:.76rem;}
-.result-quick button.active{background:linear-gradient(145deg,#003da5,#00a3e0);color:#eff7ff;border-color:#003da5;}
+.result-quick button.active{background:linear-gradient(145deg,#003b9c,#0078c2);color:#eff7ff;border-color:#003da5;}
 .result-live{text-align:center;font-size:.88rem;font-weight:800;border:1px solid #d5e5e3;border-radius:11px;padding:7px 9px;background:#f8fbfb;}
 .result-live .sep{color:#003da5;padding:0 6px;}
 .result-penalties{border:1px dashed #9fbce9;border-radius:11px;padding:10px;background:#f3f8ff;}
