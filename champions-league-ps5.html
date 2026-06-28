@@ -1396,9 +1396,12 @@ function getBettableMatches(){
 function canOpenBetForMatch(match){
   if(!match || !match.p1 || !match.p2) return false;
   if(match.status==='confirmed') return false;
-  if(state.phase==='league') return true;
-  if(state.phase==='knockout' || state.phase==='playoff') return true;
-  return false;
+  if(state.phase!=='league' && state.phase!=='knockout' && state.phase!=='playoff') return false;
+  const bettors = getEligibleBettorsForMatch(match);
+  if(!bettors.length) return false;
+  const bettorId = bettors[0].id;
+  if(getOpenBetTicket(bettorId, match.id)) return false;
+  return true;
 }
 function getEligibleBettorsForMatch(match){
   if(!state.myPlayerId) return [];
@@ -1515,6 +1518,7 @@ function placeBet(playerId, matchId, pick, stake){
   if(match.status==='confirmed') return 'Ese partido ya está cerrado para apuestas.';
   if(!['home','draw','away'].includes(pick)) return 'Selección de apuesta inválida.';
   if(Number.isNaN(stake) || stake<=0) return 'Cantidad de apuesta inválida.';
+  if(getOpenBetTicket(playerId, matchId)) return 'Ya tienes una apuesta abierta en este partido.';
   const maxStake = getMaxStakeForPlayer(playerId);
   if(stake>maxStake) return `Tu apuesta máxima en este momento es ${fmtMoney(maxStake)}.`;
   if(stake>(bettor.money||0)) return 'No tienes saldo suficiente.';
