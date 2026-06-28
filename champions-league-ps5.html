@@ -254,7 +254,15 @@ function isEditingField(){
   const ae = document.activeElement;
   if(!ae) return false;
   const tag = ae.tagName;
-  return tag==='INPUT' || tag==='TEXTAREA' || tag==='SELECT' || ae.isContentEditable;
+  if(tag==='TEXTAREA' || ae.isContentEditable) return true;
+  if(tag==='INPUT'){
+    const input = ae;
+    if(input.readOnly || input.disabled) return false;
+    const type = (input.type || '').toLowerCase();
+    return !['button','submit','reset','checkbox','radio','range','color','file'].includes(type);
+  }
+  // No bloqueamos el pull remoto por tener un select enfocado.
+  return false;
 }
 function getMasterResetPassword(){
   try{ return localStorage.getItem(MASTER_RESET_PASSWORD_KEY) || ''; }
