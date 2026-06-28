@@ -2351,10 +2351,20 @@ function renderMatchRow(m, decisive){
     <div class="vs"><span>${p1}</span><span>${scoreTxt}</span><span>${p2}</span></div>
     <span class="tag ${m.status}">${({empty:'sin jugar',pending:'pendiente',confirmed:'confirmado',dispute:'disputa'})[m.status]}</span>
   </div>`);
-  const btnLabel = m.status==='confirmed' ? 'Corregir' : (m.status==='pending' ? 'Confirmar' : 'Resultado');
-  const btn = el(`<button class="small secondary">${btnLabel}</button>`);
-  btn.onclick=()=> openMatchModal(m, decisive, m.status==='confirmed');
-  row.appendChild(btn);
+  const activeId = state.myPlayerId || null;
+  const isParticipant = !!activeId && (activeId===m.p1 || activeId===m.p2);
+  const expectedDecider = m.reportedBy===m.p1 ? m.p2 : (m.reportedBy===m.p2 ? m.p1 : null);
+  const canAct =
+    m.status==='pending'
+      ? !!activeId && activeId===expectedDecider
+      : isParticipant;
+
+  if(canAct){
+    const btnLabel = m.status==='confirmed' ? 'Corregir' : (m.status==='pending' ? 'Confirmar' : 'Resultado');
+    const btn = el(`<button class="small secondary">${btnLabel}</button>`);
+    btn.onclick=()=> openMatchModal(m, decisive, m.status==='confirmed');
+    row.appendChild(btn);
+  }
   if(canOpenBetForMatch(m)){
     const betBtn = el(`<button class="small gold" type="button">Apostar</button>`);
     betBtn.onclick=()=> openBetForMatchModal(m.id);
