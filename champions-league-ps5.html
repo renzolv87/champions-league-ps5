@@ -1113,7 +1113,7 @@ function renderBetActivityBoard(title){
   return card;
 }
 function getBettableMatches(){
-  if(state.phase==='league' && state.players.length===3){
+  if(state.phase==='league'){
     return state.leagueMatches.filter(m=> m.p1 && m.p2);
   }
   const matches = [];
@@ -1134,16 +1134,15 @@ function getBettableMatches(){
 function canOpenBetForMatch(match){
   if(!match || !match.p1 || !match.p2) return false;
   if(match.status==='confirmed') return false;
-  if(state.phase==='league' && state.players.length===3) return true;
-  if(state.phase==='knockout') return true;
+  if(state.phase==='league') return true;
+  if(state.phase==='knockout' || state.phase==='playoff') return true;
   return false;
 }
 function getEligibleBettorsForMatch(match){
-  if(state.phase==='league' && state.players.length===3){
-    const rest = state.players.find(p=> p.id!==match.p1 && p.id!==match.p2);
-    return rest ? [rest] : [];
+  if(state.phase==='league'){
+    return state.players.filter(p=> p.id!==match.p1 && p.id!==match.p2);
   }
-  if(state.phase==='knockout'){
+  if(state.phase==='knockout' || state.phase==='playoff'){
     return getNonQualifiedIds().map(id=> findPlayer(id)).filter(Boolean);
   }
   return [];
@@ -1248,15 +1247,16 @@ function openBetForMatchModal(matchId){
 function placeBet(playerId, matchId, pick, stake){
   const bettor = findPlayer(playerId);
   if(!bettor) return 'Apostador no encontrado.';
-  const isThreeLeagueMode = state.phase==='league' && state.players.length===3;
-  if(!isThreeLeagueMode && state.phase!=='knockout') return 'Las apuestas solo se permiten en eliminatorias.';
-  if(!isThreeLeagueMode && getQualifiedIds().includes(playerId)) return 'Solo pueden apostar los jugadores que no clasificaron a eliminatorias.';
-  const match = isThreeLeagueMode
+  const isLeagueMode = state.phase==='league';
+  const isKnockoutMode = state.phase==='knockout' || state.phase==='playoff';
+  if(!isLeagueMode && !isKnockoutMode) return 'Las apuestas solo se permiten en liguilla o eliminatorias.';
+  if(isKnockoutMode && getQualifiedIds().includes(playerId)) return 'Solo pueden apostar los jugadores que no clasificaron a eliminatorias.';
+  const match = isLeagueMode
     ? state.leagueMatches.find(m=> m.id===matchId)
     : getBettableMatches().find(m=> m.id===matchId);
   if(!match) return 'Partido no disponible para apostar.';
-  if(isThreeLeagueMode && (match.p1===playerId || match.p2===playerId)){
-    return 'En liguilla de 3, solo puede apostar el jugador que descansa ese partido.';
+  if(isLeagueMode && (match.p1===playerId || match.p2===playerId)){
+    return 'En liguilla, solo puede apostar un jugador que no participe en ese partido.';
   }
   if(match.status==='confirmed') return 'Ese partido ya está cerrado para apuestas.';
   if(!['home','draw','away'].includes(pick)) return 'Selección de apuesta inválida.';
@@ -1373,9 +1373,10 @@ function acceptReportedResult(match, byId, decisive){
     else match.winner = match.peno1>match.peno2? match.p1: match.p2;
   }
   if(state.phase==='league') registerLeagueMoney(match);
-  if(state.phase==='league' && state.players.length===3) settleBetsForMatch(match);
+  if(state.phase==='league') settleBetsForMatch(match);
   if(state.phase==='knockout' || state.phase==='playoff') settleBetsForMatch(match);
   refreshLeagueAfterConfirmedResult();
+  if(state.phase==='league') currentTab = 'league';
   log(player.name, 'aceptó el resultado '+match.score1+'-'+match.score2+(match.peno1!==null?` (pen. ${match.peno1}-${match.peno2})`:''));
   saveAndRender();
   return null;
@@ -1425,9 +1426,10 @@ function adminOverride(match, score1, score2, peno1, peno2, decisive){
     else match.winner = match.peno1>match.peno2? match.p1: match.p2;
   }
   if(state.phase==='league') registerLeagueMoney(match);
-  if(state.phase==='league' && state.players.length===3) settleBetsForMatch(match);
+  if(state.phase==='league') settleBetsForMatch(match);
   if(state.phase==='knockout' || state.phase==='playoff') settleBetsForMatch(match);
   refreshLeagueAfterConfirmedResult();
+  if(state.phase==='league') currentTab = 'league';
   log('Organizador','resolvió/corrigió el resultado a '+score1+'-'+score2+(match.peno1!==null?` (pen. ${match.peno1}-${match.peno2})`:''));
   saveAndRender();
   return null;
