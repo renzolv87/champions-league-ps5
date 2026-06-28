@@ -639,6 +639,7 @@ let pendingModal = null;
 let remoteEtag = null;
 let pullTimer = null;
 let pushTimer = null;
+let drawUiTimer = null;
 let pushInFlight = false;
 let pushQueued = false;
 let celebrationShownKey = null;
@@ -1135,6 +1136,18 @@ function loadState(){
     pullRemoteState();
     processKnockoutDrawClock();
   }, 1200);
+
+  if(drawUiTimer) clearInterval(drawUiTimer);
+  drawUiTimer = setInterval(()=>{
+    const demoRunning = !!(demoDrawState?.running && pendingModal);
+    const knockoutRunning = !!(currentTab==='knockout' && state?.knockoutDraw?.startedAt && !state.knockoutDraw.complete);
+    if(!demoRunning && !knockoutRunning) return;
+    if(knockoutRunning){
+      const progressed = processKnockoutDrawClock();
+      if(progressed) return;
+    }
+    render();
+  }, 1000);
 }
 function saveState(){
   try{ localStorage.setItem(STATE_KEY, JSON.stringify(state)); }
@@ -2048,13 +2061,17 @@ function revealNextDrawPair(){
 }
 
 function processKnockoutDrawClock(){
-  if(!state?.knockoutDraw || !state.knockoutDraw.startedAt || state.knockoutDraw.complete) return;
+  if(!state?.knockoutDraw || !state.knockoutDraw.startedAt || state.knockoutDraw.complete) return false;
   let changed = false;
   while(state.knockoutDraw.nextRevealAt && Date.now()>=state.knockoutDraw.nextRevealAt){
     if(!revealNextDrawPair()) break;
     changed = true;
   }
-  if(changed) saveAndRender();
+  if(changed){
+    saveAndRender();
+    return true;
+  }
+  return false;
 }
 function propagateBracket(){
   const br = state.bracket;
@@ -2799,11 +2816,14 @@ function renderHero(){
       </div>
       <div class="hero-actions">
         <button type="button" class="hero-guide-btn" id="open-guide">${t('guideButton')}</button>
+        <button type="button" class="hero-guide-btn" id="open-demo-hero">Demo</button>
       </div>
     </div>
   </div>`);
   const guideBtn = h.querySelector('#open-guide');
   if(guideBtn) guideBtn.onclick = ()=> openGuideModal();
+  const demoBtn = h.querySelector('#open-demo-hero');
+  if(demoBtn) demoBtn.onclick = ()=> openDemoSeasonModal();
   return h;
 }
 function phaseLabel(p){
@@ -2811,7 +2831,6 @@ function phaseLabel(p){
 }
 function getVisibleTabs(){
   const tabs = [
-    ['config',t('tabConfig')],
     ['players',t('tabPlayers')]
   ];
   const phaseOrder = ['setup','league','playoff','knockout','finished'];
@@ -2846,33 +2865,11 @@ function renderTabs(){
 }
 function renderTabBody(){
   const body = document.getElementById('tabbody');
-  if(currentTab==='config') body.appendChild(renderConfigTab());
-  else if(currentTab==='players') body.appendChild(renderPlayersTab());
+  if(currentTab==='players') body.appendChild(renderPlayersTab());
   else if(currentTab==='league') body.appendChild(renderLeagueTab());
   else if(currentTab==='knockout') body.appendChild(renderKnockoutTab());
   else if(currentTab==='museum') body.appendChild(renderMuseumTab());
   else if(currentTab==='history') body.appendChild(renderHistoryTab());
-}
-
-/* ---- CONFIG TAB ---- */
-function renderConfigTab(){
-  const wrap = document.createElement('div');
-  const guideCard = el(`<div class="card">
-    <h3>Cómo se juega</h3>
-    <div class="muted" style="margin-bottom:10px;">Todo el apartado de información está centralizado en este popup: reglas, parámetros automáticos y premios.</div>
-    <button id="open-guide-config" class="secondary" type="button">Abrir guía completa</button>
-  </div>`);
-  guideCard.querySelector('#open-guide-config').onclick = ()=> openGuideModal();
-  wrap.appendChild(guideCard);
-
-  const demoCard = el(`<div class="card">
-    <h3>Demo</h3>
-    <div class="muted" style="margin-bottom:10px;">Este botón es exclusivo para generar y ejecutar la demo aleatoria.</div>
-    <button id="open-demo-sector" class="secondary" type="button">Abrir demo aleatoria</button>
-  </div>`);
-  demoCard.querySelector('#open-demo-sector').onclick = ()=> openDemoSeasonModal();
-  wrap.appendChild(demoCard);
-  return wrap;
 }
 
 /* ---- PLAYERS TAB ---- */
