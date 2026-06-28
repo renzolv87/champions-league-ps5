@@ -2351,13 +2351,7 @@ function renderMatchRow(m, decisive){
     <div class="vs"><span>${p1}</span><span>${scoreTxt}</span><span>${p2}</span></div>
     <span class="tag ${m.status}">${({empty:'sin jugar',pending:'pendiente',confirmed:'confirmado',dispute:'disputa'})[m.status]}</span>
   </div>`);
-  const activeId = state.myPlayerId || null;
-  const isParticipant = !!activeId && (activeId===m.p1 || activeId===m.p2);
-  const expectedDecider = m.reportedBy===m.p1 ? m.p2 : (m.reportedBy===m.p2 ? m.p1 : null);
-  const canAct =
-    m.status==='pending'
-      ? !!activeId && activeId===expectedDecider
-      : isParticipant;
+  const canAct = canActOnMatch(m);
 
   if(canAct){
     const btnLabel = m.status==='confirmed' ? 'Corregir' : (m.status==='pending' ? 'Confirmar' : 'Resultado');
@@ -2371,6 +2365,16 @@ function renderMatchRow(m, decisive){
     row.appendChild(betBtn);
   }
   return row;
+}
+
+function canActOnMatch(match){
+  const activeId = state.myPlayerId || null;
+  if(!activeId || !match) return false;
+  if(match.status==='pending'){
+    const expectedDecider = match.reportedBy===match.p1 ? match.p2 : (match.reportedBy===match.p2 ? match.p1 : null);
+    return activeId===expectedDecider;
+  }
+  return activeId===match.p1 || activeId===match.p2;
 }
 
 function ensureTieLeg(tie, idx){
@@ -2528,6 +2532,9 @@ function renderKnockoutTieRow(tie){
 }
 
 function openMatchModal(match, decisive, isAdminEdit){
+  if(!isAdminEdit && match?.status!=='dispute' && !canActOnMatch(match)){
+    return;
+  }
   const disputeText = match.status==='dispute' && match.dispute
     ? (match.dispute.aggregate
       ? 'Empate global tras ida y vuelta. Solo el organizador puede resolverlo.'
