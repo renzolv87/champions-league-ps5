@@ -1638,6 +1638,7 @@ const I18N = {
     guideAudioStop: 'Detener audio',
     guideAudioNotSupported: 'Audio no compatible en este dispositivo',
     waProposalLangLabel: 'Idioma del mensaje de WhatsApp',
+    waProposalConfirmSend: 'Vas a abrir WhatsApp. Idioma del mensaje: {language}. ¿Continuar?',
     waProposalBtn: 'Compartir propuesta por WhatsApp',
     waProposalHint: 'Genera un mensaje con temporada, formato y 3 horarios para votar en el grupo.',
     waProposalNeedPlayers: 'Necesitas al menos 1 jugador para compartir propuesta.',
@@ -1904,6 +1905,7 @@ const I18N = {
     guideAudioStop: 'Stop audio',
     guideAudioNotSupported: 'Audio is not supported on this device',
     waProposalLangLabel: 'WhatsApp message language',
+    waProposalConfirmSend: 'You are about to open WhatsApp. Message language: {language}. Continue?',
     waProposalBtn: 'Share proposal on WhatsApp',
     waProposalHint: 'Builds a message with season details, format and 3 time options to vote in your group.',
     waProposalNeedPlayers: 'You need at least 1 player before sharing a proposal.',
@@ -2170,6 +2172,7 @@ const I18N = {
     guideAudioStop: 'Sustabdyti garsa',
     guideAudioNotSupported: 'Siame irenginyje garso skaitymas nepalaikomas',
     waProposalLangLabel: 'WhatsApp zinutes kalba',
+    waProposalConfirmSend: 'Bus atidaromas WhatsApp. Zinutes kalba: {language}. Testi?',
     waProposalBtn: 'Dalintis pasiulymu per WhatsApp',
     waProposalHint: 'Sukuria zinute su sezono info, formatu ir 3 laiko variantais balsavimui.',
     waProposalNeedPlayers: 'Pries dalinantis pasiulymu reikia bent 1 zaidejo.',
@@ -2436,6 +2439,7 @@ const I18N = {
     guideAudioStop: 'Aturar audio',
     guideAudioNotSupported: 'Audio no compatible en aquest dispositiu',
     waProposalLangLabel: 'Idioma del missatge de WhatsApp',
+    waProposalConfirmSend: 'S obrira WhatsApp. Idioma del missatge: {language}. Vols continuar?',
     waProposalBtn: 'Compartir proposta per WhatsApp',
     waProposalHint: 'Genera un missatge amb temporada, format i 3 horaris per votar al grup.',
     waProposalNeedPlayers: 'Necessites almenys 1 jugador per compartir proposta.',
@@ -2829,11 +2833,17 @@ function proposalKickoffOptions(total=3, messageLang=uiLang()){
     timeZone: tz
   });
   const now = new Date();
+  const base = new Date(now);
+  base.setHours(hh, mm, 0, 0);
+  const baseDay = base.getDate();
   const out = [];
-  for(let i=1;i<=total;i++){
-    const d = new Date(now);
-    d.setDate(d.getDate() + i);
-    d.setHours(hh, mm, 0, 0);
+  for(let i=0;i<total;i++){
+    const d = new Date(base);
+    d.setMinutes(d.getMinutes() + (i * 30));
+    // Keep every option on the same day; if it crosses midnight, clamp to 23:30.
+    if(d.getDate()!==baseDay){
+      d.setHours(23, 30, 0, 0);
+    }
     out.push(fmt.format(d));
   }
   return out;
@@ -2875,7 +2885,16 @@ function openWhatsAppProposal(messageLang = uiLang()){
     alert(t('waProposalNeedPlayers'));
     return;
   }
-  const msg = buildWhatsAppProposalText(messageLang);
+  const lang = normalizeUiLang(messageLang);
+  const langLabels = {
+    es: t('langOptionEs'),
+    en: t('langOptionEn'),
+    lt: t('langOptionLt'),
+    ca: t('langOptionCa')
+  };
+  const confirmed = confirm(tf('waProposalConfirmSend', { language: langLabels[lang] || t('langOptionEs') }));
+  if(!confirmed) return;
+  const msg = buildWhatsAppProposalText(lang);
   const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
   const win = window.open(url, '_blank', 'noopener,noreferrer');
   if(!win) window.location.href = url;
