@@ -48,6 +48,23 @@ h1,h2,h3,.disp{font-family:'Space Grotesk',sans-serif;}
   letter-spacing:.2px;
 }
 .brand-badge .icon{font-size:.85rem;}
+.name-chip-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.name-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  border:1px solid var(--line);
+  background:var(--surface-2);
+  border-radius:999px;
+  padding:5px 10px;
+  font-size:.78rem;
+}
+.name-chip button{
+  padding:2px 6px;
+  font-size:.72rem;
+  border-radius:999px;
+  background:rgba(225,87,76,.2);
+  color:#ffd4d0;
+  border:1px solid rgba(225,87,76,.45);
+}
 
 .stepper{display:flex;gap:6px;margin:14px 0 22px;flex-wrap:wrap;}
 .step{
@@ -219,6 +236,7 @@ const SUPABASE_ROW_ID = 'shared';
 const GAME_NAME = 'Champions League PS5';
 const FUN_DATE_LABEL = 'Dia del Bombazo';
 const PRESET_PLAYER_NAMES = ['renzo','johan','giank','felipe','jordi','ithan','miguel'];
+const PLAYER_CATALOG_KEY = 'cl-ps5-player-catalog-custom';
 const MASTER_RESET_PASSWORD_KEY = 'cl-ps5-master-reset-password';
 const RESTART_SEASON_PASSWORD = '01234';
 let state = null;
@@ -264,6 +282,11 @@ function isEditingField(){
   // No bloqueamos el pull remoto por tener un select enfocado.
   return false;
 }
+function shouldPauseSync(){
+  // En liguilla priorizamos actualización en vivo de la clasificación.
+  if(currentTab==='league') return false;
+  return !!pendingModal || isEditingField();
+}
 function getMasterResetPassword(){
   try{ return localStorage.getItem(MASTER_RESET_PASSWORD_KEY) || ''; }
   catch(_err){ return ''; }
@@ -271,6 +294,45 @@ function getMasterResetPassword(){
 function setMasterResetPassword(value){
   try{ localStorage.setItem(MASTER_RESET_PASSWORD_KEY, value); }
   catch(_err){}
+}
+function getStoredCustomPlayerNames(){
+  try{
+    const raw = localStorage.getItem(PLAYER_CATALOG_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    if(!Array.isArray(parsed)) return [];
+    return parsed
+      .map(n=> normalizePlayerName(n))
+      .filter(Boolean)
+      .filter((n, i, arr)=> arr.indexOf(n)===i)
+      .filter(n=> !PRESET_PLAYER_NAMES.includes(n));
+  }catch(_err){
+    return [];
+  }
+}
+function setStoredCustomPlayerNames(names){
+  try{ localStorage.setItem(PLAYER_CATALOG_KEY, JSON.stringify(names)); }
+  catch(_err){}
+}
+function getPlayerNameCatalog(){
+  return [...PRESET_PLAYER_NAMES, ...getStoredCustomPlayerNames()];
+}
+function addNameToCatalog(name){
+  const clean = normalizePlayerName(name);
+  if(!clean || PRESET_PLAYER_NAMES.includes(clean)) return;
+  const custom = getStoredCustomPlayerNames();
+  if(custom.includes(clean)) return;
+  custom.push(clean);
+  custom.sort((a,b)=> a.localeCompare(b, 'es-ES'));
+  setStoredCustomPlayerNames(custom);
+}
+function removeNameFromCatalog(name){
+  const clean = normalizePlayerName(name);
+  if(!clean || PRESET_PLAYER_NAMES.includes(clean)) return false;
+  const custom = getStoredCustomPlayerNames();
+  const next = custom.filter(n=> n!==clean);
+  if(next.length===custom.length) return false;
+  setStoredCustomPlayerNames(next);
+  return true;
 }
 
 function supabaseHeaders(extra = {}){
@@ -459,7 +521,7 @@ function loadState(){
   pullRemoteState();
   if(pullTimer) clearInterval(pullTimer);
   pullTimer = setInterval(()=>{
-    if(pendingModal || isEditingField()) return;
+    if(shouldPauseSync()) return;
     pullRemoteState();
     processKnockoutDrawClock();
   }, 1200);
@@ -475,7 +537,7 @@ function log(actor, action){
 
 async function pullRemoteState(opts = {}){
   const touchOnNoChange = !!opts.touchOnNoChange;
-  if(pendingModal || isEditingField()) return;
+  if(shouldPauseSync()) return;
   const prevLocal = state;
   const remote = await readRemoteSnapshot();
   if(!remote.ok){
@@ -1853,26 +1915,67 @@ function renderPlayersTab(){
   if(!locked){
     const addRow = el(`<div class="row" style="margin-top:14px;">
       <div>
-        <label>Nombre (listado)</label>
+        <label>Selecciona jugador</label>
         <select id="np-preset"></select>
+        <div class="muted" style="margin-top:-6px;">Tip: pulsa un nombre de la lista rápida para seleccionarlo al instante.</div>
+        <div id="np-chip-list" class="name-chip-list"></div>
       </div>
       <div>
-        <label>Otro nombre (INS)</label>
-        <input id="np-name" placeholder="Escribe un nombre si eliges INS" style="display:none;">
+        <label>Nombre personalizado (INS)</label>
+        <input id="np-name" placeholder="Escribe un nombre nuevo" style="display:none;">
       </div>
     </div>`);
     wrap.appendChild(addRow);
     const presetSel = addRow.querySelector('#np-preset');
     const nameInput = addRow.querySelector('#np-name');
-    PRESET_PLAYER_NAMES.forEach(name=>{
-      presetSel.appendChild(el(`<option value="${name}">${name}</option>`));
-    });
-    presetSel.appendChild(el(`<option value="INS">INS (no está en el listado)</option>`));
+    const chipList = addRow.querySelector('#np-chip-list');
+
+    function populatePresetOptions(selectedValue){
+      presetSel.innerHTML = '';
+      const catalog = getPlayerNameCatalog();
+      catalog.forEach(name=>{
+        presetSel.appendChild(el(`<option value="${name}">${name}</option>`));
+      });
+      presetSel.appendChild(el(`<option value="INS">INS (no está en el listado)</option>`));
+      if(selectedValue && [...presetSel.options].some(o=> o.value===selectedValue)){
+        presetSel.value = selectedValue;
+      }
+    }
+    function renderNameChips(){
+      chipList.innerHTML = '';
+      const customSet = new Set(getStoredCustomPlayerNames());
+      getPlayerNameCatalog().forEach(name=>{
+        const isCustom = customSet.has(name);
+        const chip = el(`<span class="name-chip"><span>${name}</span></span>`);
+        chip.onclick = ()=>{
+          presetSel.value = name;
+          presetSel.onchange();
+        };
+        if(isCustom){
+          const del = el(`<button type="button" title="Eliminar del listado">x</button>`);
+          del.onclick = (ev)=>{
+            ev.stopPropagation();
+            if(!removeNameFromCatalog(name)) return;
+            const nextSelection = presetSel.value===name ? 'INS' : presetSel.value;
+            populatePresetOptions(nextSelection);
+            renderNameChips();
+            presetSel.onchange();
+          };
+          chip.appendChild(del);
+        }
+        chipList.appendChild(chip);
+      });
+    }
+
+    populatePresetOptions();
+    renderNameChips();
+
     presetSel.onchange = ()=>{
       const isIns = presetSel.value==='INS';
       nameInput.style.display = isIns ? '' : 'none';
       if(!isIns) nameInput.value = '';
     };
+    presetSel.onchange();
     const syncInfo = el(`<div class="muted" style="margin-bottom:8px;">Sync remoto: ${state.sync?.mode==='remoto'?'OK':'desconectado'}${state.sync?.lastRemoteAt?` · Última: ${state.sync.lastRemoteAt}`:''}</div>`);
     wrap.appendChild(syncInfo);
     const addBtn = el(`<button>Añadir jugador</button>`);
@@ -1882,7 +1985,10 @@ function renderPlayersTab(){
       if(!name) return;
       const err = await addPlayerShared(name);
       if(err){ alert(err); return; }
+      addNameToCatalog(name);
       if(selected==='INS') nameInput.value = '';
+      populatePresetOptions(selected==='INS' ? name : selected);
+      renderNameChips();
     };
     wrap.appendChild(addBtn);
   }
