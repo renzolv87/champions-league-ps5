@@ -1634,6 +1634,9 @@ const I18N = {
     guidePairingModeSingle: 'liga unica a una vuelta',
     guidePairingModeGroups: 'grupos de tamano aprox. {size}, una vuelta por grupo',
     guideButton: 'Cómo jugar',
+    guideAudioPlay: 'Reproducir audio',
+    guideAudioStop: 'Detener audio',
+    guideAudioNotSupported: 'Audio no compatible en este dispositivo',
     waProposalBtn: 'Compartir propuesta por WhatsApp',
     waProposalHint: 'Genera un mensaje con temporada, formato y 3 horarios para votar en el grupo.',
     waProposalNeedPlayers: 'Necesitas al menos 1 jugador para compartir propuesta.',
@@ -1896,6 +1899,9 @@ const I18N = {
     guidePairingModeSingle: 'single league, one leg',
     guidePairingModeGroups: 'groups of about {size} teams, one leg per group',
     guideButton: 'How to play',
+    guideAudioPlay: 'Play audio',
+    guideAudioStop: 'Stop audio',
+    guideAudioNotSupported: 'Audio is not supported on this device',
     waProposalBtn: 'Share proposal on WhatsApp',
     waProposalHint: 'Builds a message with season details, format and 3 time options to vote in your group.',
     waProposalNeedPlayers: 'You need at least 1 player before sharing a proposal.',
@@ -2158,6 +2164,9 @@ const I18N = {
     guidePairingModeSingle: 'viena lyga, vienas ratas',
     guidePairingModeGroups: 'grupes po mazdaug {size} komandas, vienas ratas grupeje',
     guideButton: 'Kaip zaisti',
+    guideAudioPlay: 'Paleisti garso skaityma',
+    guideAudioStop: 'Sustabdyti garsa',
+    guideAudioNotSupported: 'Siame irenginyje garso skaitymas nepalaikomas',
     waProposalBtn: 'Dalintis pasiulymu per WhatsApp',
     waProposalHint: 'Sukuria zinute su sezono info, formatu ir 3 laiko variantais balsavimui.',
     waProposalNeedPlayers: 'Pries dalinantis pasiulymu reikia bent 1 zaidejo.',
@@ -2420,6 +2429,9 @@ const I18N = {
     guidePairingModeSingle: 'lliga unica a una volta',
     guidePairingModeGroups: 'grups d aprox. {size} equips, una volta per grup',
     guideButton: 'Com jugar',
+    guideAudioPlay: 'Reproduir audio',
+    guideAudioStop: 'Aturar audio',
+    guideAudioNotSupported: 'Audio no compatible en aquest dispositiu',
     waProposalBtn: 'Compartir proposta per WhatsApp',
     waProposalHint: 'Genera un missatge amb temporada, format i 3 horaris per votar al grup.',
     waProposalNeedPlayers: 'Necessites almenys 1 jugador per compartir proposta.',
@@ -2549,7 +2561,10 @@ function openGuideModal(){
     const bg = el(`<div class="modal-bg"><div class="modal guide-modal">
       <span class="close">✕</span>
       <h3>${t('guideTitle')}</h3>
-      <div class="muted" style="line-height:1.6;max-height:72vh;overflow:auto;padding-right:4px;">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin:4px 0 10px;">
+        <button type="button" class="secondary" id="guide-audio-toggle">${t('guideAudioPlay')}</button>
+      </div>
+      <div id="guide-content" class="muted" style="line-height:1.6;max-height:72vh;overflow:auto;padding-right:4px;">
         <p><b>${t('guideObjTitle')}</b><br>${t('guideObjBody')}</p>
 
         <p><b>${t('guideSetupTitle')}</b></p>
@@ -2623,7 +2638,62 @@ function openGuideModal(){
 
       </div>
     </div></div>`);
-    bg.querySelector('.close').onclick = ()=>{ pendingModal=null; render(); };
+    const audioBtn = bg.querySelector('#guide-audio-toggle');
+    const guideContent = bg.querySelector('#guide-content');
+    const canSpeak = typeof window!=='undefined' && 'speechSynthesis' in window && typeof SpeechSynthesisUtterance!=='undefined';
+    let isSpeaking = false;
+    let activeUtterance = null;
+
+    function syncAudioButtonLabel(){
+      if(!audioBtn) return;
+      audioBtn.textContent = isSpeaking ? t('guideAudioStop') : t('guideAudioPlay');
+    }
+
+    if(audioBtn){
+      if(!canSpeak){
+        audioBtn.disabled = true;
+        audioBtn.textContent = t('guideAudioNotSupported');
+      } else {
+        syncAudioButtonLabel();
+        audioBtn.onclick = ()=>{
+          if(isSpeaking){
+            window.speechSynthesis.cancel();
+            isSpeaking = false;
+            activeUtterance = null;
+            syncAudioButtonLabel();
+            return;
+          }
+          const fullText = String(guideContent?.innerText || guideContent?.textContent || '').replace(/\s+/g, ' ').trim();
+          if(!fullText) return;
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(fullText);
+          utterance.lang = uiLocale();
+          utterance.rate = 1;
+          utterance.onend = ()=>{
+            if(activeUtterance!==utterance) return;
+            isSpeaking = false;
+            activeUtterance = null;
+            syncAudioButtonLabel();
+          };
+          utterance.onerror = ()=>{
+            if(activeUtterance!==utterance) return;
+            isSpeaking = false;
+            activeUtterance = null;
+            syncAudioButtonLabel();
+          };
+          activeUtterance = utterance;
+          isSpeaking = true;
+          syncAudioButtonLabel();
+          window.speechSynthesis.speak(utterance);
+        };
+      }
+    }
+
+    bg.querySelector('.close').onclick = ()=>{
+      if(canSpeak) window.speechSynthesis.cancel();
+      pendingModal=null;
+      render();
+    };
     return bg;
   };
   render();
