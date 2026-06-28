@@ -5144,16 +5144,12 @@ function renderLeagueTab(){
   }
 
   // standings
-  const standings = computeStandings();
-  const Q = effectiveNumQualifiers();
+  const qualification = leagueQualificationSnapshot();
+  const Q = qualification.totalQ;
   const pendingWithScore = state.leagueMatches.filter(m=> m.status==='pending' && m.score1!==null && m.score2!==null).length;
   state.config.numQualifiers = Q;
-  const card = el(`<div class="card"><h3>${t('standingsTitle')}</h3><table>
-    <thead><tr><th>#</th><th class="name">Jugador</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>DG</th><th>Pts</th></tr></thead>
-    <tbody id="league-standings-body"></tbody>
-  </table></div>`);
-  const tableBody = card.querySelector('#league-standings-body');
-  const tiedIds = state.phase==='league'? tiedGroupsAtCutoff(standings,Q) : [];
+  const card = el(`<div class="card"><h3>${t('standingsTitle')}</h3></div>`);
+  const tiedIds = state.phase==='league' ? unresolvedQualificationTieIds(qualification) : [];
 
   function appendCell(row, value, cls){
     const td = document.createElement('td');
@@ -5163,39 +5159,55 @@ function renderLeagueTab(){
     return td;
   }
 
-  standings.forEach((s,i)=>{
-    const name = (s?.name || '').trim() || 'Jugador';
-    const displayName = s?.id ? playerDisplayName(s.id) : name;
-    const pj = Number.isFinite(Number(s?.pj)) ? Number(s.pj) : 0;
-    const g = Number.isFinite(Number(s?.g)) ? Number(s.g) : 0;
-    const e = Number.isFinite(Number(s?.e)) ? Number(s.e) : 0;
-    const p = Number.isFinite(Number(s?.p)) ? Number(s.p) : 0;
-    const dg = Number.isFinite(Number(s?.dg)) ? Number(s.dg) : 0;
-    const pts = Number.isFinite(Number(s?.pts)) ? Number(s.pts) : 0;
-    const tr = document.createElement('tr');
-    if(i<Q) tr.classList.add('qual');
-    if(tiedIds.includes(s.id)) tr.classList.add('tied');
-    appendCell(tr, i+1);
-    appendCell(tr, displayName, 'name');
-    appendCell(tr, pj);
-    appendCell(tr, g);
-    appendCell(tr, e);
-    appendCell(tr, p);
-    appendCell(tr, `${dg>0?'+':''}${dg}`);
-    const ptsCell = appendCell(tr, pts);
-    ptsCell.style.fontWeight = '700';
-    tableBody.appendChild(tr);
+  qualification.groups.forEach((group, groupIdx)=>{
+    if(qualification.groupMode){
+      const slotsLabel = ` · ${group.slots} clasifica${group.slots===1?'':'n'}`;
+      card.appendChild(el(`<div class="muted" style="margin:${groupIdx?12:2}px 0 6px;font-weight:800;">${group.name}${slotsLabel}</div>`));
+    }
+    const tableWrap = el(`<table>
+      <thead><tr><th>#</th><th class="name">Jugador</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>DG</th><th>Pts</th></tr></thead>
+      <tbody></tbody>
+    </table>`);
+    const tableBody = tableWrap.querySelector('tbody');
+    group.standings.forEach((s,i)=>{
+      const name = (s?.name || '').trim() || 'Jugador';
+      const displayName = s?.id ? playerDisplayName(s.id) : name;
+      const pj = Number.isFinite(Number(s?.pj)) ? Number(s.pj) : 0;
+      const g = Number.isFinite(Number(s?.g)) ? Number(s.g) : 0;
+      const e = Number.isFinite(Number(s?.e)) ? Number(s.e) : 0;
+      const p = Number.isFinite(Number(s?.p)) ? Number(s.p) : 0;
+      const dg = Number.isFinite(Number(s?.dg)) ? Number(s.dg) : 0;
+      const pts = Number.isFinite(Number(s?.pts)) ? Number(s.pts) : 0;
+      const tr = document.createElement('tr');
+      if(i<group.slots) tr.classList.add('qual');
+      if(tiedIds.includes(s.id)) tr.classList.add('tied');
+      appendCell(tr, i+1);
+      appendCell(tr, displayName, 'name');
+      appendCell(tr, pj);
+      appendCell(tr, g);
+      appendCell(tr, e);
+      appendCell(tr, p);
+      appendCell(tr, `${dg>0?'+':''}${dg}`);
+      const ptsCell = appendCell(tr, pts);
+      ptsCell.style.fontWeight = '700';
+      tableBody.appendChild(tr);
+    });
+    if(!group.standings.length){
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 8;
+      td.className = 'muted';
+      td.textContent = t('standingsNoData');
+      tr.appendChild(td);
+      tableBody.appendChild(tr);
+    }
+    card.appendChild(tableWrap);
   });
-  if(!standings.length){
-    const tr = document.createElement('tr');
-    const td = document.createElement('td');
-    td.colSpan = 8;
-    td.className = 'muted';
-    td.textContent = t('standingsNoData');
-    tr.appendChild(td);
-    tableBody.appendChild(tr);
-  }
-  card.appendChild(el(`<div class="muted" style="margin-top:8px;">${tf('standingsQualifiedTop',{count:Q})}</div>`));
+
+  const split = qualification.groupMode
+    ? ` · ${qualification.groups.map(g=> `${g.name}: ${g.slots}`).join(' · ')}`
+    : '';
+  card.appendChild(el(`<div class="muted" style="margin-top:8px;">${tf('standingsQualifiedTop',{count:Q})}${split}</div>`));
   if(pendingWithScore>0){
     card.appendChild(el(`<div class="muted" style="margin-top:6px;">${tf('standingsProvisional',{count:pendingWithScore})}</div>`));
   }
@@ -5249,12 +5261,26 @@ function renderLeagueTab(){
     const closeCard = el(`<div class="card"><h3>${t('leagueCalendarTitle')}</h3></div>`);
     closeCard.appendChild(el(`<div class="muted" style="margin-bottom:8px;">${t('antiCheatBanner')}</div>`));
     const ml = el(`<div class="matchlist"></div>`);
-    const byRound = {};
-    state.leagueMatches.forEach(m=> (byRound[m.round]=byRound[m.round]||[]).push(m));
-    Object.keys(byRound).sort((a,b)=>a-b).forEach(r=>{
-      ml.appendChild(el(`<div class="muted" style="margin:10px 0 4px;font-weight:700;">Jornada ${r}</div>`));
-      byRound[r].forEach(m=> ml.appendChild(renderMatchRow(m, false)));
-    });
+    if(qualification.groupMode){
+      qualification.groups.forEach(group=>{
+        const groupMatches = state.leagueMatches.filter(m=> m.group===group.id);
+        if(!groupMatches.length) return;
+        ml.appendChild(el(`<div class="muted" style="margin:10px 0 4px;font-weight:800;">${group.name}</div>`));
+        const byRound = {};
+        groupMatches.forEach(m=> (byRound[m.round]=byRound[m.round]||[]).push(m));
+        Object.keys(byRound).sort((a,b)=>a-b).forEach(r=>{
+          ml.appendChild(el(`<div class="muted" style="margin:8px 0 4px;font-weight:700;">Jornada ${r}</div>`));
+          byRound[r].forEach(m=> ml.appendChild(renderMatchRow(m, false)));
+        });
+      });
+    } else {
+      const byRound = {};
+      state.leagueMatches.forEach(m=> (byRound[m.round]=byRound[m.round]||[]).push(m));
+      Object.keys(byRound).sort((a,b)=>a-b).forEach(r=>{
+        ml.appendChild(el(`<div class="muted" style="margin:10px 0 4px;font-weight:700;">Jornada ${r}</div>`));
+        byRound[r].forEach(m=> ml.appendChild(renderMatchRow(m, false)));
+      });
+    }
     closeCard.appendChild(ml);
     wrap.appendChild(closeCard);
 
@@ -5269,7 +5295,16 @@ function renderLeagueTab(){
   } else {
     const ml = el(`<div class="card"><h3>${t('leagueResultsTitle')}</h3><div class="matchlist"></div></div>`);
     const list = ml.querySelector('.matchlist');
-    state.leagueMatches.forEach(m=> list.appendChild(renderMatchRow(m,false)));
+    if(qualification.groupMode){
+      qualification.groups.forEach(group=>{
+        const groupMatches = state.leagueMatches.filter(m=> m.group===group.id);
+        if(!groupMatches.length) return;
+        list.appendChild(el(`<div class="muted" style="margin:8px 0 4px;font-weight:800;">${group.name}</div>`));
+        groupMatches.forEach(m=> list.appendChild(renderMatchRow(m,false)));
+      });
+    } else {
+      state.leagueMatches.forEach(m=> list.appendChild(renderMatchRow(m,false)));
+    }
     wrap.appendChild(ml);
   }
 
