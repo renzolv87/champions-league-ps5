@@ -177,6 +177,7 @@ tr.tied td{outline:1px dashed var(--bad);outline-offset:-1px;}
 .player-tile-name{font-weight:700;font-size:.9rem;text-transform:capitalize;}
 .player-tile-meta{margin-top:4px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.78rem;color:var(--text-dim);}
 .player-tile-badge{font-size:.68rem;font-weight:700;color:#1a1200;background:var(--gold);border-radius:999px;padding:2px 7px;}
+.player-tile-actions{display:flex;gap:6px;align-items:center;}
 
 .add-player-panel{background:radial-gradient(800px 180px at 0% 0%,rgba(91,61,245,.14),transparent 60%),var(--surface);}
 .catalog-wrap{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 6px;}
@@ -817,6 +818,70 @@ async function addPlayerShared(name){
     pullRemoteState();
     return null;
   }
+  if(hadReadIssue) return 'Sin conexión estable al servidor compartido. Se guardó local y se intentará sincronizar solo.';
+  return 'Hubo muchos cambios simultáneos en otros dispositivos. Vuelve a intentarlo.';
+}
+
+async function removePlayerShared(playerId){
+  if(!playerId) return 'Jugador inválido.';
+  let hadReadIssue = false;
+
+  for(let attempt=0; attempt<10; attempt++){
+    let remoteState = null;
+    let etag = null;
+    const snapshot = await readRemoteSnapshot();
+    if(!snapshot.ok){
+      hadReadIssue = true;
+      state.sync.mode = 'local';
+      state.sync.lastError = 'Sin conexión remota. Intentando guardar igualmente...';
+      remoteState = JSON.parse(JSON.stringify(state || defaultState()));
+      etag = remoteEtag || null;
+    } else {
+      remoteState = snapshot.state || null;
+      etag = snapshot.etag ?? null;
+    }
+
+    const nextState = migrateStateShape(remoteState ? JSON.parse(JSON.stringify(remoteState)) : defaultState());
+    if(nextState.phase!=='setup') return 'Solo puedes borrar jugadores antes de iniciar la liguilla.';
+
+    const idx = nextState.players.findIndex(p=> p.id===playerId);
+    if(idx<0) return 'Ese jugador ya no existe.';
+    const removed = nextState.players[idx];
+
+    nextState.players.splice(idx, 1);
+    if(nextState.finance?.lifetimeByPlayer) delete nextState.finance.lifetimeByPlayer[playerId];
+    if(nextState.myPlayerId===playerId) nextState.myPlayerId = null;
+    if(nextState.tieResolution && typeof nextState.tieResolution==='object') delete nextState.tieResolution[playerId];
+    if(nextState.bets?.tickets) nextState.bets.tickets = nextState.bets.tickets.filter(t=> t.playerId!==playerId);
+    nextState.history = nextState.history || [];
+    nextState.history.unshift({ts: nowStr(), actor:'Organizador', action:'eliminó a '+(removed?.name || 'jugador')+' de la plantilla.'});
+
+    const saved = await writeRemoteSnapshot(stateForRemote(nextState), etag);
+    if(saved.status===409){
+      await wait(80 + Math.floor(Math.random()*120));
+      continue;
+    }
+    if(!saved.ok){
+      state = migrateStateShape(nextState);
+      state.sync.mode = 'local';
+      state.sync.lastError = 'Guardado local temporal. Se sincronizará cuando vuelva la conexión remota.';
+      localStorage.setItem(STATE_KEY, JSON.stringify(state));
+      queueRemotePush();
+      render();
+      return null;
+    }
+
+    state = migrateStateShape(nextState);
+    remoteEtag = typeof saved.etag==='number' ? saved.etag : etag;
+    state.sync.mode = 'remoto';
+    state.sync.lastRemoteAt = nowStr();
+    state.sync.lastError = null;
+    localStorage.setItem(STATE_KEY, JSON.stringify(state));
+    render();
+    pullRemoteState();
+    return null;
+  }
+
   if(hadReadIssue) return 'Sin conexión estable al servidor compartido. Se guardó local y se intentará sincronizar solo.';
   return 'Hubo muchos cambios simultáneos en otros dispositivos. Vuelve a intentarlo.';
 }
@@ -2029,9 +2094,20 @@ function renderPlayersTab(){
       <div class="player-tile-name">${p.name}</div>
       <div class="player-tile-meta">
         <span>${fmtMoney(totalMoney)}</span>
-        ${isMine?'<span class="player-tile-badge">Tu jugador</span>':''}
+        <span class="player-tile-actions">${isMine?'<span class="player-tile-badge">Tu jugador</span>':''}${!locked?'<button class="small danger" type="button">Borrar</button>':''}</span>
       </div>
     </div>`);
+    if(!locked){
+      const delBtn = tile.querySelector('button.danger');
+      if(delBtn){
+        delBtn.onclick = async ()=>{
+          const ok = confirm(`¿Borrar a ${p.name} de la plantilla?`);
+          if(!ok) return;
+          const err = await removePlayerShared(p.id);
+          if(err) alert(err);
+        };
+      }
+    }
     plist.appendChild(tile);
   });
   if(!state.players.length) plist.appendChild(el(`<div class="muted">Todavía no hay jugadores.</div>`));
