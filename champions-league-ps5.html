@@ -2671,11 +2671,129 @@ function openGuideModal(){
     const guideContent = bg.querySelector('#guide-content');
     const canSpeak = typeof window!=='undefined' && 'speechSynthesis' in window && typeof SpeechSynthesisUtterance!=='undefined';
     let isSpeaking = false;
-    let activeUtterance = null;
+    let speakSessionId = 0;
 
     function syncAudioButtonLabel(){
       if(!audioBtn) return;
       audioBtn.textContent = isSpeaking ? t('guideAudioStop') : t('guideAudioPlay');
+    }
+
+    function cleanSpeechText(raw){
+      return String(raw || '')
+        .replace(/[•]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .replace(/\s([,.:;!?])/g, '$1')
+        .replace(/\(\s*/g, '(')
+        .replace(/\s*\)/g, ')')
+        .trim();
+    }
+
+    function splitSpeechChunks(text){
+      const chunks = [];
+      text
+        .split(/\n+/)
+        .map(part=> cleanSpeechText(part))
+        .filter(Boolean)
+        .forEach(part=>{
+          const sentences = part.split(/(?<=[.!?])\s+/).map(s=> cleanSpeechText(s)).filter(Boolean);
+          if(!sentences.length){
+            chunks.push(part);
+            return;
+          }
+          let current = '';
+          sentences.forEach(s=>{
+            const candidate = current ? `${current} ${s}` : s;
+            if(candidate.length>190){
+              if(current) chunks.push(current);
+              current = s;
+            } else {
+              current = candidate;
+            }
+          });
+          if(current) chunks.push(current);
+        });
+      return chunks;
+    }
+
+    function preferredVoiceForLang(targetLang){
+      const synth = window.speechSynthesis;
+      const voices = synth.getVoices ? synth.getVoices() : [];
+      if(!voices.length) return null;
+      const lc = String(targetLang || '').toLowerCase();
+      const short = lc.split('-')[0];
+      const strong = voices.filter(v=> String(v.lang || '').toLowerCase().startsWith(short));
+      const preferredName = {
+        es: ['monica','jorge','paulina','es-'],
+        en: ['samantha','daniel','serena','en-'],
+        lt: ['lt-','lithuan'],
+        ca: ['ca-','catalan','montserrat']
+      }[short] || [];
+      const ranked = strong.length ? strong : voices;
+      for(const hint of preferredName){
+        const found = ranked.find(v=> String(v.name || '').toLowerCase().includes(hint));
+        if(found) return found;
+      }
+      return ranked[0] || null;
+    }
+
+    function prosodyForLang(targetLang){
+      const short = String(targetLang || '').toLowerCase().split('-')[0];
+      if(short==='es') return {rate: 0.94, pitch: 1.02};
+      if(short==='ca') return {rate: 0.95, pitch: 1.03};
+      if(short==='lt') return {rate: 0.92, pitch: 1.0};
+      return {rate: 0.96, pitch: 1.0};
+    }
+
+    function stopSpeech(){
+      if(!canSpeak) return;
+      speakSessionId += 1;
+      window.speechSynthesis.cancel();
+      isSpeaking = false;
+      syncAudioButtonLabel();
+    }
+
+    function speakGuideNaturally(){
+      if(!canSpeak) return;
+      const langTag = uiLocale();
+      const raw = String(guideContent?.innerText || guideContent?.textContent || '');
+      const chunks = splitSpeechChunks(raw);
+      if(!chunks.length) return;
+
+      stopSpeech();
+      const sessionId = speakSessionId;
+      isSpeaking = true;
+      syncAudioButtonLabel();
+
+      const chosenVoice = preferredVoiceForLang(langTag);
+      const prosody = prosodyForLang(langTag);
+      let idx = 0;
+
+      const speakNext = ()=>{
+        if(sessionId!==speakSessionId) return;
+        if(idx>=chunks.length){
+          isSpeaking = false;
+          syncAudioButtonLabel();
+          return;
+        }
+        const text = chunks[idx++];
+        const utt = new SpeechSynthesisUtterance(text);
+        utt.lang = langTag;
+        utt.rate = prosody.rate;
+        utt.pitch = prosody.pitch;
+        if(chosenVoice) utt.voice = chosenVoice;
+        utt.onend = ()=>{
+          if(sessionId!==speakSessionId) return;
+          setTimeout(speakNext, 80);
+        };
+        utt.onerror = ()=>{
+          if(sessionId!==speakSessionId) return;
+          isSpeaking = false;
+          syncAudioButtonLabel();
+        };
+        window.speechSynthesis.speak(utt);
+      };
+
+      speakNext();
     }
 
     if(audioBtn){
@@ -2685,41 +2803,17 @@ function openGuideModal(){
       } else {
         syncAudioButtonLabel();
         audioBtn.onclick = ()=>{
-          if(isSpeaking){
-            window.speechSynthesis.cancel();
-            isSpeaking = false;
-            activeUtterance = null;
-            syncAudioButtonLabel();
-            return;
-          }
-          const fullText = String(guideContent?.innerText || guideContent?.textContent || '').replace(/\s+/g, ' ').trim();
-          if(!fullText) return;
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(fullText);
-          utterance.lang = uiLocale();
-          utterance.rate = 1;
-          utterance.onend = ()=>{
-            if(activeUtterance!==utterance) return;
-            isSpeaking = false;
-            activeUtterance = null;
-            syncAudioButtonLabel();
-          };
-          utterance.onerror = ()=>{
-            if(activeUtterance!==utterance) return;
-            isSpeaking = false;
-            activeUtterance = null;
-            syncAudioButtonLabel();
-          };
-          activeUtterance = utterance;
-          isSpeaking = true;
-          syncAudioButtonLabel();
-          window.speechSynthesis.speak(utterance);
+          if(isSpeaking){ stopSpeech(); return; }
+          speakGuideNaturally();
         };
+        if(typeof window.speechSynthesis.onvoiceschanged!=='undefined'){
+          window.speechSynthesis.onvoiceschanged = ()=>{};
+        }
       }
     }
 
     bg.querySelector('.close').onclick = ()=>{
-      if(canSpeak) window.speechSynthesis.cancel();
+      if(canSpeak) stopSpeech();
       pendingModal=null;
       render();
     };
