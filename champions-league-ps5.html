@@ -246,6 +246,19 @@ tr.tied td{outline:1px dashed var(--bad);outline-offset:-1px;}
 .modal h3{margin-top:0;}
 .modal .close{float:right;cursor:pointer;color:var(--text-dim);font-size:1.1rem;}
 .modal.result-modal{max-width:560px;}
+.modal.demo-modal{max-width:min(960px,95vw);}
+
+.demo-summary{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.demo-pill{font-size:.72rem;font-weight:700;border:1px solid var(--line);border-radius:999px;padding:5px 10px;background:var(--surface-2);}
+.demo-grid{display:grid;grid-template-columns:1fr;gap:12px;max-height:70vh;overflow:auto;padding-right:2px;}
+.demo-box{border:1px solid var(--line);border-radius:12px;padding:10px;background:rgba(30,37,80,.4);}
+.demo-box h4{margin:0 0 8px;font-size:.85rem;color:var(--gold);text-transform:uppercase;letter-spacing:.4px;}
+.demo-list{display:flex;flex-direction:column;gap:6px;}
+.demo-line{display:flex;justify-content:space-between;gap:8px;font-size:.82rem;background:rgba(11,16,38,.45);padding:7px 8px;border:1px solid #303873;border-radius:8px;}
+
+@media (min-width:860px){
+  .demo-grid{grid-template-columns:1.1fr .9fr;}
+}
 
 .result-entry{display:flex;flex-direction:column;gap:12px;}
 .result-scoreboard{
@@ -332,11 +345,182 @@ const SUPABASE_ANON_KEY = 'sb_publishable_r3PAKQSOk2h8DmVeGmSOIg_lKLi8v8F';
 const SUPABASE_TABLE = 'tournament_state';
 const SUPABASE_ROW_ID = 'shared';
 const GAME_NAME = 'Champions League PS5';
-const FUN_DATE_LABEL = 'Dia del Bombazo';
+const UI_LANG_KEY = 'cl-ps5-ui-lang';
+const SUPPORTED_UI_LANGS = ['es','en','lt','ca'];
 const PRESET_PLAYER_NAMES = ['renzo','johan','giank','felipe','jordi','ithan','miguel'];
 const PLAYER_CATALOG_KEY = 'cl-ps5-player-catalog-custom';
 const MASTER_RESET_PASSWORD_KEY = 'cl-ps5-master-reset-password';
 const RESTART_SEASON_PASSWORD = '01234';
+const I18N = {
+  es: {
+    seasonStartLabel: 'Inicio de campaña',
+    phaseWord: 'fase',
+    syncWord: 'sync',
+    syncRemote: 'sincronizado',
+    syncLocal: 'solo local',
+    playersSingular: 'jugador',
+    playersPlural: 'jugadores',
+    tabConfig: 'Configuración',
+    tabPlayers: 'Jugadores',
+    tabLeague: 'Liguilla',
+    tabKnockout: 'Eliminatorias',
+    tabMuseum: 'Museo',
+    tabHistory: 'Historial',
+    phaseSetup: 'configuración',
+    phaseLeague: 'liguilla',
+    phasePlayoff: 'play-off',
+    phaseKnockout: 'eliminatorias',
+    phaseFinished: 'finalizado',
+    playersHint: 'Selecciona tu jugador activo al añadirlo desde este dispositivo.',
+    noPlayersYet: 'Todavía no hay jugadores.',
+    yourPlayer: 'Tu jugador',
+    deletePlayer: 'Borrar',
+    addPlayerTitle: 'Añadir jugador',
+    addPlayerHint: 'Toca un nombre sugerido o usa INS para crear uno nuevo.',
+    insNew: 'INS (nuevo)',
+    newNamePlaceholder: 'Escribe un nombre nuevo',
+    addNow: 'Añadir ahora',
+    chooseLanguage: 'Idioma del juego en este dispositivo',
+    syncStatusPrefix: 'Sync remoto',
+    syncOk: 'OK',
+    disconnected: 'desconectado',
+    lastSync: 'Última',
+    alreadyRegisteredInfo: 'Ya registraste tu jugador en este dispositivo. El resto de jugadores debe añadirse de forma colaborativa desde sus propios dispositivos.',
+    startLeague: 'Iniciar liguilla / torneo',
+    setupLockedInfo: 'La temporada ya está en curso. Este botón se habilita cuando la fase vuelva a configuración.',
+    needTwoPlayers: 'Añade al menos 2 jugadores para iniciar la liguilla.',
+    langOptionEs: 'Español',
+    langOptionEn: 'Inglés',
+    langOptionLt: 'Lituano',
+    langOptionCa: 'Catalán'
+  },
+  en: {
+    seasonStartLabel: 'Season kickoff',
+    phaseWord: 'phase',
+    syncWord: 'sync',
+    syncRemote: 'synced',
+    syncLocal: 'local only',
+    playersSingular: 'player',
+    playersPlural: 'players',
+    tabConfig: 'Settings',
+    tabPlayers: 'Players',
+    tabLeague: 'League',
+    tabKnockout: 'Knockout',
+    tabMuseum: 'Museum',
+    tabHistory: 'History',
+    phaseSetup: 'setup',
+    phaseLeague: 'league',
+    phasePlayoff: 'play-off',
+    phaseKnockout: 'knockout',
+    phaseFinished: 'finished',
+    playersHint: 'Pick your active player when adding from this device.',
+    noPlayersYet: 'No players yet.',
+    yourPlayer: 'Your player',
+    deletePlayer: 'Delete',
+    addPlayerTitle: 'Add player',
+    addPlayerHint: 'Tap a suggested name or use INS to create a new one.',
+    insNew: 'INS (new)',
+    newNamePlaceholder: 'Type a new name',
+    addNow: 'Add now',
+    chooseLanguage: 'Game language on this device',
+    syncStatusPrefix: 'Remote sync',
+    syncOk: 'OK',
+    disconnected: 'offline',
+    lastSync: 'Last',
+    alreadyRegisteredInfo: 'You already registered your player on this device. The rest must be added collaboratively from their own devices.',
+    startLeague: 'Start league / tournament',
+    setupLockedInfo: 'Season is already in progress. This button is enabled again when the phase returns to setup.',
+    needTwoPlayers: 'Add at least 2 players to start the league.',
+    langOptionEs: 'Spanish',
+    langOptionEn: 'English',
+    langOptionLt: 'Lithuanian',
+    langOptionCa: 'Catalan'
+  },
+  lt: {
+    seasonStartLabel: 'Sezono startas',
+    phaseWord: 'etapas',
+    syncWord: 'sinch.',
+    syncRemote: 'sinchronizuota',
+    syncLocal: 'tik vietoje',
+    playersSingular: 'zaidejas',
+    playersPlural: 'zaidejai',
+    tabConfig: 'Nustatymai',
+    tabPlayers: 'Zaidejai',
+    tabLeague: 'Lyga',
+    tabKnockout: 'Atkrintamosios',
+    tabMuseum: 'Muziejus',
+    tabHistory: 'Istorija',
+    phaseSetup: 'nustatymai',
+    phaseLeague: 'lyga',
+    phasePlayoff: 'atkrint. etapas',
+    phaseKnockout: 'atkrintamosios',
+    phaseFinished: 'baigta',
+    playersHint: 'Pridedant is sio irenginio pasirink savo aktyvu zaideja.',
+    noPlayersYet: 'Zaideju dar nera.',
+    yourPlayer: 'Tavo zaidejas',
+    deletePlayer: 'Trinti',
+    addPlayerTitle: 'Prideti zaideja',
+    addPlayerHint: 'Spausk siuloma varda arba rinkis INS naujam vardui.',
+    insNew: 'INS (naujas)',
+    newNamePlaceholder: 'Ivesk nauja varda',
+    addNow: 'Prideti dabar',
+    chooseLanguage: 'Zaidimo kalba siame irenginyje',
+    syncStatusPrefix: 'Nuotoline sinch.',
+    syncOk: 'OK',
+    disconnected: 'atsijungta',
+    lastSync: 'Paskutinis',
+    alreadyRegisteredInfo: 'Siame irenginyje jau uzregistravai savo zaideja. Kitus zaidejus reikia prideti is ju irenginiu.',
+    startLeague: 'Pradeti lyga / turnyra',
+    setupLockedInfo: 'Sezonas jau vyksta. Mygtukas vel bus aktyvus, kai faze griz i nustatymus.',
+    needTwoPlayers: 'Pridek bent 2 zaidejus, kad paleistum lyga.',
+    langOptionEs: 'Ispanu',
+    langOptionEn: 'Anglu',
+    langOptionLt: 'Lietuviu',
+    langOptionCa: 'Katalonu'
+  },
+  ca: {
+    seasonStartLabel: 'Inici de campanya',
+    phaseWord: 'fase',
+    syncWord: 'sync',
+    syncRemote: 'sincronitzat',
+    syncLocal: 'nomes local',
+    playersSingular: 'jugador',
+    playersPlural: 'jugadors',
+    tabConfig: 'Configuracio',
+    tabPlayers: 'Jugadors',
+    tabLeague: 'Lligueta',
+    tabKnockout: 'Eliminatories',
+    tabMuseum: 'Museu',
+    tabHistory: 'Historial',
+    phaseSetup: 'configuracio',
+    phaseLeague: 'lligueta',
+    phasePlayoff: 'play-off',
+    phaseKnockout: 'eliminatories',
+    phaseFinished: 'finalitzat',
+    playersHint: 'Selecciona el teu jugador actiu quan l\'afegeixis des d\'aquest dispositiu.',
+    noPlayersYet: 'Encara no hi ha jugadors.',
+    yourPlayer: 'El teu jugador',
+    deletePlayer: 'Esborrar',
+    addPlayerTitle: 'Afegir jugador',
+    addPlayerHint: 'Toca un nom suggerit o fes servir INS per crear-ne un de nou.',
+    insNew: 'INS (nou)',
+    newNamePlaceholder: 'Escriu un nom nou',
+    addNow: 'Afegir ara',
+    chooseLanguage: 'Idioma del joc en aquest dispositiu',
+    syncStatusPrefix: 'Sync remot',
+    syncOk: 'OK',
+    disconnected: 'desconnectat',
+    lastSync: 'Ultima',
+    alreadyRegisteredInfo: 'Ja has registrat el teu jugador en aquest dispositiu. La resta de jugadors s\'han d\'afegir de manera colaborativa des dels seus dispositius.',
+    startLeague: 'Iniciar lligueta / torneig',
+    setupLockedInfo: 'La temporada ja esta en curs. Aquest boto s\'habilita quan la fase torni a configuracio.',
+    needTwoPlayers: 'Afegeix almenys 2 jugadors per iniciar la lligueta.',
+    langOptionEs: 'Espanyol',
+    langOptionEn: 'Angles',
+    langOptionLt: 'Lituà',
+    langOptionCa: 'Català'
+  }
+};
 let state = null;
 let currentTab = 'config';
 let pendingModal = null;
@@ -347,9 +531,30 @@ let pushInFlight = false;
 let pushQueued = false;
 
 function uid(){ return Math.random().toString(36).slice(2,10); }
-function nowStr(){ const d=new Date(); return d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); }
-function dayStr(){ return new Date().toLocaleDateString('es-ES'); }
-function seasonDateText(dateValue){ return dateValue ? `${FUN_DATE_LABEL}: ${dateValue}` : `${FUN_DATE_LABEL}: —`; }
+function normalizeUiLang(lang){
+  const v = String(lang || '').trim().toLowerCase();
+  return SUPPORTED_UI_LANGS.includes(v) ? v : 'es';
+}
+function persistedUiLang(){
+  try{ return normalizeUiLang(localStorage.getItem(UI_LANG_KEY) || 'es'); }
+  catch(_err){ return 'es'; }
+}
+function uiLang(){ return normalizeUiLang(state?.uiLang || persistedUiLang()); }
+function uiLocale(){ return ({es:'es-ES', en:'en-GB', lt:'lt-LT', ca:'ca-ES'})[uiLang()] || 'es-ES'; }
+function t(key){
+  const lang = uiLang();
+  return I18N[lang]?.[key] || I18N.es[key] || key;
+}
+function setUiLang(lang){
+  const next = normalizeUiLang(lang);
+  if(state) state.uiLang = next;
+  try{ localStorage.setItem(UI_LANG_KEY, next); }
+  catch(_err){}
+  document.documentElement.lang = next;
+}
+function nowStr(){ const d=new Date(); return d.toLocaleDateString(uiLocale())+' '+d.toLocaleTimeString(uiLocale(),{hour:'2-digit',minute:'2-digit'}); }
+function dayStr(){ return new Date().toLocaleDateString(uiLocale()); }
+function seasonDateText(dateValue){ return dateValue ? `${t('seasonStartLabel')}: ${dateValue}` : `${t('seasonStartLabel')}: —`; }
 function normalizePlayerName(name){ return (name||'').trim().toLocaleLowerCase('es-ES'); }
 function basePlayerName(name){
   const n = normalizePlayerName(name);
@@ -454,15 +659,17 @@ function supabaseApi(path){
 function stateForRemote(s){
   const clone = JSON.parse(JSON.stringify(s || {}));
   delete clone.myPlayerId;
+  delete clone.uiLang;
   return clone;
 }
 
 function preserveLocalMyPlayer(prevState, nextState){
   const localId = prevState?.myPlayerId || null;
-  if(!localId) return nextState;
-  if(Array.isArray(nextState?.players) && nextState.players.some(p=> p.id===localId)){
+  const localLang = normalizeUiLang(prevState?.uiLang || persistedUiLang());
+  if(localId && Array.isArray(nextState?.players) && nextState.players.some(p=> p.id===localId)){
     nextState.myPlayerId = localId;
   }
+  nextState.uiLang = localLang;
   return nextState;
 }
 
@@ -561,6 +768,7 @@ function defaultState(){
     knockoutDraw: null, // { pairings:[[id,id],...], revealed:number, startedAt:number|null, nextRevealAt:number|null, complete:boolean }
     champion: null,
     myPlayerId: null,
+    uiLang: persistedUiLang(),
     finance: {
       applied: {},
       lifetimeByPlayer: {},
@@ -602,6 +810,8 @@ function loadState(){
   if(!state.finance.lifetimeByPlayer) state.finance.lifetimeByPlayer = {};
   if(!state.sync) state.sync = defaultState().sync;
   if(!state.seasonKickoff) state.seasonKickoff = null;
+  state.uiLang = normalizeUiLang(state.uiLang || persistedUiLang());
+  setUiLang(state.uiLang);
   if(!state.season || state.season==='Champions PS5') state.season = GAME_NAME+' - T1';
   state.players.forEach(p=>{
     p.name = normalizePlayerName(p.name);
@@ -749,6 +959,8 @@ function migrateStateShape(s){
   if(!s.sync) s.sync = defaultState().sync;
   if(!s.seasonKickoff) s.seasonKickoff = null;
   if(typeof s.myPlayerId==='undefined') s.myPlayerId = null;
+  if(typeof s.uiLang==='undefined') s.uiLang = persistedUiLang();
+  s.uiLang = normalizeUiLang(s.uiLang);
   if(typeof s.champion==='undefined') s.champion = null;
   if(typeof s.qualifiers==='undefined') s.qualifiers = null;
   if(typeof s.leagueTieBreaker==='undefined') s.leagueTieBreaker = null;
@@ -763,9 +975,13 @@ function migrateStateShape(s){
   return s;
 }
 
-async function addPlayerShared(name){
+async function addPlayerShared(name, preferredLang){
   const clean = normalizePlayerName(name);
+  const chosenLang = normalizeUiLang(preferredLang || state?.uiLang || persistedUiLang());
   if(!clean) return 'Nombre inválido.';
+  if(state?.myPlayerId && Array.isArray(state?.players) && state.players.some(p=> p.id===state.myPlayerId)){
+    return 'Solo puedes añadir tu propio jugador una vez. El resto debe añadirse desde sus propios dispositivos.';
+  }
   let hadReadIssue = false;
 
   for(let attempt=0; attempt<10; attempt++){
@@ -801,6 +1017,7 @@ async function addPlayerShared(name){
     if(!saved.ok){
       state = migrateStateShape(nextState);
       state.myPlayerId = id;
+      setUiLang(chosenLang);
       state.sync.mode = 'local';
       state.sync.lastError = 'Guardado local temporal. Se sincronizará cuando vuelva la conexión remota.';
       localStorage.setItem(STATE_KEY, JSON.stringify(state));
@@ -810,7 +1027,8 @@ async function addPlayerShared(name){
     }
 
     state = migrateStateShape(nextState);
-  state.myPlayerId = id;
+    state.myPlayerId = id;
+    setUiLang(chosenLang);
     remoteEtag = typeof saved.etag==='number' ? saved.etag : etag;
     state.sync.mode = 'remoto';
     state.sync.lastRemoteAt = nowStr();
@@ -982,6 +1200,215 @@ function tiedGroupsAtCutoff(standings, cutoff){
 }
 
 function shuffle(arr){ return [...arr].sort(()=>Math.random()-0.5); }
+
+function escapeHtml(str){
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function demoRandInt(min, max){
+  return Math.floor(Math.random()*(max-min+1))+min;
+}
+
+function demoRandomGoals(){
+  const bag = [0,0,1,1,1,2,2,2,3,3,4,5];
+  return bag[demoRandInt(0, bag.length-1)];
+}
+
+function demoPlayMatch(p1, p2, allowDraw){
+  const score1 = demoRandomGoals();
+  const score2 = demoRandomGoals();
+  if(allowDraw || score1!==score2){
+    const winner = score1===score2 ? null : (score1>score2 ? p1 : p2);
+    return {p1, p2, score1, score2, winner, pen1:null, pen2:null};
+  }
+  let pen1 = demoRandInt(3, 6);
+  let pen2 = demoRandInt(3, 6);
+  while(pen1===pen2){
+    if(Math.random()<0.5) pen1 += 1;
+    else pen2 += 1;
+  }
+  return {p1, p2, score1, score2, winner:pen1>pen2 ? p1 : p2, pen1, pen2};
+}
+
+function demoMatchText(m){
+  const base = `${m.p1.name} ${m.score1}-${m.score2} ${m.p2.name}`;
+  if(Number.isFinite(m.pen1) && Number.isFinite(m.pen2)){
+    return `${base} (pen ${m.pen1}-${m.pen2})`;
+  }
+  return base;
+}
+
+function generateDemoSeason(){
+  const sourceNames = state.players.length>=3
+    ? state.players.map(p=> p.name)
+    : ['alex','bruno','carla','diego','elena','fabio'];
+  const uniqueNames = [...new Set(sourceNames.map(n=> normalizePlayerName(n) || 'jugador'))];
+  const target = Math.min(8, Math.max(4, uniqueNames.length));
+  const picks = shuffle(uniqueNames).slice(0, target);
+  const players = picks.map((name, idx)=>({id:`d${idx+1}`, name}));
+
+  const table = {};
+  players.forEach(p=>{
+    table[p.id] = {id:p.id, name:p.name, pj:0, g:0, e:0, p:0, gf:0, gc:0, dg:0, pts:0};
+  });
+
+  const leagueMatches = [];
+  for(let i=0;i<players.length;i++){
+    for(let j=i+1;j<players.length;j++){
+      const home = players[i];
+      const away = players[j];
+      const m1 = demoPlayMatch(home, away, true);
+      const m2 = demoPlayMatch(away, home, true);
+      leagueMatches.push(m1, m2);
+    }
+  }
+
+  leagueMatches.forEach(m=>{
+    const a = table[m.p1.id];
+    const b = table[m.p2.id];
+    a.pj += 1;
+    b.pj += 1;
+    a.gf += m.score1;
+    a.gc += m.score2;
+    b.gf += m.score2;
+    b.gc += m.score1;
+    if(m.score1>m.score2){
+      a.g += 1;
+      a.pts += 3;
+      b.p += 1;
+    }else if(m.score2>m.score1){
+      b.g += 1;
+      b.pts += 3;
+      a.p += 1;
+    }else{
+      a.e += 1;
+      b.e += 1;
+      a.pts += 1;
+      b.pts += 1;
+    }
+  });
+
+  const standings = Object.values(table);
+  standings.forEach(r=>{ r.dg = r.gf-r.gc; });
+  standings.sort((a,b)=>{
+    if(b.pts!==a.pts) return b.pts-a.pts;
+    if(b.dg!==a.dg) return b.dg-a.dg;
+    if(b.gf!==a.gf) return b.gf-a.gf;
+    return Math.random()<0.5 ? -1 : 1;
+  });
+
+  const n = players.length;
+  const q = n<=2 ? n : Math.max(2, Math.min(n-1, autoQualifiers(n)));
+  const qualified = standings.slice(0, q).map(r=> players.find(p=> p.id===r.id)).filter(Boolean);
+
+  let bracketSize = 1;
+  while(bracketSize*2<=q) bracketSize*=2;
+
+  const playoffMatches = [];
+  let entrants = qualified.slice();
+  if(q>bracketSize){
+    const byeCount = (2*bracketSize)-q;
+    const byes = qualified.slice(0, Math.max(0, byeCount));
+    const playoffPool = qualified.slice(Math.max(0, byeCount));
+    const playoffWinners = [];
+    for(let i=0;i<playoffPool.length;i+=2){
+      const m = demoPlayMatch(playoffPool[i], playoffPool[i+1], false);
+      playoffMatches.push(m);
+      playoffWinners.push(m.winner);
+    }
+    entrants = [...byes, ...playoffWinners];
+  }
+
+  const knockoutRounds = [];
+  let active = shuffle(entrants);
+  while(active.length>1){
+    const round = [];
+    for(let i=0;i<active.length;i+=2){
+      const m = demoPlayMatch(active[i], active[i+1], false);
+      round.push(m);
+    }
+    knockoutRounds.push(round);
+    active = round.map(m=> m.winner);
+  }
+
+  return {
+    players,
+    leagueMatchesCount: leagueMatches.length,
+    standings,
+    qualifiersCount: q,
+    playoffMatches,
+    knockoutRounds,
+    champion: active[0] || null
+  };
+}
+
+function openDemoSeasonModal(){
+  const demo = generateDemoSeason();
+  pendingModal = ()=>{
+    const standingRows = demo.standings.map((r, idx)=>`
+      <tr class="${idx<demo.qualifiersCount?'qual':''}">
+        <td>${idx+1}</td>
+        <td class="name">${escapeHtml(r.name)}</td>
+        <td>${r.pj}</td>
+        <td>${r.g}</td>
+        <td>${r.e}</td>
+        <td>${r.p}</td>
+        <td>${r.gf}</td>
+        <td>${r.gc}</td>
+        <td>${r.dg}</td>
+        <td>${r.pts}</td>
+      </tr>`).join('');
+
+    const playoffHtml = demo.playoffMatches.length
+      ? `<div class="demo-box"><h4>Play-off (clasificación al cuadro final)</h4><div class="demo-list">${demo.playoffMatches.map(m=> `<div class="demo-line"><span>${escapeHtml(m.p1.name)} vs ${escapeHtml(m.p2.name)}</span><span>${escapeHtml(demoMatchText(m))}</span></div>`).join('')}</div></div>`
+      : '';
+
+    const roundsHtml = demo.knockoutRounds.map((round, idx)=>{
+      const total = demo.knockoutRounds.length;
+      const name = total-idx===1 ? 'Final' : (total-idx===2 ? 'Semifinales' : (total-idx===3 ? 'Cuartos' : `Ronda ${idx+1}`));
+      return `<div class="demo-box"><h4>${name}</h4><div class="demo-list">${round.map(m=> `<div class="demo-line"><span>${escapeHtml(m.p1.name)} vs ${escapeHtml(m.p2.name)}</span><span>${escapeHtml(demoMatchText(m))}</span></div>`).join('')}</div></div>`;
+    }).join('');
+
+    const bg = el(`<div class="modal-bg"><div class="modal demo-modal">
+      <span class="close">✕</span>
+      <h3>Demo de temporada (no se guarda)</h3>
+      <div class="muted" style="margin-bottom:10px;">Simulación explicativa aleatoria. No modifica la temporada real, no suma premios y no se sincroniza.</div>
+      <div class="demo-summary">
+        <span class="demo-pill">Jugadores: ${demo.players.length}</span>
+        <span class="demo-pill">Partidos liguilla: ${demo.leagueMatchesCount}</span>
+        <span class="demo-pill">Clasifican: ${demo.qualifiersCount}</span>
+        <span class="demo-pill">Campeón demo: ${escapeHtml(demo.champion ? demo.champion.name : '—')}</span>
+      </div>
+      <div class="demo-grid">
+        <div class="demo-box">
+          <h4>Tabla de liguilla (demo)</h4>
+          <table>
+            <tr><th>#</th><th>Jugador</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr>
+            ${standingRows}
+          </table>
+        </div>
+        <div>
+          ${playoffHtml}
+          ${roundsHtml}
+        </div>
+      </div>
+      <div class="row" style="margin-top:12px;justify-content:flex-end;">
+        <button id="demo-reroll" class="secondary" type="button">Generar otra demo</button>
+      </div>
+    </div></div>`);
+
+    bg.querySelector('.close').onclick = ()=>{ pendingModal=null; render(); };
+    bg.querySelector('#demo-reroll').onclick = ()=> openDemoSeasonModal();
+    return bg;
+  };
+  render();
+}
+
 function buildAllowedPairings(ids){
   if(ids.length%2!==0) return null;
   function backtrack(remaining){
@@ -1927,6 +2354,7 @@ function restartCurrentSeason(){
 function el(html){ const d=document.createElement('div'); d.innerHTML=html; return d.firstElementChild; }
 
 function render(){
+  document.documentElement.lang = uiLang();
   const app = document.getElementById('app');
   const allowedTabs = getVisibleTabs();
   if(!allowedTabs.some(t=> t[0]===currentTab)) currentTab = allowedTabs[0][0];
@@ -1942,8 +2370,9 @@ function render(){
 }
 
 function renderHero(){
-  const syncTxt = state.sync?.mode==='remoto' ? 'sincronizado' : 'solo local';
+  const syncTxt = state.sync?.mode==='remoto' ? t('syncRemote') : t('syncLocal');
   const syncWarn = state.sync?.lastError ? ` · ${state.sync.lastError}` : '';
+  const playersLabel = state.players.length===1 ? t('playersSingular') : t('playersPlural');
   return el(`<div class="hero">
     <svg class="crest" viewBox="0 0 48 48" fill="none">
       <path d="M24 3 L43 11 V24 C43 35 35 42 24 45 C13 42 5 35 5 24 V11 Z" fill="#1E2550" stroke="#E8B339" stroke-width="2"/>
@@ -1951,7 +2380,7 @@ function renderHero(){
     </svg>
     <div>
       <h1>${state.season}</h1>
-      <div class="sub">${state.players.length} jugador${state.players.length===1?'':'es'} · fase: ${phaseLabel(state.phase)} · ${seasonDateText(state.seasonKickoff)} · sync: ${syncTxt}${syncWarn}</div>
+      <div class="sub">${state.players.length} ${playersLabel} · ${t('phaseWord')}: ${phaseLabel(state.phase)} · ${seasonDateText(state.seasonKickoff)} · ${t('syncWord')}: ${syncTxt}${syncWarn}</div>
       <div class="brand-strip">
         <span class="brand-badge"><span class="icon">⭐</span>Champions League</span>
         <span class="brand-badge"><span class="icon">🏆</span>Mundial</span>
@@ -1964,19 +2393,19 @@ function renderHero(){
   </div>`);
 }
 function phaseLabel(p){
-  return {setup:'configuración', league:'liguilla', playoff:'play-off', knockout:'eliminatorias', finished:'finalizado'}[p]||p;
+  return {setup:t('phaseSetup'), league:t('phaseLeague'), playoff:t('phasePlayoff'), knockout:t('phaseKnockout'), finished:t('phaseFinished')}[p]||p;
 }
 function getVisibleTabs(){
   const tabs = [
-    ['config','Configuración'],
-    ['players','Jugadores']
+    ['config',t('tabConfig')],
+    ['players',t('tabPlayers')]
   ];
   const phaseOrder = ['setup','league','playoff','knockout','finished'];
   const idx = Math.max(0, phaseOrder.indexOf(state.phase));
-  if(idx>=1) tabs.push(['league','Liguilla']);
-  if(idx>=2) tabs.push(['knockout','Eliminatorias']);
-  tabs.push(['museum','Museo']);
-  tabs.push(['history','Historial']);
+  if(idx>=1) tabs.push(['league',t('tabLeague')]);
+  if(idx>=2) tabs.push(['knockout',t('tabKnockout')]);
+  tabs.push(['museum',t('tabMuseum')]);
+  tabs.push(['history',t('tabHistory')]);
   return tabs;
 }
 function renderStepper(){
@@ -2056,8 +2485,8 @@ function renderConfigTab(){
 
   const prize = state.finance.prizes;
   const moneyCard = el(`<div class="card">
-    <h3>Premios económicos (referencia Champions 2024/25)</h3>
-    <div class="muted">Importes aproximados en euros por rendimiento deportivo.</div>
+    <h3>Premios económicos (referencia Champions 2025/26)</h3>
+    <div class="muted">Importes aproximados en euros por rendimiento deportivo (ciclo UEFA 2024-27).</div>
     <table style="margin-top:8px;">
       <tr><th>Concepto</th><th>Premio</th></tr>
       <tr><td class="name">Participación</td><td>${fmtMoney(prize.participation)}</td></tr>
@@ -2072,6 +2501,14 @@ function renderConfigTab(){
   </div>`);
   wrap.appendChild(moneyCard);
 
+  const demoCard = el(`<div class="card">
+    <h3>Modo demo</h3>
+    <div class="muted" style="margin-bottom:10px;">Genera una temporada ejemplo al azar para explicar el formato. No cambia ni guarda datos reales.</div>
+    <button id="open-demo-season" class="secondary" type="button">Ver demo aleatoria</button>
+  </div>`);
+  demoCard.querySelector('#open-demo-season').onclick = ()=> openDemoSeasonModal();
+  wrap.appendChild(demoCard);
+
 
 
   if(!locked){
@@ -2084,10 +2521,11 @@ function renderConfigTab(){
 function renderPlayersTab(){
   const wrap = document.createElement('div');
   const locked = state.phase!=='setup';
+  const hasLocalPlayer = !!(state?.myPlayerId && Array.isArray(state?.players) && state.players.some(p=> p.id===state.myPlayerId));
   const card = el(`<div class="card">
     <div class="players-panel-head">
       <h3>Plantilla (${state.players.length})</h3>
-      <div class="muted">Selecciona tu jugador activo al añadirlo desde este dispositivo.</div>
+      <div class="muted">${t('playersHint')}</div>
     </div>
     <div id="plist" class="player-grid"></div>
   </div>`);
@@ -2100,7 +2538,7 @@ function renderPlayersTab(){
       <div class="player-tile-name">${p.name}</div>
       <div class="player-tile-meta">
         <span>${fmtMoney(totalMoney)}</span>
-        <span class="player-tile-actions">${isMine?'<span class="player-tile-badge">Tu jugador</span>':''}${!locked?'<button class="small danger" type="button">Borrar</button>':''}</span>
+        <span class="player-tile-actions">${isMine?`<span class="player-tile-badge">${t('yourPlayer')}</span>`:''}${!locked?`<button class="small danger" type="button">${t('deletePlayer')}</button>`:''}</span>
       </div>
     </div>`);
     if(!locked){
@@ -2116,23 +2554,32 @@ function renderPlayersTab(){
     }
     plist.appendChild(tile);
   });
-  if(!state.players.length) plist.appendChild(el(`<div class="muted">Todavía no hay jugadores.</div>`));
+  if(!state.players.length) plist.appendChild(el(`<div class="muted">${t('noPlayersYet')}</div>`));
 
-  if(!locked){
+  if(!locked && !hasLocalPlayer){
     const addPanel = el(`<div class="card add-player-panel">
-      <h3>Añadir jugador</h3>
-      <div class="muted">Toca un nombre sugerido o usa INS para crear uno nuevo.</div>
+      <h3>${t('addPlayerTitle')}</h3>
+      <div class="muted">${t('addPlayerHint')}</div>
       <div id="catalog" class="catalog-wrap"></div>
+      <label>${t('chooseLanguage')}</label>
+      <select id="np-lang">
+        <option value="es">${t('langOptionEs')}</option>
+        <option value="en">${t('langOptionEn')}</option>
+        <option value="lt">${t('langOptionLt')}</option>
+        <option value="ca">${t('langOptionCa')}</option>
+      </select>
       <div class="add-player-actions" style="margin-top:8px;">
-        <input id="np-name" placeholder="Escribe un nombre nuevo" style="display:none;">
-        <button id="np-add">Añadir ahora</button>
+        <input id="np-name" placeholder="${t('newNamePlaceholder')}" style="display:none;">
+        <button id="np-add">${t('addNow')}</button>
       </div>
     </div>`);
     wrap.appendChild(addPanel);
     const catalog = addPanel.querySelector('#catalog');
     const nameInput = addPanel.querySelector('#np-name');
+    const langSelect = addPanel.querySelector('#np-lang');
     const addBtn = addPanel.querySelector('#np-add');
     let selectedName = getPlayerNameCatalog()[0] || 'INS';
+    langSelect.value = uiLang();
 
     function renderCatalog(){
       const names = getPlayerNameCatalog();
@@ -2140,7 +2587,7 @@ function renderPlayersTab(){
       if(!options.includes(selectedName)) selectedName = options[0];
       catalog.innerHTML = '';
       options.forEach(name=>{
-        const label = name==='INS' ? 'INS (nuevo)' : name;
+        const label = name==='INS' ? t('insNew') : name;
         const chip = el(`<button type="button" class="catalog-chip ${selectedName===name?'active':''}">${label}</button>`);
         chip.onclick = ()=>{
           selectedName = name;
@@ -2157,12 +2604,12 @@ function renderPlayersTab(){
     }
     renderCatalog();
 
-    const syncInfo = el(`<div class="muted" style="margin-bottom:8px;">Sync remoto: ${state.sync?.mode==='remoto'?'OK':'desconectado'}${state.sync?.lastRemoteAt?` · Última: ${state.sync.lastRemoteAt}`:''}</div>`);
+    const syncInfo = el(`<div class="muted" style="margin-bottom:8px;">${t('syncStatusPrefix')}: ${state.sync?.mode==='remoto'?t('syncOk'):t('disconnected')}${state.sync?.lastRemoteAt?` · ${t('lastSync')}: ${state.sync.lastRemoteAt}`:''}</div>`);
     wrap.appendChild(syncInfo);
     addBtn.onclick=async ()=>{
       const name = selectedName==='INS' ? nameInput.value.trim() : selectedName;
       if(!name) return;
-      const err = await addPlayerShared(name);
+      const err = await addPlayerShared(name, langSelect.value);
       if(err){ alert(err); return; }
       addNameToCatalog(name);
       if(selectedName==='INS'){
@@ -2171,10 +2618,12 @@ function renderPlayersTab(){
       }
       renderCatalog();
     };
+  } else if(!locked && hasLocalPlayer){
+    wrap.appendChild(el(`<div class="card"><div class="banner info" style="margin-bottom:0;">${t('alreadyRegisteredInfo')}</div></div>`));
   }
 
   const canStartLeague = !locked && state.players.length>=2;
-  const startBtn = el(`<button class="gold" style="margin-left:8px;" ${canStartLeague?'':'disabled'}>Iniciar liguilla / torneo</button>`);
+  const startBtn = el(`<button class="gold" style="margin-left:8px;" ${canStartLeague?'':'disabled'}>${t('startLeague')}</button>`);
   startBtn.onclick=()=>{
     const n = state.players.length;
     state.config.matchesPerPlayer = autoMatchesPerPlayer(n);
@@ -2185,9 +2634,9 @@ function renderPlayersTab(){
   wrap.appendChild(startBtn);
 
   if(locked){
-    wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">La temporada ya está en curso. Este botón se habilita cuando la fase vuelva a configuración.</div>`));
+    wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">${t('setupLockedInfo')}</div>`));
   } else if(state.players.length<2){
-    wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">Añade al menos 2 jugadores para iniciar la liguilla.</div>`));
+    wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">${t('needTwoPlayers')}</div>`));
   }
 
   return wrap;
