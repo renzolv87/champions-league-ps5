@@ -1656,7 +1656,6 @@ function render(){
   if(!allowedTabs.some(t=> t[0]===currentTab)) currentTab = allowedTabs[0][0];
   app.innerHTML = '';
   app.appendChild(renderHero());
-  app.appendChild(renderStepper());
   app.appendChild(renderTabs());
   const body = document.createElement('div');
   body.id='tabbody';
