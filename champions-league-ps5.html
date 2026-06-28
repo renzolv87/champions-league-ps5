@@ -244,11 +244,12 @@ tr.tied td{outline:1px dashed var(--bad);outline-offset:-1px;}
 .modal{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;max-width:380px;width:100%;}
 .modal h3{margin-top:0;}
 .modal .close{float:right;cursor:pointer;color:var(--text-dim);font-size:1.1rem;}
+.modal.result-modal{max-width:560px;}
 
 .result-entry{display:flex;flex-direction:column;gap:12px;}
 .result-scoreboard{
   display:grid;
-  grid-template-columns:1fr auto 1fr;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
   gap:10px;
   align-items:end;
 }
@@ -257,8 +258,9 @@ tr.tied td{outline:1px dashed var(--bad);outline-offset:-1px;}
   border:1px solid var(--line);
   border-radius:12px;
   padding:10px;
+  min-width:0;
 }
-.result-team-name{font-weight:700;font-size:.88rem;text-transform:capitalize;margin-bottom:6px;}
+.result-team-name{font-weight:700;font-size:.88rem;text-transform:capitalize;margin-bottom:6px;overflow-wrap:anywhere;}
 .result-vs{
   font-size:.72rem;
   font-weight:800;
@@ -2413,6 +2415,9 @@ function openMatchModal(match, decisive, isAdminEdit){
     const form = (isAdminEdit || match.status==='dispute')
       ? renderAdminForm(match, decisive)
       : (match.status==='pending' ? renderPendingDecisionForm(match, decisive) : renderPlayerForm(match, decisive));
+    if(!(isAdminEdit || match.status==='dispute' || match.status==='pending')){
+      modal.classList.add('result-modal');
+    }
     modal.appendChild(form);
     bg.querySelector('.close').onclick=()=>{pendingModal=null; render();};
     return bg;
