@@ -844,10 +844,12 @@ function generateRoundRobinRounds(ids, numRounds){
 
 /* ---------------- STANDINGS ---------------- */
 function computeStandings(){
+  const countsForStandings = m =>
+    (m.status==='confirmed' || m.status==='pending') && m.score1!==null && m.score2!==null;
   const table = {};
   state.players.forEach(p=> table[p.id] = {id:p.id, name:p.name, pj:0,g:0,e:0,p:0,gf:0,gc:0,dg:0,pts:0});
   state.leagueMatches.forEach(m=>{
-    if(m.status!=='confirmed') return;
+    if(!countsForStandings(m)) return;
     const t1=table[m.p1], t2=table[m.p2];
     if(!t1 || !t2) return;
     t1.pj++; t2.pj++;
@@ -862,7 +864,7 @@ function computeStandings(){
 
   function headToHead(aId,bId){
     const direct = state.leagueMatches.filter(x=>
-      x.status==='confirmed' && ((x.p1===aId&&x.p2===bId)||(x.p1===bId&&x.p2===aId))
+      countsForStandings(x) && ((x.p1===aId&&x.p2===bId)||(x.p1===bId&&x.p2===aId))
     );
     if(!direct.length) return 0;
     let diff = 0;
@@ -2110,6 +2112,7 @@ function renderLeagueTab(){
   // standings
   const standings = computeStandings();
   const Q = effectiveNumQualifiers();
+  const pendingWithScore = state.leagueMatches.filter(m=> m.status==='pending' && m.score1!==null && m.score2!==null).length;
   state.config.numQualifiers = Q;
   const card = el(`<div class="card"><h3>Clasificación</h3><table>
     <tr><th>#</th><th class="name">Jugador</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>DG</th><th>Pts</th></tr>
@@ -2121,6 +2124,9 @@ function renderLeagueTab(){
     table.appendChild(tr);
   });
   card.appendChild(el(`<div class="muted" style="margin-top:8px;">Los ${Q} primeros (resaltados) pasan a la fase eliminatoria.</div>`));
+  if(pendingWithScore>0){
+    card.appendChild(el(`<div class="muted" style="margin-top:6px;">Clasificación provisional: incluye ${pendingWithScore} resultado${pendingWithScore===1?'':'s'} pendiente${pendingWithScore===1?'':'s'} de confirmar.</div>`));
+  }
   wrap.appendChild(card);
 
   if(tiedIds.length){
