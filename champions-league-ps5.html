@@ -1450,8 +1450,6 @@ function placeBet(playerId, matchId, pick, stake){
   if(match.status==='confirmed') return 'Ese partido ya está cerrado para apuestas.';
   if(!['home','draw','away'].includes(pick)) return 'Selección de apuesta inválida.';
   if(Number.isNaN(stake) || stake<=0) return 'Cantidad de apuesta inválida.';
-  if(getOpenBetTicket(playerId, matchId)) return 'Ya tienes una apuesta abierta en este partido.';
-
   const maxStake = getMaxStakeForPlayer(playerId);
   if(stake>maxStake) return `Tu apuesta máxima en este momento es ${fmtMoney(maxStake)}.`;
   if(stake>(bettor.money||0)) return 'No tienes saldo suficiente.';
