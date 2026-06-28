@@ -1380,6 +1380,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_r3PAKQSOk2h8DmVeGmSOIg_lKLi8v8F';
 const SUPABASE_TABLE = 'tournament_state';
 const SUPABASE_ROW_ID = 'shared';
 const GAME_NAME = 'Champions League PS5';
+const GAME_PAGE_URL = 'https://github.com/renzolv87/champions-league-ps5';
 const UI_LANG_KEY = 'cl-ps5-ui-lang';
 const SUPPORTED_UI_LANGS = ['es','en','lt','ca'];
 const PRESET_PLAYER_NAMES = ['renzo','johan','giank','felipe','jordi','ithan','miguel'];
@@ -1654,6 +1655,7 @@ const I18N = {
     waProposalOptionsTitle: 'Dia y horas:',
     waProposalVoteCall: 'Responde con 1, 2 o 3 para confirmar horario.',
     waProposalDataLinkLabel: 'Mete tus datos aqui:',
+    waGamePageBtn: 'Pagina del juego',
     sharedDataNote: 'Datos compartidos por Supabase. Si dos personas editan a la vez, el sistema resuelve conflictos refrescando el estado más reciente.'
   },
   en: {
@@ -1922,6 +1924,7 @@ const I18N = {
     waProposalOptionsTitle: 'Day and times:',
     waProposalVoteCall: 'Reply with 1, 2 or 3 to confirm the time.',
     waProposalDataLinkLabel: 'Enter your data here:',
+    waGamePageBtn: 'Game page',
     sharedDataNote: 'Shared data via Supabase. If two people edit at the same time, the app resolves conflicts by refreshing the latest state.'
   },
   lt: {
@@ -2190,6 +2193,7 @@ const I18N = {
     waProposalOptionsTitle: 'Diena ir laikai:',
     waProposalVoteCall: 'Atsakyk 1, 2 arba 3 ir patvirtink laika.',
     waProposalDataLinkLabel: 'Ivesk savo duomenis cia:',
+    waGamePageBtn: 'Zaidimo puslapis',
     sharedDataNote: 'Bendrinami duomenys per Supabase. Jei du zmones redaguoja vienu metu, sistema issprendzia konfliktus atnaujindama naujausia busena.'
   },
   ca: {
@@ -2458,6 +2462,7 @@ const I18N = {
     waProposalOptionsTitle: 'Dia i hores:',
     waProposalVoteCall: 'Respon amb 1, 2 o 3 per confirmar horari.',
     waProposalDataLinkLabel: 'Introdueix les teves dades aqui:',
+    waGamePageBtn: 'Pagina del joc',
     sharedDataNote: 'Dades compartides per Supabase. Si dues persones editen alhora, el sistema resol conflictes refrescant l\'estat mes recent.'
   }
 };
@@ -2886,7 +2891,7 @@ function proposalFormatText(playerCount, messageLang=uiLang()){
 function buildWhatsAppProposalText(messageLang = uiLang()){
   const lang = normalizeUiLang(messageLang);
   const options = proposalKickoffOptions(3, lang);
-  const dataUrl = 'https://github.com/renzolv87/champions-league-ps5';
+  const dataUrl = GAME_PAGE_URL;
   return [
     tForLang(lang, 'waProposalTitle'),
     '',
@@ -5648,6 +5653,12 @@ function renderPlayersTab(){
   const waBtn = el(`<button class="secondary" style="margin-left:8px;">${t('waProposalBtn')}</button>`);
   waBtn.onclick=()=> openWhatsAppProposal(normalizeUiLang(state.whatsAppProposalLang || uiLang()));
   wrap.appendChild(waBtn);
+  const gamePageBtn = el(`<button class="small secondary" style="margin-left:8px;opacity:.78;">${t('waGamePageBtn')}</button>`);
+  gamePageBtn.onclick=()=>{
+    const win = window.open(GAME_PAGE_URL, '_blank', 'noopener,noreferrer');
+    if(!win) window.location.href = GAME_PAGE_URL;
+  };
+  wrap.appendChild(gamePageBtn);
   wrap.appendChild(el(`<div class="muted" style="margin-top:8px;">${t('waProposalHint')}</div>`));
 
   if(!locked){
