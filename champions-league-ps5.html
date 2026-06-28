@@ -1445,8 +1445,8 @@ const I18N = {
     lastSync: 'Última',
     alreadyRegisteredInfo: 'En este dispositivo ya registraste 2 equipos. El resto debe añadirse desde otros dispositivos.',
     secondTeamOnlyWhenNeeded: 'Tu segundo equipo solo se permite cuando aún faltan equipos para llegar al mínimo de 4.',
-    associateAddLockedUntilStart: 'Primero pulsa Iniciar liguilla. Si faltan equipos, se habilitara anadir un equipo asociado.',
-    associateModeEnabled: 'Faltan {count} equipos. Ya puedes anadir un equipo asociado a tu cuenta en este dispositivo.',
+    associateAddLockedUntilStart: 'Primero pulsa Iniciar liguilla. Si faltan equipos, se habilitará añadir un equipo asociado.',
+    associateModeEnabled: 'Faltan {count} equipos. Ya puedes añadir un equipo asociado a tu cuenta en este dispositivo.',
     associatedTeamsCounter: 'Equipos asociados en este dispositivo: {count}/{max}',
     startLeague: 'Iniciar liguilla / torneo',
     setupLockedInfo: 'La temporada ya está en curso. Este botón se habilita cuando la fase vuelva a configuración.',
@@ -1588,13 +1588,13 @@ const I18N = {
     guideObjTitle: 'Objetivo final',
     guideObjBody: 'El ganador historico se ve en Museo. El orden historico se decide por copas, dinero historico y diferencia de goles.',
     guideSetupTitle: 'Antes de empezar',
-    guideSetup1: 'Cada persona registra su equipo en la pestana Jugadores.',
+    guideSetup1: 'Cada persona registra su equipo en la pestaña Jugadores.',
     guideSetup2: 'Por dispositivo puedes tener hasta 2 equipos locales cuando faltan equipos para el minimo.',
     guideSetup3: 'No se permiten nombres duplicados exactos.',
     guideFlowTitle: 'Flujo de temporada',
     guideFlow1: 'Con menos de {threshold} equipos se juega una liguilla unica (fase liga limitada).',
     guideFlow2: 'Con {threshold} o mas equipos se activa fase de grupos y solo se juega dentro de cada grupo.',
-    guideFlow3: 'Los cupos a eliminatorias se reparten por grupo segun tamano y cupo total de clasificados.',
+    guideFlow3: 'Los cupos a eliminatorias se reparten por grupo según tamaño y cupo total de clasificados.',
     guideFlow4: 'Si los clasificados no completan una potencia de 2, se juega play-off para completar el cuadro.',
     guideFlow5: 'Despues se juegan eliminatorias hasta definir campeon.',
     guideFlow6: 'Los emparejamientos se generan de forma automatica y evitan cruces entre equipos con el mismo nombre base.',
@@ -1633,7 +1633,7 @@ const I18N = {
     guideParams4: 'Clasifican a eliminatorias: {qualifiers}.',
     guideParams5: 'Grupos actuales: {groups}. Regla de emparejamiento: {pairing}.',
     guidePairingModeSingle: 'liga unica a una vuelta',
-    guidePairingModeGroups: 'grupos de tamano aprox. {size}, una vuelta por grupo',
+    guidePairingModeGroups: 'grupos de tamaño aprox. {size}, una vuelta por grupo',
     guideButton: 'Cómo jugar',
     guideAudioPlay: 'Reproducir audio',
     guideAudioStop: 'Detener audio',
@@ -1651,7 +1651,7 @@ const I18N = {
     waProposalKickoff: 'Inicio registrado: {kickoff}',
     waProposalToDefine: 'por definir',
     waProposalFormatSingle: 'liga unica a una vuelta ({matches} partidos por equipo)',
-    waProposalFormatGroups: 'fase de grupos (tamano aprox. {groupSize}) y {matches} partidos por equipo',
+    waProposalFormatGroups: 'fase de grupos (tamaño aprox. {groupSize}) y {matches} partidos por equipo',
     waProposalOptionsTitle: 'Dia y horas:',
     waProposalVoteCall: 'Responde con 1, 2 o 3 para confirmar horario.',
     waProposalDataLinkLabel: 'Abrir juego',
@@ -2681,6 +2681,10 @@ function openGuideModal(){
     function cleanSpeechText(raw){
       return String(raw || '')
         .replace(/[•]/g, ' ')
+        .replace(/\s*\/\s*/g, ' de ')
+        .replace(/\s*-\s*/g, ', ')
+        .replace(/(\d+)\s*%/g, '$1 por ciento')
+        .replace(/\bvs\b/gi, ' versus ')
         .replace(/\s+/g, ' ')
         .replace(/\s([,.:;!?])/g, '$1')
         .replace(/\(\s*/g, '(')
@@ -2695,7 +2699,7 @@ function openGuideModal(){
         .map(part=> cleanSpeechText(part))
         .filter(Boolean)
         .forEach(part=>{
-          const sentences = part.split(/(?<=[.!?])\s+/).map(s=> cleanSpeechText(s)).filter(Boolean);
+          const sentences = part.split(/(?<=[.!?;:])\s+/).map(s=> cleanSpeechText(s)).filter(Boolean);
           if(!sentences.length){
             chunks.push(part);
             return;
@@ -2703,7 +2707,7 @@ function openGuideModal(){
           let current = '';
           sentences.forEach(s=>{
             const candidate = current ? `${current} ${s}` : s;
-            if(candidate.length>190){
+            if(candidate.length>150){
               if(current) chunks.push(current);
               current = s;
             } else {
@@ -2721,27 +2725,38 @@ function openGuideModal(){
       if(!voices.length) return null;
       const lc = String(targetLang || '').toLowerCase();
       const short = lc.split('-')[0];
-      const strong = voices.filter(v=> String(v.lang || '').toLowerCase().startsWith(short));
-      const preferredName = {
+      const strong = voices.filter(v=> {
+        const lang = String(v.lang || '').toLowerCase();
+        return lang===lc || lang.startsWith(short);
+      });
+      const preferredNameHints = {
         es: ['monica','jorge','paulina','es-'],
-        en: ['samantha','daniel','serena','en-'],
+        en: ['samantha','daniel','serena','google uk english','en-'],
         lt: ['lt-','lithuan'],
         ca: ['ca-','catalan','montserrat']
       }[short] || [];
       const ranked = strong.length ? strong : voices;
-      for(const hint of preferredName){
-        const found = ranked.find(v=> String(v.name || '').toLowerCase().includes(hint));
-        if(found) return found;
-      }
-      return ranked[0] || null;
+      const scoreVoice = (v)=>{
+        const name = String(v.name || '').toLowerCase();
+        const lang = String(v.lang || '').toLowerCase();
+        let score = 0;
+        if(lang===lc) score += 8;
+        else if(lang.startsWith(short)) score += 5;
+        if(v.localService) score += 2;
+        if(v.default) score += 1;
+        if(name.includes('natural') || name.includes('neural') || name.includes('enhanced') || name.includes('premium')) score += 2;
+        if(preferredNameHints.some(h=> name.includes(h))) score += 3;
+        return score;
+      };
+      return [...ranked].sort((a,b)=> scoreVoice(b)-scoreVoice(a))[0] || null;
     }
 
     function prosodyForLang(targetLang){
       const short = String(targetLang || '').toLowerCase().split('-')[0];
-      if(short==='es') return {rate: 0.94, pitch: 1.02};
-      if(short==='ca') return {rate: 0.95, pitch: 1.03};
-      if(short==='lt') return {rate: 0.92, pitch: 1.0};
-      return {rate: 0.96, pitch: 1.0};
+      if(short==='es') return {rate: 0.90, pitch: 1.00};
+      if(short==='ca') return {rate: 0.91, pitch: 1.01};
+      if(short==='lt') return {rate: 0.89, pitch: 0.99};
+      return {rate: 0.92, pitch: 1.00};
     }
 
     function stopSpeech(){
@@ -2776,14 +2791,17 @@ function openGuideModal(){
           return;
         }
         const text = chunks[idx++];
-        const utt = new SpeechSynthesisUtterance(text);
+        const utt = new SpeechSynthesisUtterance(/[.!?]$/.test(text) ? text : `${text}.`);
         utt.lang = langTag;
         utt.rate = prosody.rate;
         utt.pitch = prosody.pitch;
+        utt.volume = 1;
         if(chosenVoice) utt.voice = chosenVoice;
         utt.onend = ()=>{
           if(sessionId!==speakSessionId) return;
-          setTimeout(speakNext, 80);
+          const tail = text.trim().slice(-1);
+          const pauseMs = (tail===':' || tail===';') ? 260 : ((tail==='.' || tail==='!' || tail==='?') ? 210 : 140);
+          setTimeout(speakNext, pauseMs);
         };
         utt.onerror = ()=>{
           if(sessionId!==speakSessionId) return;
@@ -2806,9 +2824,6 @@ function openGuideModal(){
           if(isSpeaking){ stopSpeech(); return; }
           speakGuideNaturally();
         };
-        if(typeof window.speechSynthesis.onvoiceschanged!=='undefined'){
-          window.speechSynthesis.onvoiceschanged = ()=>{};
-        }
       }
     }
 
