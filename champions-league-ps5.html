@@ -1375,6 +1375,7 @@ function acceptReportedResult(match, byId, decisive){
   if(state.phase==='league') registerLeagueMoney(match);
   if(state.phase==='league' && state.players.length===3) settleBetsForMatch(match);
   if(state.phase==='knockout' || state.phase==='playoff') settleBetsForMatch(match);
+  refreshLeagueAfterConfirmedResult();
   log(player.name, 'aceptó el resultado '+match.score1+'-'+match.score2+(match.peno1!==null?` (pen. ${match.peno1}-${match.peno2})`:''));
   saveAndRender();
   return null;
@@ -1404,6 +1405,12 @@ function rejectReportedResult(match, byId){
   return null;
 }
 
+function refreshLeagueAfterConfirmedResult(){
+  if(state.phase!=='league') return;
+  // Mantiene la clasificación de liguilla sincronizada al confirmar/aceptar resultados.
+  state.config.numQualifiers = effectiveNumQualifiers();
+}
+
 function adminOverride(match, score1, score2, peno1, peno2, decisive){
   match.score1=score1;
   match.score2=score2;
@@ -1420,6 +1427,7 @@ function adminOverride(match, score1, score2, peno1, peno2, decisive){
   if(state.phase==='league') registerLeagueMoney(match);
   if(state.phase==='league' && state.players.length===3) settleBetsForMatch(match);
   if(state.phase==='knockout' || state.phase==='playoff') settleBetsForMatch(match);
+  refreshLeagueAfterConfirmedResult();
   log('Organizador','resolvió/corrigió el resultado a '+score1+'-'+score2+(match.peno1!==null?` (pen. ${match.peno1}-${match.peno2})`:''));
   saveAndRender();
   return null;
@@ -2171,8 +2179,8 @@ function renderPlayerForm(match, decisive){
       <option value="${match.p2}" ${defaultWho===match.p2?'selected':''}>${playerName(match.p2)}</option>
     </select>`}
     <div class="row">
-      <div><label>Goles ${playerName(match.p1)}</label><input type="number" id="m-s1" min="0" value="${match.score1??''}"></div>
-      <div><label>Goles ${playerName(match.p2)}</label><input type="number" id="m-s2" min="0" value="${match.score2??''}"></div>
+      <div><label>Goles ${playerName(match.p1)}</label><input type="number" id="m-s1" min="0" value="${match.score1??0}"></div>
+      <div><label>Goles ${playerName(match.p2)}</label><input type="number" id="m-s2" min="0" value="${match.score2??0}"></div>
     </div>
     ${decisive? `<div class="row"><div><label>Penaltis ${playerName(match.p1)}</label><input type="number" id="m-pn1" min="0"></div><div><label>Penaltis ${playerName(match.p2)}</label><input type="number" id="m-pn2" min="0"></div></div><div class="muted" style="margin-bottom:10px;">Solo rellena penaltis si el resultado queda empatado — en esta fase no puede haber empates.</div>`:''}
     <div id="m-err" class="muted" style="color:#ffb3ad;"></div>
