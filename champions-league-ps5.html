@@ -164,6 +164,36 @@ tr.tied td{outline:1px dashed var(--bad);outline-offset:-1px;}
 }
 .player-chip .pin{color:var(--text-dim);font-size:.7rem;}
 
+.players-panel-head{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.players-panel-head h3{margin:0;}
+.player-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;}
+.player-tile{
+  background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(0,0,0,.08));
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:11px 12px;
+}
+.player-tile.is-me{border-color:var(--gold);box-shadow:0 0 0 1px rgba(232,179,57,.25) inset;}
+.player-tile-name{font-weight:700;font-size:.9rem;text-transform:capitalize;}
+.player-tile-meta{margin-top:4px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.78rem;color:var(--text-dim);}
+.player-tile-badge{font-size:.68rem;font-weight:700;color:#1a1200;background:var(--gold);border-radius:999px;padding:2px 7px;}
+
+.add-player-panel{background:radial-gradient(800px 180px at 0% 0%,rgba(91,61,245,.14),transparent 60%),var(--surface);}
+.catalog-wrap{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 6px;}
+.catalog-chip{
+  border:1px solid var(--line);
+  background:var(--surface-2);
+  color:var(--text);
+  border-radius:999px;
+  padding:6px 11px;
+  font-size:.8rem;
+  font-weight:700;
+  text-transform:capitalize;
+}
+.catalog-chip.active{background:var(--gold);color:#1a1200;border-color:var(--gold);}
+.add-player-actions{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+.add-player-actions input{margin-bottom:0;min-width:220px;flex:1;}
+
 .banner{padding:12px 14px;border-radius:10px;font-size:.85rem;margin-bottom:14px;}
 .banner.warn{background:rgba(225,87,76,.12);border:1px solid var(--bad);color:#ffd4d0;}
 .banner.info{background:rgba(91,61,245,.14);border:1px solid var(--accent);color:#d9d4ff;}
@@ -1900,65 +1930,82 @@ function renderConfigTab(){
 function renderPlayersTab(){
   const wrap = document.createElement('div');
   const locked = state.phase!=='setup';
-  const card = el(`<div class="card"><h3>Jugadores (${state.players.length})</h3><div id="plist"></div></div>`);
+  const card = el(`<div class="card">
+    <div class="players-panel-head">
+      <h3>Plantilla (${state.players.length})</h3>
+      <div class="muted">Selecciona tu jugador activo al añadirlo desde este dispositivo.</div>
+    </div>
+    <div id="plist" class="player-grid"></div>
+  </div>`);
   wrap.appendChild(card);
   const plist = card.querySelector('#plist');
   state.players.forEach(p=>{
     const totalMoney = state.finance?.lifetimeByPlayer?.[p.id] ?? p.money ?? 0;
-    const chip = el(`<span class="player-chip">${p.name} · ${fmtMoney(totalMoney)}</span>`);
-    plist.appendChild(chip);
+    const isMine = state.myPlayerId===p.id;
+    const tile = el(`<div class="player-tile ${isMine?'is-me':''}">
+      <div class="player-tile-name">${p.name}</div>
+      <div class="player-tile-meta">
+        <span>${fmtMoney(totalMoney)}</span>
+        ${isMine?'<span class="player-tile-badge">Tu jugador</span>':''}
+      </div>
+    </div>`);
+    plist.appendChild(tile);
   });
   if(!state.players.length) plist.appendChild(el(`<div class="muted">Todavía no hay jugadores.</div>`));
 
   if(!locked){
-    const addRow = el(`<div class="row" style="margin-top:14px;">
-      <div>
-        <label>Jugador</label>
-        <select id="np-preset"></select>
-        <div class="muted" style="margin-top:-6px;">Elige un nombre o INS para escribir uno nuevo.</div>
-      </div>
-      <div>
-        <label>INS (nombre nuevo)</label>
+    const addPanel = el(`<div class="card add-player-panel">
+      <h3>Añadir jugador</h3>
+      <div class="muted">Toca un nombre sugerido o usa INS para crear uno nuevo.</div>
+      <div id="catalog" class="catalog-wrap"></div>
+      <div class="add-player-actions" style="margin-top:8px;">
         <input id="np-name" placeholder="Escribe un nombre nuevo" style="display:none;">
+        <button id="np-add">Añadir ahora</button>
       </div>
     </div>`);
-    wrap.appendChild(addRow);
-    const presetSel = addRow.querySelector('#np-preset');
-    const nameInput = addRow.querySelector('#np-name');
+    wrap.appendChild(addPanel);
+    const catalog = addPanel.querySelector('#catalog');
+    const nameInput = addPanel.querySelector('#np-name');
+    const addBtn = addPanel.querySelector('#np-add');
+    let selectedName = getPlayerNameCatalog()[0] || 'INS';
 
-    function populatePresetOptions(selectedValue){
-      presetSel.innerHTML = '';
-      const catalog = getPlayerNameCatalog();
-      catalog.forEach(name=>{
-        presetSel.appendChild(el(`<option value="${name}">${name}</option>`));
+    function renderCatalog(){
+      const names = getPlayerNameCatalog();
+      const options = [...names, 'INS'];
+      if(!options.includes(selectedName)) selectedName = options[0];
+      catalog.innerHTML = '';
+      options.forEach(name=>{
+        const label = name==='INS' ? 'INS (nuevo)' : name;
+        const chip = el(`<button type="button" class="catalog-chip ${selectedName===name?'active':''}">${label}</button>`);
+        chip.onclick = ()=>{
+          selectedName = name;
+          const isIns = selectedName==='INS';
+          nameInput.style.display = isIns ? '' : 'none';
+          if(!isIns) nameInput.value = '';
+          renderCatalog();
+          if(isIns) nameInput.focus();
+        };
+        catalog.appendChild(chip);
       });
-      presetSel.appendChild(el(`<option value="INS">INS (no está en el listado)</option>`));
-      if(selectedValue && [...presetSel.options].some(o=> o.value===selectedValue)){
-        presetSel.value = selectedValue;
-      }
-    }
-    populatePresetOptions();
-
-    presetSel.onchange = ()=>{
-      const isIns = presetSel.value==='INS';
+      const isIns = selectedName==='INS';
       nameInput.style.display = isIns ? '' : 'none';
-      if(!isIns) nameInput.value = '';
-    };
-    presetSel.onchange();
+    }
+    renderCatalog();
+
     const syncInfo = el(`<div class="muted" style="margin-bottom:8px;">Sync remoto: ${state.sync?.mode==='remoto'?'OK':'desconectado'}${state.sync?.lastRemoteAt?` · Última: ${state.sync.lastRemoteAt}`:''}</div>`);
     wrap.appendChild(syncInfo);
-    const addBtn = el(`<button>Añadir jugador</button>`);
     addBtn.onclick=async ()=>{
-      const selected = presetSel.value;
-      const name = selected==='INS' ? nameInput.value.trim() : selected;
+      const name = selectedName==='INS' ? nameInput.value.trim() : selectedName;
       if(!name) return;
       const err = await addPlayerShared(name);
       if(err){ alert(err); return; }
       addNameToCatalog(name);
-      if(selected==='INS') nameInput.value = '';
-      populatePresetOptions(selected==='INS' ? name : selected);
+      if(selectedName==='INS'){
+        selectedName = normalizePlayerName(name);
+        nameInput.value = '';
+      }
+      renderCatalog();
     };
-    wrap.appendChild(addBtn);
   }
 
   const canStartLeague = !locked && state.players.length>=2;
