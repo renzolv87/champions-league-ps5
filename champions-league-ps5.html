@@ -470,6 +470,8 @@ function bindLocalPlayerId(playerId){
   if(!playerId) return;
   if(!state || !Array.isArray(state.players)) return;
   if(!state.players.some(p=> p.id===playerId)) return;
+  // Tras iniciar liguilla, el dispositivo queda atado a un solo jugador.
+  if(state.phase!=='setup' && state.myPlayerId && state.myPlayerId!==playerId) return;
   state.myPlayerId = playerId;
   try{ localStorage.setItem(STATE_KEY, JSON.stringify(state)); }
   catch(_err){}
@@ -2677,11 +2679,14 @@ function renderPlayerForm(match, decisive){
 
 function renderPendingDecisionForm(match, decisive){
   const reporterId = match.reportedBy;
-  const autoDecider = reporterId===match.p1
+  const expectedDecider = reporterId===match.p1
     ? match.p2
     : (reporterId===match.p2 ? match.p1 : null);
+  const autoDecider = (state.myPlayerId && state.myPlayerId===expectedDecider)
+    ? state.myPlayerId
+    : null;
   if(!autoDecider){
-    return el(`<div class="banner warn">No se pudo identificar automáticamente al rival que debe confirmar este resultado.</div>`);
+    return el(`<div class="banner warn">Este resultado lo debe confirmar <b>${playerName(expectedDecider)}</b>. Solo puedes confirmar con tu jugador activo.</div>`);
   }
   const scoreTxt = `${match.score1} - ${match.score2}` + (match.peno1!==null? ` (pen. ${match.peno1}-${match.peno2})` : '');
 
