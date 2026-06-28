@@ -1651,7 +1651,7 @@ const I18N = {
     waProposalToDefine: 'por definir',
     waProposalFormatSingle: 'liga unica a una vuelta ({matches} partidos por equipo)',
     waProposalFormatGroups: 'fase de grupos (tamano aprox. {groupSize}) y {matches} partidos por equipo',
-    waProposalOptionsTitle: 'Votacion (todas las zonas permitidas)',
+    waProposalOptionsTitle: 'Dia y horas: BCN LIM VNO',
     waProposalVoteCall: 'Responde con 1, 2 o 3 para confirmar horario.',
     sharedDataNote: 'Datos compartidos por Supabase. Si dos personas editan a la vez, el sistema resuelve conflictos refrescando el estado más reciente.'
   },
@@ -1918,7 +1918,7 @@ const I18N = {
     waProposalToDefine: 'to be defined',
     waProposalFormatSingle: 'single league, one leg ({matches} matches per team)',
     waProposalFormatGroups: 'group stage (approx size {groupSize}) and {matches} matches per team',
-    waProposalOptionsTitle: 'Poll options (all allowed time zones)',
+    waProposalOptionsTitle: 'Day and times: BCN LIM VNO',
     waProposalVoteCall: 'Reply with 1, 2 or 3 to confirm the time.',
     sharedDataNote: 'Shared data via Supabase. If two people edit at the same time, the app resolves conflicts by refreshing the latest state.'
   },
@@ -2185,7 +2185,7 @@ const I18N = {
     waProposalToDefine: 'bus patikslinta',
     waProposalFormatSingle: 'viena lyga, vienas ratas ({matches} rungtynes komandai)',
     waProposalFormatGroups: 'grupiu etapas (apytikslis dydis {groupSize}) ir {matches} rungtynes komandai',
-    waProposalOptionsTitle: 'Balsavimo variantai (visos leidziamos laiko juostos)',
+    waProposalOptionsTitle: 'Diena ir laikai: BCN LIM VNO',
     waProposalVoteCall: 'Atsakyk 1, 2 arba 3 ir patvirtink laika.',
     sharedDataNote: 'Bendrinami duomenys per Supabase. Jei du zmones redaguoja vienu metu, sistema issprendzia konfliktus atnaujindama naujausia busena.'
   },
@@ -2452,7 +2452,7 @@ const I18N = {
     waProposalToDefine: 'per definir',
     waProposalFormatSingle: 'lliga unica a una volta ({matches} partits per equip)',
     waProposalFormatGroups: 'fase de grups (mida aprox. {groupSize}) i {matches} partits per equip',
-    waProposalOptionsTitle: 'Votacio (totes les zones horaries permeses)',
+    waProposalOptionsTitle: 'Dia i hores: BCN LIM VNO',
     waProposalVoteCall: 'Respon amb 1, 2 o 3 per confirmar horari.',
     sharedDataNote: 'Dades compartides per Supabase. Si dues persones editen alhora, el sistema resol conflictes refrescant l\'estat mes recent.'
   }
@@ -2823,12 +2823,21 @@ function proposalKickoffOptions(total=3, messageLang=uiLang()){
   const time = proposalSuggestedKickoffTime();
   const [hh, mm] = time.split(':').map(Number);
   const locale = localeForLang(messageLang);
+  const zoneCodeByTz = {
+    'Europe/Madrid': 'BCN',
+    'America/Lima': 'LIM',
+    'Europe/Vilnius': 'VNO'
+  };
+  const dayFmt = new Intl.DateTimeFormat(locale, {
+    weekday:'short',
+    day:'2-digit',
+    month:'2-digit',
+    hourCycle:'h23',
+    timeZone:'Europe/Madrid'
+  });
   const zoneFormatters = SCHEDULE_CITIES.map(city=>({
-    city,
+    code: zoneCodeByTz[city.timeZone] || city.label,
     fmt: new Intl.DateTimeFormat(locale, {
-      weekday:'short',
-      day:'2-digit',
-      month:'2-digit',
       hour:'2-digit',
       minute:'2-digit',
       hourCycle:'h23',
@@ -2848,11 +2857,12 @@ function proposalKickoffOptions(total=3, messageLang=uiLang()){
   for(let i=0;i<total;i++){
     const d = new Date(base);
     d.setMinutes(d.getMinutes() + (i * 30));
-    const byZone = zoneFormatters.map(entry=> `${entry.city.label}: ${entry.fmt.format(d)}`);
+    const byZone = zoneFormatters.map(entry=> `(${entry.code}) ${entry.fmt.format(d)}`);
+    const dayText = dayFmt.format(d);
     out.push({
       at: d,
       byZone,
-      line: byZone.join(' · ')
+      line: `${dayText} ${byZone.join(' ')}`
     });
   }
   return out;
