@@ -2145,7 +2145,7 @@ function renderMatchRow(m, decisive){
     <div class="vs"><span>${p1}</span><span>${scoreTxt}</span><span>${p2}</span></div>
     <span class="tag ${m.status}">${({empty:'sin jugar',pending:'pendiente',confirmed:'confirmado',dispute:'disputa'})[m.status]}</span>
   </div>`);
-  const btnLabel = m.status==='confirmed' ? 'Corregir' : (m.status==='pending' ? 'Revisar' : 'Pon resultado');
+  const btnLabel = m.status==='confirmed' ? 'Corregir' : (m.status==='pending' ? 'Revisar' : 'resultado');
   const btn = el(`<button class="small secondary">${btnLabel}</button>`);
   btn.onclick=()=> openMatchModal(m, decisive, m.status==='confirmed');
   row.appendChild(btn);
