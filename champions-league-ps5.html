@@ -360,7 +360,7 @@ const I18N = {
     syncLocal: 'solo local',
     playersSingular: 'jugador',
     playersPlural: 'jugadores',
-    tabConfig: 'Configuración',
+    tabConfig: 'Guía del juego',
     tabPlayers: 'Jugadores',
     tabLeague: 'Liguilla',
     tabKnockout: 'Eliminatorias',
@@ -402,7 +402,7 @@ const I18N = {
     syncLocal: 'local only',
     playersSingular: 'player',
     playersPlural: 'players',
-    tabConfig: 'Settings',
+    tabConfig: 'Game Guide',
     tabPlayers: 'Players',
     tabLeague: 'League',
     tabKnockout: 'Knockout',
@@ -444,7 +444,7 @@ const I18N = {
     syncLocal: 'tik vietoje',
     playersSingular: 'zaidejas',
     playersPlural: 'zaidejai',
-    tabConfig: 'Nustatymai',
+    tabConfig: 'Zaidimo gidas',
     tabPlayers: 'Zaidejai',
     tabLeague: 'Lyga',
     tabKnockout: 'Atkrintamosios',
@@ -486,7 +486,7 @@ const I18N = {
     syncLocal: 'nomes local',
     playersSingular: 'jugador',
     playersPlural: 'jugadors',
-    tabConfig: 'Configuracio',
+    tabConfig: 'Guia del joc',
     tabPlayers: 'Jugadors',
     tabLeague: 'Lligueta',
     tabKnockout: 'Eliminatories',
@@ -2447,10 +2447,47 @@ function renderConfigTab(){
   const n = state.players.length;
   const maxMatches = Math.max(1,2*(n-1));
   const q = effectiveNumQualifiers();
+  const betCeiling = getBetMoneyCeiling();
 
   if(locked){
     wrap.appendChild(el(`<div class="banner info">La configuración está bloqueada porque el torneo ya empezó. Puedes iniciar una nueva temporada desde la pestaña Historial cuando termine.</div>`));
   }
+
+  const guideCard = el(`<div class="card">
+    <h3>Cómo se juega</h3>
+    <div class="muted" style="line-height:1.6;">
+      <p><b>Objetivo final</b><br>El ganador histórico se ve en <b>Museo</b>. El orden se define así: <b>1) más copas</b>, <b>2) más dinero histórico</b>, <b>3) mejor diferencia de goles</b>.</p>
+
+      <p><b>Flujo de temporada</b></p>
+      <ol style="padding-left:18px;margin:0 0 10px;">
+        <li>En <b>Jugadores</b> cada persona registra su jugador desde su propio dispositivo.</li>
+        <li>Arranca la liguilla: todos contra todos, ida y vuelta.</li>
+        <li>Clasifican aprox. 2 de cada 3 jugadores. Si el número no es potencia de 2, hay <b>play-off</b> para completar el cuadro.</li>
+        <li>Luego se juegan eliminatorias hasta coronar al campeón de la temporada.</li>
+      </ol>
+
+      <p><b>Reporte y confirmación de resultados</b><br>Un jugador reporta marcador y el rival lo <b>confirma</b> o <b>rechaza</b>. Si se rechaza, el reporte debe cargarse de nuevo.</p>
+
+      <p><b>Apuestas</b></p>
+      <ul style="padding-left:18px;margin:0 0 10px;">
+        <li>Solo apuestas con tu <b>jugador activo</b>.</li>
+        <li>En liguilla solo puede apostar quien <b>no juega</b> ese partido.</li>
+        <li>En eliminatorias/play-off solo apuestan los <b>no clasificados</b>.</li>
+        <li>Máximo una apuesta abierta por partido y jugador.</li>
+        <li>Apuesta máxima por ticket: <b>${Math.round(state.bets.maxStakePct*100)}%</b> de tu saldo actual.</li>
+        <li>Cuota fija ganadora: <b>x2</b> (recuperas stake + ganancia equivalente), con tope global de apuestas en <b>${fmtMoney(betCeiling)}</b>.</li>
+        <li>Las apuestas se liquidan cuando el resultado queda confirmado.</li>
+      </ul>
+
+      <p><b>Desempates</b></p>
+      <ul style="padding-left:18px;margin:0;">
+        <li>En liguilla: puntos, diferencia de goles, goles a favor, partido directo.</li>
+        <li>Si el empate sigue justo en el corte de clasificación: cruces aleatorios a penaltis hasta desempatar.</li>
+        <li>En play-off/eliminatorias no puede quedar empate: si empatan en goles, se registra tanda de penaltis obligatoriamente.</li>
+      </ul>
+    </div>
+  </div>`);
+  wrap.appendChild(guideCard);
 
   const card = el(`<div class="card">
     <h3>Parámetros de la liguilla</h3>
@@ -2562,12 +2599,7 @@ function renderPlayersTab(){
       <div class="muted">${t('addPlayerHint')}</div>
       <div id="catalog" class="catalog-wrap"></div>
       <label>${t('chooseLanguage')}</label>
-      <select id="np-lang">
-        <option value="es">${t('langOptionEs')}</option>
-        <option value="en">${t('langOptionEn')}</option>
-        <option value="lt">${t('langOptionLt')}</option>
-        <option value="ca">${t('langOptionCa')}</option>
-      </select>
+      <div id="lang-catalog" class="catalog-wrap"></div>
       <div class="add-player-actions" style="margin-top:8px;">
         <input id="np-name" placeholder="${t('newNamePlaceholder')}" style="display:none;">
         <button id="np-add">${t('addNow')}</button>
@@ -2575,11 +2607,11 @@ function renderPlayersTab(){
     </div>`);
     wrap.appendChild(addPanel);
     const catalog = addPanel.querySelector('#catalog');
+    const langCatalog = addPanel.querySelector('#lang-catalog');
     const nameInput = addPanel.querySelector('#np-name');
-    const langSelect = addPanel.querySelector('#np-lang');
     const addBtn = addPanel.querySelector('#np-add');
     let selectedName = getPlayerNameCatalog()[0] || 'INS';
-    langSelect.value = uiLang();
+    let selectedLang = uiLang();
 
     function renderCatalog(){
       const names = getPlayerNameCatalog();
@@ -2602,14 +2634,39 @@ function renderPlayersTab(){
       const isIns = selectedName==='INS';
       nameInput.style.display = isIns ? '' : 'none';
     }
+
+    function renderLanguageCatalog(){
+      const options = [
+        {code:'es', label:t('langOptionEs')},
+        {code:'en', label:t('langOptionEn')},
+        {code:'lt', label:t('langOptionLt')},
+        {code:'ca', label:t('langOptionCa')}
+      ];
+      langCatalog.innerHTML = '';
+      options.forEach(opt=>{
+        const chip = el(`<button type="button" class="catalog-chip ${selectedLang===opt.code?'active':''}">${opt.label}</button>`);
+        chip.onclick = ()=>{
+          selectedLang = opt.code;
+          if(selectedLang!==uiLang()){
+            setUiLang(selectedLang);
+            render();
+            return;
+          }
+          renderLanguageCatalog();
+        };
+        langCatalog.appendChild(chip);
+      });
+    }
+
     renderCatalog();
+    renderLanguageCatalog();
 
     const syncInfo = el(`<div class="muted" style="margin-bottom:8px;">${t('syncStatusPrefix')}: ${state.sync?.mode==='remoto'?t('syncOk'):t('disconnected')}${state.sync?.lastRemoteAt?` · ${t('lastSync')}: ${state.sync.lastRemoteAt}`:''}</div>`);
     wrap.appendChild(syncInfo);
     addBtn.onclick=async ()=>{
       const name = selectedName==='INS' ? nameInput.value.trim() : selectedName;
       if(!name) return;
-      const err = await addPlayerShared(name, langSelect.value);
+      const err = await addPlayerShared(name, selectedLang);
       if(err){ alert(err); return; }
       addNameToCatalog(name);
       if(selectedName==='INS'){
