@@ -1380,7 +1380,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_r3PAKQSOk2h8DmVeGmSOIg_lKLi8v8F';
 const SUPABASE_TABLE = 'tournament_state';
 const SUPABASE_ROW_ID = 'shared';
 const GAME_NAME = 'Champions League PS5';
-const GAME_PAGE_URL = 'https://github.com/renzolv87/champions-league-ps5';
+const GAME_PAGE_URL = 'https://renzolv87.github.io/champions-league-ps5/champions-league-ps5.html';
 const UI_LANG_KEY = 'cl-ps5-ui-lang';
 const SUPPORTED_UI_LANGS = ['es','en','lt','ca'];
 const PRESET_PLAYER_NAMES = ['renzo','johan','giank','felipe','jordi','ithan','miguel'];
@@ -1654,7 +1654,7 @@ const I18N = {
     waProposalFormatGroups: 'fase de grupos (tamano aprox. {groupSize}) y {matches} partidos por equipo',
     waProposalOptionsTitle: 'Dia y horas:',
     waProposalVoteCall: 'Responde con 1, 2 o 3 para confirmar horario.',
-    waProposalDataLinkLabel: 'Mete tus datos aqui:',
+    waProposalDataLinkLabel: 'Abrir juego',
     waGamePageBtn: 'Pagina del juego',
     sharedDataNote: 'Datos compartidos por Supabase. Si dos personas editan a la vez, el sistema resuelve conflictos refrescando el estado más reciente.'
   },
@@ -1912,7 +1912,7 @@ const I18N = {
     waProposalBtn: 'Share proposal on WhatsApp',
     waProposalHint: 'Builds a message with season details, format and 3 time options to vote in your group.',
     waProposalNeedPlayers: 'You need at least 1 player before sharing a proposal.',
-    waProposalTitle: 'Un partidito???',
+    waProposalTitle: 'Quick match???',
     waProposalSeason: 'Season: {season}',
     waProposalPlayers: 'Players ({count}): {list}',
     waProposalFormat: 'Proposed format: {format}',
@@ -1923,7 +1923,7 @@ const I18N = {
     waProposalFormatGroups: 'group stage (approx size {groupSize}) and {matches} matches per team',
     waProposalOptionsTitle: 'Day and times:',
     waProposalVoteCall: 'Reply with 1, 2 or 3 to confirm the time.',
-    waProposalDataLinkLabel: 'Enter your data here:',
+    waProposalDataLinkLabel: 'Open game',
     waGamePageBtn: 'Game page',
     sharedDataNote: 'Shared data via Supabase. If two people edit at the same time, the app resolves conflicts by refreshing the latest state.'
   },
@@ -2181,7 +2181,7 @@ const I18N = {
     waProposalBtn: 'Dalintis pasiulymu per WhatsApp',
     waProposalHint: 'Sukuria zinute su sezono info, formatu ir 3 laiko variantais balsavimui.',
     waProposalNeedPlayers: 'Pries dalinantis pasiulymu reikia bent 1 zaidejo.',
-    waProposalTitle: 'Un partidito???',
+    waProposalTitle: 'Gal suzaidziam???',
     waProposalSeason: 'Sezonas: {season}',
     waProposalPlayers: 'Zaidejai ({count}): {list}',
     waProposalFormat: 'Siulomas formatas: {format}',
@@ -2192,7 +2192,7 @@ const I18N = {
     waProposalFormatGroups: 'grupiu etapas (apytikslis dydis {groupSize}) ir {matches} rungtynes komandai',
     waProposalOptionsTitle: 'Diena ir laikai:',
     waProposalVoteCall: 'Atsakyk 1, 2 arba 3 ir patvirtink laika.',
-    waProposalDataLinkLabel: 'Ivesk savo duomenis cia:',
+    waProposalDataLinkLabel: 'Atidaryti zaidima',
     waGamePageBtn: 'Zaidimo puslapis',
     sharedDataNote: 'Bendrinami duomenys per Supabase. Jei du zmones redaguoja vienu metu, sistema issprendzia konfliktus atnaujindama naujausia busena.'
   },
@@ -2450,7 +2450,7 @@ const I18N = {
     waProposalBtn: 'Compartir proposta per WhatsApp',
     waProposalHint: 'Genera un missatge amb temporada, format i 3 horaris per votar al grup.',
     waProposalNeedPlayers: 'Necessites almenys 1 jugador per compartir proposta.',
-    waProposalTitle: 'Un partidito???',
+    waProposalTitle: 'Un partidet???',
     waProposalSeason: 'Temporada: {season}',
     waProposalPlayers: 'Jugadors ({count}): {list}',
     waProposalFormat: 'Format proposat: {format}',
@@ -2461,7 +2461,7 @@ const I18N = {
     waProposalFormatGroups: 'fase de grups (mida aprox. {groupSize}) i {matches} partits per equip',
     waProposalOptionsTitle: 'Dia i hores:',
     waProposalVoteCall: 'Respon amb 1, 2 o 3 per confirmar horari.',
-    waProposalDataLinkLabel: 'Introdueix les teves dades aqui:',
+    waProposalDataLinkLabel: 'Obrir joc',
     waGamePageBtn: 'Pagina del joc',
     sharedDataNote: 'Dades compartides per Supabase. Si dues persones editen alhora, el sistema resol conflictes refrescant l\'estat mes recent.'
   }
@@ -2893,15 +2893,16 @@ function buildWhatsAppProposalText(messageLang = uiLang()){
   const options = proposalKickoffOptions(3, lang);
   const dataUrl = GAME_PAGE_URL;
   return [
-    tForLang(lang, 'waProposalTitle'),
+    `⚽ ${tForLang(lang, 'waProposalTitle')}`,
     '',
-    tForLang(lang, 'waProposalOptionsTitle'),
+    `🕒 ${tForLang(lang, 'waProposalOptionsTitle')}`,
     `1) ${options[0]?.line || '—'}`,
     `2) ${options[1]?.line || '—'}`,
     `3) ${options[2]?.line || '—'}`,
     '',
-    tForLang(lang, 'waProposalVoteCall'),
-    `${tForLang(lang, 'waProposalDataLinkLabel')} ${dataUrl}`
+    `✅ ${tForLang(lang, 'waProposalVoteCall')}`,
+    `🟩 ${tForLang(lang, 'waProposalDataLinkLabel')}`,
+    dataUrl
   ].join('\n');
 }
 function openWhatsAppProposal(messageLang = uiLang()){
