@@ -23,10 +23,11 @@
 body{
   margin:0; background:var(--bg); color:var(--text);
   font-family:'Inter',system-ui,sans-serif;
+  line-height:1.45;
   -webkit-font-smoothing:antialiased;
 }
 h1,h2,h3,.disp{font-family:'Space Grotesk',sans-serif;}
-.app{max-width:920px;margin:0 auto;padding:20px 16px 80px;}
+.app{max-width:min(1100px,96vw);margin:0 auto;padding:clamp(14px,2vw,24px) clamp(12px,2vw,20px) 80px;}
 
 .hero{
   display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap;
@@ -34,8 +35,8 @@ h1,h2,h3,.disp{font-family:'Space Grotesk',sans-serif;}
 .hero .crest{
   width:46px;height:46px;flex:0 0 auto;
 }
-.hero h1{font-size:1.5rem;margin:0;letter-spacing:.3px;}
-.hero .sub{color:var(--text-dim);font-size:.82rem;margin-top:2px;}
+.hero h1{font-size:clamp(1.25rem,2vw,1.75rem);margin:0;letter-spacing:.3px;}
+.hero .sub{color:var(--text-dim);font-size:clamp(.76rem,1.2vw,.9rem);margin-top:2px;}
 .brand-strip{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
 .brand-badge{
   display:inline-flex;align-items:center;gap:6px;
@@ -89,14 +90,14 @@ h1,h2,h3,.disp{font-family:'Space Grotesk',sans-serif;}
 
 .tabs{display:flex;gap:4px;margin-bottom:18px;border-bottom:1px solid var(--line);overflow-x:auto;}
 .tab{
-  padding:10px 14px;font-size:.85rem;font-weight:600;color:var(--text-dim);
+  padding:10px 14px;font-size:clamp(.8rem,1.2vw,.92rem);font-weight:600;color:var(--text-dim);
   cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;
 }
 .tab.active{color:var(--text);border-bottom-color:var(--gold);}
 
 .card{
   background:var(--surface);border:1px solid var(--line);border-radius:14px;
-  padding:18px;margin-bottom:16px;
+  padding:clamp(12px,1.6vw,18px);margin-bottom:16px;
 }
 .card h3{margin:0 0 12px;font-size:1.02rem;}
 .muted{color:var(--text-dim);font-size:.82rem;}
@@ -104,7 +105,8 @@ h1,h2,h3,.disp{font-family:'Space Grotesk',sans-serif;}
 label{display:block;font-size:.78rem;color:var(--text-dim);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
 input,select{
   width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--text);
-  padding:9px 10px;border-radius:8px;font-size:.92rem;margin-bottom:12px;font-family:inherit;
+  padding:10px 11px;border-radius:8px;font-size:.92rem;margin-bottom:12px;font-family:inherit;
+  min-height:42px;
 }
 input[type=number]{width:90px;}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
@@ -113,6 +115,7 @@ input[type=number]{width:90px;}
 button{
   background:var(--accent);color:#fff;border:none;padding:9px 16px;border-radius:8px;
   font-weight:700;font-size:.85rem;cursor:pointer;font-family:inherit;
+  min-height:40px;
 }
 button.secondary{background:var(--surface-2);color:var(--text);border:1px solid var(--line);}
 button.gold{background:var(--gold);color:#1a1200;}
@@ -442,11 +445,44 @@ tr.tied td{outline:1px dashed var(--bad);outline-offset:-1px;}
   .result-vs{padding:0;text-align:center;}
 }
 
+@media (max-width:1024px){
+  .player-grid{grid-template-columns:repeat(auto-fit,minmax(165px,1fr));}
+  .museum-grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));}
+}
+
+@media (max-width:768px){
+  .tabs{gap:2px;}
+  .tab{padding:10px 11px;}
+  .row > div{min-width:100px;}
+  .add-player-actions input{min-width:170px;}
+  .modal{padding:14px;max-width:min(96vw,560px);}
+  .modal-bg{padding:10px;align-items:flex-end;}
+  .modal.demo-modal,.modal.guide-modal{max-width:96vw;max-height:88vh;overflow:auto;}
+  .player-grid{max-height:min(52vh, 480px);}
+}
+
 .foot-note{font-size:.72rem;color:var(--text-dim);text-align:center;margin-top:30px;line-height:1.5;}
 
 @media (max-width:640px){
+  .app{padding:12px 10px 70px;}
   .hero{align-items:flex-start;}
   .hero h1{font-size:1.25rem;}
+  .hero .crest{width:38px;height:38px;}
+  .brand-badge{font-size:.68rem;padding:4px 8px;}
+  button{min-height:42px;}
+  .player-grid{grid-template-columns:1fr;max-height:min(48vh,420px);}
+}
+
+@media (min-width:1600px){
+  body{font-size:18px;}
+  .app{max-width:min(1460px,94vw);padding:28px 24px 96px;}
+  .card{border-radius:16px;}
+  .tab{padding:12px 16px;}
+  .player-grid{grid-template-columns:repeat(auto-fit,minmax(230px,1fr));max-height:min(60vh,720px);}
+  .modal{max-width:520px;}
+  .modal.result-modal{max-width:760px;}
+  .modal.demo-modal{max-width:min(1200px,94vw);}
+  .modal.guide-modal{max-width:min(1100px,94vw);}
 }
 </style>
 </head>
@@ -491,6 +527,7 @@ const I18N = {
     playersHint: 'Selecciona tu jugador activo al añadirlo desde este dispositivo.',
     noPlayersYet: 'Todavía no hay jugadores.',
     yourPlayer: 'Tu jugador',
+    guestTeam: 'Invitado',
     deletePlayer: 'Borrar',
     addPlayerTitle: 'Añadir jugador',
     addPlayerHint: 'Toca un nombre sugerido o usa (nuevo) para crear uno nuevo.',
@@ -505,7 +542,7 @@ const I18N = {
     alreadyRegisteredInfo: 'Ya registraste tu jugador en este dispositivo. El resto de jugadores debe añadirse de forma colaborativa desde sus propios dispositivos.',
     startLeague: 'Iniciar liguilla / torneo',
     setupLockedInfo: 'La temporada ya está en curso. Este botón se habilita cuando la fase vuelva a configuración.',
-    needTwoPlayers: 'Añade al menos 4 jugadores para iniciar la liguilla.',
+    needTwoPlayers: 'Añade al menos 2 jugadores para iniciar. Si sois pocos, el sistema agrega un invitado para mantener fases con sentido.',
     langOptionEs: 'Español',
     langOptionEn: 'Inglés',
     langOptionLt: 'Lituano',
@@ -535,6 +572,7 @@ const I18N = {
     playersHint: 'Pick your active player when adding from this device.',
     noPlayersYet: 'No players yet.',
     yourPlayer: 'Your player',
+    guestTeam: 'Guest',
     deletePlayer: 'Delete',
     addPlayerTitle: 'Add player',
     addPlayerHint: 'Tap a suggested name or use (new) to create a new one.',
@@ -549,7 +587,7 @@ const I18N = {
     alreadyRegisteredInfo: 'You already registered your player on this device. The rest must be added collaboratively from their own devices.',
     startLeague: 'Start league / tournament',
     setupLockedInfo: 'Season is already in progress. This button is enabled again when the phase returns to setup.',
-    needTwoPlayers: 'Add at least 4 players to start the league.',
+    needTwoPlayers: 'Add at least 2 players to start. If you are few, the system adds a guest team to keep meaningful phases.',
     langOptionEs: 'Spanish',
     langOptionEn: 'English',
     langOptionLt: 'Lithuanian',
@@ -579,6 +617,7 @@ const I18N = {
     playersHint: 'Pridedant is sio irenginio pasirink savo aktyvu zaideja.',
     noPlayersYet: 'Zaideju dar nera.',
     yourPlayer: 'Tavo zaidejas',
+    guestTeam: 'Svecias',
     deletePlayer: 'Trinti',
     addPlayerTitle: 'Prideti zaideja',
     addPlayerHint: 'Spausk siuloma varda arba rinkis (naujas) naujam vardui.',
@@ -593,7 +632,7 @@ const I18N = {
     alreadyRegisteredInfo: 'Siame irenginyje jau uzregistravai savo zaideja. Kitus zaidejus reikia prideti is ju irenginiu.',
     startLeague: 'Pradeti lyga / turnyra',
     setupLockedInfo: 'Sezonas jau vyksta. Mygtukas vel bus aktyvus, kai faze griz i nustatymus.',
-    needTwoPlayers: 'Pridek bent 4 zaidejus, kad paleistum lyga.',
+    needTwoPlayers: 'Pridek bent 2 zaidejus. Jei jusu mazai, sistema prides svecia kad fazes turetu prasme.',
     langOptionEs: 'Ispanu',
     langOptionEn: 'Anglu',
     langOptionLt: 'Lietuviu',
@@ -623,6 +662,7 @@ const I18N = {
     playersHint: 'Selecciona el teu jugador actiu quan l\'afegeixis des d\'aquest dispositiu.',
     noPlayersYet: 'Encara no hi ha jugadors.',
     yourPlayer: 'El teu jugador',
+    guestTeam: 'Convidat',
     deletePlayer: 'Esborrar',
     addPlayerTitle: 'Afegir jugador',
     addPlayerHint: 'Toca un nom suggerit o fes servir (nou) per crear-ne un de nou.',
@@ -637,7 +677,7 @@ const I18N = {
     alreadyRegisteredInfo: 'Ja has registrat el teu jugador en aquest dispositiu. La resta de jugadors s\'han d\'afegir de manera colaborativa des dels seus dispositius.',
     startLeague: 'Iniciar lligueta / torneig',
     setupLockedInfo: 'La temporada ja esta en curs. Aquest boto s\'habilita quan la fase torni a configuracio.',
-    needTwoPlayers: 'Afegeix almenys 4 jugadors per iniciar la lligueta.',
+    needTwoPlayers: 'Afegeix almenys 2 jugadors per iniciar. Si sou pocs, el sistema afegeix un convidat per mantenir fases amb sentit.',
     langOptionEs: 'Espanyol',
     langOptionEn: 'Angles',
     langOptionLt: 'Lituà',
