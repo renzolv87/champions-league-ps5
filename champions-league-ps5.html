@@ -470,8 +470,8 @@ function bindLocalPlayerId(playerId){
   if(!playerId) return;
   if(!state || !Array.isArray(state.players)) return;
   if(!state.players.some(p=> p.id===playerId)) return;
-  // Tras iniciar liguilla, el dispositivo queda atado a un solo jugador.
-  if(state.phase!=='setup' && state.myPlayerId && state.myPlayerId!==playerId) return;
+  // Tras iniciar liguilla, nunca se puede reasignar identidad en este dispositivo.
+  if(state.phase!=='setup') return;
   state.myPlayerId = playerId;
   try{ localStorage.setItem(STATE_KEY, JSON.stringify(state)); }
   catch(_err){}
@@ -2664,7 +2664,6 @@ function renderPlayerForm(match, decisive){
 
   box.querySelector('#m-submit').onclick=()=>{
     const byId = box.querySelector('#m-who').value;
-    bindLocalPlayerId(byId);
     const s1 = parseInt(s1El.value);
     const s2 = parseInt(s2El.value);
     const pn1 = decisive? (pn1El.value===''? null: parseInt(pn1El.value)) : null;
@@ -2704,7 +2703,6 @@ function renderPendingDecisionForm(match, decisive){
 
   box.querySelector('#m-accept').onclick=()=>{
     const byId = box.querySelector('#m-decider').value;
-    bindLocalPlayerId(byId);
     const err = acceptReportedResult(match, byId, decisive);
     if(err){ box.querySelector('#m-derr').textContent = err; return; }
     pendingModal=null;
@@ -2712,7 +2710,6 @@ function renderPendingDecisionForm(match, decisive){
   };
   box.querySelector('#m-reject').onclick=()=>{
     const byId = box.querySelector('#m-decider').value;
-    bindLocalPlayerId(byId);
     const err = rejectReportedResult(match, byId);
     if(err){ box.querySelector('#m-derr').textContent = err; return; }
     pendingModal=null;
