@@ -267,16 +267,37 @@ tr.tied td{outline:1px dashed var(--bad);outline-offset:-1px;}
   padding-bottom:12px;
 }
 .result-goal-input{
-  width:100%;
+  width:86px;
   margin-bottom:0;
   text-align:center;
   font-size:1.15rem;
   font-weight:800;
   padding:10px 8px;
 }
+.result-goal-controls{display:flex;justify-content:center;align-items:center;gap:8px;}
+.result-step-btn{
+  width:34px;
+  height:34px;
+  border-radius:10px;
+  padding:0;
+  font-size:1rem;
+  line-height:1;
+  background:var(--surface-2);
+  border:1px solid var(--line);
+}
 .result-quick{display:flex;flex-wrap:wrap;gap:7px;}
 .result-quick button{background:var(--surface-2);border:1px solid var(--line);padding:6px 10px;font-size:.76rem;}
 .result-quick button.active{background:var(--gold);color:#1a1200;border-color:var(--gold);}
+.result-live{
+  text-align:center;
+  font-size:.95rem;
+  font-weight:700;
+  border:1px solid var(--line);
+  border-radius:11px;
+  padding:9px 10px;
+  background:rgba(30,37,80,.5);
+}
+.result-live .sep{color:var(--gold);padding:0 6px;}
 .result-penalties{
   border:1px dashed #4a5397;
   border-radius:11px;
@@ -1240,8 +1261,12 @@ function renderBetActivityBoard(title){
   }
   tickets.forEach(t=>{
     const m = findMatchForTicket(t.matchId);
-    const pickTxt = m ? getPickLabelForMatch(m, t.pick) : (t.pick==='home' ? 'local' : (t.pick==='away' ? 'visitante' : 'empate'));
-    const matchTxt = m ? `${playerName(m.p1)} vs ${playerName(m.p2)}` : 'partido no disponible';
+    const fallbackHome = t.homeName || 'Jugador 1';
+    const fallbackAway = t.awayName || 'Jugador 2';
+    const pickTxt = m
+      ? getPickLabelForMatch(m, t.pick)
+      : (t.pick==='home' ? fallbackHome : (t.pick==='away' ? fallbackAway : 'Empate'));
+    const matchTxt = m ? `${playerName(m.p1)} vs ${playerName(m.p2)}` : `${fallbackHome} vs ${fallbackAway}`;
     const statusTag = t.status==='open'
       ? '<span class="tag pending">abierta</span>'
       : (t.status==='settled'
@@ -1423,6 +1448,8 @@ function placeBet(playerId, matchId, pick, stake){
     season: state.season,
     playerId,
     matchId,
+    homeName: playerName(match.p1),
+    awayName: playerName(match.p2),
     pick,
     stake,
     status:'open',
@@ -2392,23 +2419,34 @@ function renderPlayerForm(match, decisive){
       <div class="result-team-box">
         <div class="result-team-name">${p1Name}</div>
         <label>Goles</label>
-        <input class="result-goal-input" type="number" id="m-s1" min="0" value="${match.score1??0}">
+        <div class="result-goal-controls">
+          <button type="button" class="result-step-btn" data-target="m-s1" data-delta="-1">−</button>
+          <input class="result-goal-input" type="number" id="m-s1" min="0" value="${match.score1??0}">
+          <button type="button" class="result-step-btn" data-target="m-s1" data-delta="1">+</button>
+        </div>
       </div>
       <div class="result-vs">VS</div>
       <div class="result-team-box">
         <div class="result-team-name">${p2Name}</div>
         <label>Goles</label>
-        <input class="result-goal-input" type="number" id="m-s2" min="0" value="${match.score2??0}">
+        <div class="result-goal-controls">
+          <button type="button" class="result-step-btn" data-target="m-s2" data-delta="-1">−</button>
+          <input class="result-goal-input" type="number" id="m-s2" min="0" value="${match.score2??0}">
+          <button type="button" class="result-step-btn" data-target="m-s2" data-delta="1">+</button>
+        </div>
       </div>
     </div>
+    <div class="result-live" id="m-live"></div>
     <div>
       <div class="muted" style="margin-bottom:6px;">Marcadores rápidos</div>
       <div class="result-quick" id="m-quick">
+        <button type="button" data-s1="0" data-s2="0">0-0</button>
         <button type="button" data-s1="1" data-s2="0">1-0</button>
         <button type="button" data-s1="2" data-s2="1">2-1</button>
         <button type="button" data-s1="0" data-s2="1">0-1</button>
         <button type="button" data-s1="1" data-s2="1">1-1</button>
         <button type="button" data-s1="2" data-s2="2">2-2</button>
+        <button type="button" data-s1="3" data-s2="2">3-2</button>
       </div>
     </div>
     ${decisive? `<div class="result-penalties" id="m-pen-wrap">
@@ -2420,10 +2458,22 @@ function renderPlayerForm(match, decisive){
   </div>`);
   const s1El = box.querySelector('#m-s1');
   const s2El = box.querySelector('#m-s2');
+  const liveEl = box.querySelector('#m-live');
   const quickBtns = [...box.querySelectorAll('#m-quick button')];
+  const stepBtns = [...box.querySelectorAll('.result-step-btn')];
   const penWrap = decisive ? box.querySelector('#m-pen-wrap') : null;
   const pn1El = decisive ? box.querySelector('#m-pn1') : null;
   const pn2El = decisive ? box.querySelector('#m-pn2') : null;
+
+  function updateLiveLine(){
+    const g1 = parseInt(s1El.value);
+    const g2 = parseInt(s2El.value);
+    if(Number.isNaN(g1) || Number.isNaN(g2)){
+      liveEl.innerHTML = `${p1Name} <span class="sep">vs</span> ${p2Name}`;
+      return;
+    }
+    liveEl.innerHTML = `${p1Name} <span class="sep">${g1} - ${g2}</span> ${p2Name}`;
+  }
 
   function refreshQuickState(){
     quickBtns.forEach(btn=>{
@@ -2452,12 +2502,27 @@ function renderPlayerForm(match, decisive){
       s2El.value = btn.dataset.s2;
       refreshQuickState();
       refreshPenaltiesState();
+      updateLiveLine();
     };
   });
-  s1El.oninput = ()=>{ refreshQuickState(); refreshPenaltiesState(); };
-  s2El.oninput = ()=>{ refreshQuickState(); refreshPenaltiesState(); };
+  stepBtns.forEach(btn=>{
+    btn.onclick = ()=>{
+      const targetId = btn.dataset.target;
+      const delta = parseInt(btn.dataset.delta || '0');
+      const target = targetId==='m-s1' ? s1El : s2El;
+      const current = parseInt(target.value);
+      const next = Math.max(0, (Number.isNaN(current)?0:current) + delta);
+      target.value = String(next);
+      refreshQuickState();
+      refreshPenaltiesState();
+      updateLiveLine();
+    };
+  });
+  s1El.oninput = ()=>{ refreshQuickState(); refreshPenaltiesState(); updateLiveLine(); };
+  s2El.oninput = ()=>{ refreshQuickState(); refreshPenaltiesState(); updateLiveLine(); };
   refreshQuickState();
   refreshPenaltiesState();
+  updateLiveLine();
 
   box.querySelector('#m-submit').onclick=()=>{
     const byId = box.querySelector('#m-who').value;
