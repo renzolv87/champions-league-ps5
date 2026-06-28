@@ -2887,6 +2887,69 @@ function restartCurrentSeason(){
 /* ================= RENDER ================= */
 function el(html){ const d=document.createElement('div'); d.innerHTML=html; return d.firstElementChild; }
 
+function isMobileSwipeCloseEnabled(){
+  try{
+    if(window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return true;
+    if(typeof navigator!=='undefined' && navigator.maxTouchPoints>0) return true;
+  }catch(_err){}
+  return false;
+}
+
+function closePendingModal(){
+  if(!pendingModal) return;
+  if(demoDrawState) resetDemoDrawState();
+  pendingModal = null;
+  render();
+}
+
+function getScrollableParentWithinModal(start, modalEl){
+  let cur = start instanceof Element ? start : null;
+  while(cur && cur!==modalEl){
+    const style = window.getComputedStyle(cur);
+    const canScrollY = /(auto|scroll)/.test(style.overflowY || '') && cur.scrollHeight>cur.clientHeight+2;
+    if(canScrollY) return cur;
+    cur = cur.parentElement;
+  }
+  const modalStyle = window.getComputedStyle(modalEl);
+  const modalScroll = /(auto|scroll)/.test(modalStyle.overflowY || '') && modalEl.scrollHeight>modalEl.clientHeight+2;
+  return modalScroll ? modalEl : null;
+}
+
+function attachMobileSwipeToClose(modalRoot){
+  if(!modalRoot || !isMobileSwipeCloseEnabled()) return;
+  const modalEl = modalRoot.querySelector('.modal');
+  if(!modalEl) return;
+
+  let startX = 0;
+  let startY = 0;
+  let active = false;
+  let startsNearTop = false;
+  let startsAtTopScroll = false;
+
+  modalEl.addEventListener('touchstart', (ev)=>{
+    if(!ev.touches || ev.touches.length!==1) return;
+    const t = ev.touches[0];
+    startX = t.clientX;
+    startY = t.clientY;
+    active = true;
+    const rect = modalEl.getBoundingClientRect();
+    startsNearTop = (startY - rect.top) <= 130;
+    const scrollable = getScrollableParentWithinModal(ev.target, modalEl);
+    startsAtTopScroll = !scrollable || scrollable.scrollTop<=1;
+  }, {passive:true});
+
+  modalEl.addEventListener('touchend', (ev)=>{
+    if(!active || !ev.changedTouches || !ev.changedTouches.length) return;
+    active = false;
+    const t = ev.changedTouches[0];
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+    if(startsNearTop && startsAtTopScroll && dy>85 && Math.abs(dx)<80){
+      closePendingModal();
+    }
+  }, {passive:true});
+}
+
 function render(){
   document.documentElement.lang = uiLang();
   const app = document.getElementById('app');
@@ -2900,7 +2963,13 @@ function render(){
   app.appendChild(body);
   renderTabBody();
   app.appendChild(el(`<div class="foot-note">${t('sharedDataNote')}</div>`));
-  if(pendingModal) app.appendChild(pendingModal());
+  if(pendingModal){
+    const modalNode = pendingModal();
+    if(modalNode){
+      attachMobileSwipeToClose(modalNode);
+      app.appendChild(modalNode);
+    }
+  }
   if(state?.phase==='finished' && state?.champion) runChampionCelebration();
 }
 
@@ -4027,9 +4096,8 @@ function renderHistoryTab(){
 /* ---------------- BOOT ---------------- */
 document.addEventListener('keydown', (ev)=>{
   if(ev.key!=='Escape' || !pendingModal) return;
-  if(demoDrawState) resetDemoDrawState();
-  pendingModal = null;
-  render();
+  if(isMobileSwipeCloseEnabled()) return;
+  closePendingModal();
 });
 
 loadState();
