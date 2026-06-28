@@ -1589,7 +1589,10 @@ function demoUppercaseFirst(name){
 const DEMO_FALLBACK_NAMES = [
   'alex','bruno','carla','diego','elena','fabio','gabriela','hugo','irene','joel',
   'kiara','leo','marina','nico','olga','paula','quim','raquel','samir','tamara',
-  'ulises','valeria','wanda','xavi','yasmin','zoe','adrian','bianca','ciro','diana'
+  'ulises','valeria','wanda','xavi','yasmin','zoe','adrian','bianca','ciro','diana',
+  'erik','flavia','gael','helena','ian','julieta','kevin','lara','mario','naia',
+  'oscar','petra','quentin','rocio','sandro','tatiana','ugo','violeta','will','ximena',
+  'yoris','zaira','alba','borja','cloe','dario','eva','fermin','gala','hector'
 ];
 
 function generateDemoSeason(requestedCount){
@@ -1610,11 +1613,11 @@ function generateDemoSeason(requestedCount){
   });
 
   const pool = shuffle(uniqueNames);
+  let fallbackCursor = 0;
   while(pool.length < targetCount){
-    const base = DEMO_FALLBACK_NAMES[pool.length % DEMO_FALLBACK_NAMES.length];
-    const repeat = Math.floor(pool.length / DEMO_FALLBACK_NAMES.length) + 1;
-    const candidateRaw = repeat===1 ? base : `${base} ${repeat}`;
-    const candidate = demoUppercaseFirst(candidateRaw);
+    const base = DEMO_FALLBACK_NAMES[fallbackCursor++];
+    if(!base) break;
+    const candidate = demoUppercaseFirst(base);
     const key = normalizePlayerName(candidate);
     if(seen.has(key)) continue;
     seen.add(key);
