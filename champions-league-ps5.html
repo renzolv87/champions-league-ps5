@@ -218,6 +218,7 @@ const SUPABASE_TABLE = 'tournament_state';
 const SUPABASE_ROW_ID = 'shared';
 const GAME_NAME = 'Champions League PS5';
 const FUN_DATE_LABEL = 'Dia del Bombazo';
+const PRESET_PLAYER_NAMES = ['renzo','johan','giank','felipe','jordi','ithan','miguel'];
 const MASTER_RESET_PASSWORD_KEY = 'cl-ps5-master-reset-password';
 const RESTART_SEASON_PASSWORD = '01234';
 let state = null;
@@ -1843,17 +1844,37 @@ function renderPlayersTab(){
 
   if(!locked){
     const addRow = el(`<div class="row" style="margin-top:14px;">
-      <div><label>Nombre</label><input id="np-name" placeholder="Ej: renzo"></div>
+      <div>
+        <label>Nombre (listado)</label>
+        <select id="np-preset"></select>
+      </div>
+      <div>
+        <label>Otro nombre (INS)</label>
+        <input id="np-name" placeholder="Escribe un nombre si eliges INS" style="display:none;">
+      </div>
     </div>`);
     wrap.appendChild(addRow);
+    const presetSel = addRow.querySelector('#np-preset');
+    const nameInput = addRow.querySelector('#np-name');
+    PRESET_PLAYER_NAMES.forEach(name=>{
+      presetSel.appendChild(el(`<option value="${name}">${name}</option>`));
+    });
+    presetSel.appendChild(el(`<option value="INS">INS (no está en el listado)</option>`));
+    presetSel.onchange = ()=>{
+      const isIns = presetSel.value==='INS';
+      nameInput.style.display = isIns ? '' : 'none';
+      if(!isIns) nameInput.value = '';
+    };
     const syncInfo = el(`<div class="muted" style="margin-bottom:8px;">Sync remoto: ${state.sync?.mode==='remoto'?'OK':'desconectado'}${state.sync?.lastRemoteAt?` · Última: ${state.sync.lastRemoteAt}`:''}</div>`);
     wrap.appendChild(syncInfo);
     const addBtn = el(`<button>Añadir jugador</button>`);
     addBtn.onclick=async ()=>{
-      const name = document.getElementById('np-name').value.trim();
+      const selected = presetSel.value;
+      const name = selected==='INS' ? nameInput.value.trim() : selected;
       if(!name) return;
       const err = await addPlayerShared(name);
       if(err){ alert(err); return; }
+      if(selected==='INS') nameInput.value = '';
     };
     wrap.appendChild(addBtn);
   }
